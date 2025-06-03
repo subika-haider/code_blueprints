@@ -1,0 +1,16 @@
+{
+  "name": "code-blueprints",
+  "version": "1.0.0",
+  "description": "An interactive visualization system for mapping patient journeys through hospital care pathways",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "three": "^0.150.1"
+  },
+  "devDependencies": {
+    "serve": "^14.2.1"
+  }
+}

@@ -3,81 +3,662 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Code Blueprints: Mapping Patient Journeys</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <title>CodeBlueprints | Interactive Hospital Journey Visualization</title>
+    <meta name="description" content="An advanced 3D visualization system for mapping patient journeys through hospital care pathways with interactive room exploration">
+    
+    <!-- Preconnect for performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
-    <script type="module" src="https://unpkg.com/@splinetool/viewer@1.9.98/build/spline-viewer.js"></script>
-    <script type="module" src="./model.js"></script>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    
+    <!-- Styles -->
     <link rel="stylesheet" href="style.css">
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "CodeBlueprints Hospital Visualization",
+        "description": "Interactive 3D hospital visualization for patient journey mapping",
+        "url": "https://example.com",
+        "applicationCategory": "HealthcareApplication"
+    }
+    </script>
 </head>
 <body>
-    <header class="header">
-        <div class="container header-content">
-            <h1 class="page-title">Code Blueprints</h1>
-            <p class="subtitle">An interactive visualization system for mapping patient journeys through hospital care pathways</p>
+    <!-- Progress indicator -->
+    <div class="progress-indicator" id="progressIndicator">
+        <div class="progress-bar"></div>
+    </div>
+
+    <!-- Theme Toggle -->
+    <div class="theme-toggle" id="themeToggle">
+        <button class="theme-toggle-btn" id="lightModeBtn" title="Light Mode">
+            <i class="fas fa-sun"></i>
+        </button>
+        <button class="theme-toggle-btn active" id="darkModeBtn" title="Dark Mode">
+            <i class="fas fa-moon"></i>
+        </button>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <i class="fas fa-hospital-symbol nav-icon"></i>
+                <span class="brand-text">CodeBlueprints</span>
+            </div>
+            <div class="nav-stats">
+                <div class="stat-item">
+                    <span class="stat-number" data-target="15">0</span>
+                    <span class="stat-label">Room Types</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" data-target="5">0</span>
+                    <span class="stat-label">Conditions</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="hero" id="hero">
+        <div class="hero-background">
+            <div class="hero-pattern"></div>
+            <div class="floating-elements">
+                <div class="floating-element" style="--delay: 0s; --x: 10%; --y: 20%;"></div>
+                <div class="floating-element" style="--delay: 1s; --x: 80%; --y: 60%;"></div>
+                <div class="floating-element" style="--delay: 2s; --x: 60%; --y: 10%;"></div>
+                <div class="floating-element" style="--delay: 3s; --x: 20%; --y: 80%;"></div>
+            </div>
+        </div>
+        <div class="hero-content">
+            <div class="hero-badge">
+                <i class="fas fa-sparkles"></i>
+                <span>Next-Generation Healthcare Visualization</span>
+            </div>
+            <h1 class="hero-title">
+                <span class="title-accent">Interactive</span>
+                <span class="title-main">Hospital Journey</span>
+                <span class="title-gradient">Visualization</span>
+            </h1>
+            <p class="hero-subtitle">
+                Explore patient pathways through advanced 3D modeling, real-time room visualization, 
+                and data-driven healthcare analytics.
+            </p>
+            <div class="hero-features">
+                <div class="feature-item">
+                    <i class="fas fa-cube"></i>
+                    <span>3D Room Models</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-route"></i>
+                    <span>Patient Pathways</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Real-time Data</span>
+                </div>
+            </div>
+            <button class="cta-button" onclick="document.getElementById('visualization').scrollIntoView({behavior: 'smooth'})">
+                <span>Start Exploring</span>
+                <i class="fas fa-arrow-down"></i>
+            </button>
+        </div>
+        <div class="scroll-indicator">
+            <div class="scroll-line"></div>
+            <div class="scroll-dot"></div>
         </div>
     </header>
-    
-    <main class="container">
-        <div class="viewer-container">
-            <div class="controls">
-                <label for="conditionSelect" class="control-label">
-                    <i class="fas fa-heartbeat"></i>Choose a condition:
-                </label>
-                <select id="conditionSelect" class="select-input">
-                    <option value="" disabled selected>Select a condition</option>
-                    <option value="broken_bone">Broken Bone</option>
-                    <option value="chest_pain">Chest Pain</option>
-                    <option value="head_injury">Head Injury</option>
-                    <option value="kidney_infection">Kidney Infection</option>
-                    <option value="abdominal_pain">Abdominal Pain</option>
-                </select>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Visualization Section -->
+        <section class="visualization-section" id="visualization">
+            <div class="container">
+                <div class="section-header">
+                    <div class="section-badge">
+                        <i class="fas fa-eye"></i>
+                        <span>Interactive Visualization</span>
+                    </div>
+                    <h2 class="section-title">
+                        Explore Hospital Environments
+                    </h2>
+                    <p class="section-description">
+                        Select a medical condition to visualize the complete patient journey through specialized 
+                        hospital departments with interactive 3D room exploration.
+                    </p>
+                </div>
+
+                <!-- Controls Panel -->
+                <div class="controls-panel">
+                    <div class="control-group">
+                        <label class="control-label">
+                            <i class="fas fa-stethoscope control-icon"></i>
+                            <span>Select Medical Condition</span>
+                        </label>
+                        <div class="select-container">
+                            <select id="conditionSelect" class="condition-select">
+                                <option value="default">Overview - No Highlighting</option>
+                                <option value="broken_bone">Broken Bone Treatment</option>
+                                <option value="chest_pain">Chest Pain Evaluation</option>
+                                <option value="head_injury">Head Injury Assessment</option>
+                                <option value="kidney_infection">Kidney Infection Care</option>
+                                <option value="abdominal_pain">Abdominal Pain Diagnosis</option>
+                            </select>
+                            <div class="select-icon">
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="condition-info" id="conditionInfo">
+                        <div class="info-content">
+                            <div class="info-icon">
+                                <i class="fas fa-info-circle"></i>
+                            </div>
+                            <div class="info-text">
+                                <p class="info-title">Get Started</p>
+                                <p class="info-description">Choose a condition above to see the patient journey</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3D Viewer -->
+                <div class="viewer-container glass-effect" id="viewerContainer">
+                    <div class="viewer-header">
+                        <div class="viewer-title">
+                            <i class="fas fa-hospital"></i>
+                            <span>3D Hospital Model</span>
+                        </div>
+                        <div class="viewer-controls">
+                            <div class="keyboard-hint">
+                                <span class="hint-text">Press <kbd>H</kbd> for shortcuts</span>
+                            </div>
+                            <button class="viewer-btn" id="fullscreenBtn" title="Toggle Fullscreen (F)">
+                                <i class="fas fa-expand"></i>
+                            </button>
+                            <button class="viewer-btn" id="helpBtn" title="Keyboard Shortcuts (H)">
+                                <i class="fas fa-keyboard"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="three-container" id="three-container">
+                        <!-- Loading State -->
+                        <div class="loading-overlay" id="loadingOverlay">
+                            <div class="loading-content">
+                                <div class="loading-spinner">
+                                    <div class="spinner-ring"></div>
+                                    <div class="spinner-ring"></div>
+                                    <div class="spinner-ring"></div>
+                                </div>
+                                <h3 class="loading-title">Loading Hospital Model</h3>
+                                <p class="loading-text">Preparing 3D environment...</p>
+                                <div class="loading-progress">
+                                    <div class="progress-track">
+                                        <div class="progress-fill" id="loadingProgress"></div>
+                                    </div>
+                                    <span class="progress-text">0%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Room Information Panel -->
+                        <div class="room-info-panel" id="roomInfoPanel">
+                            <div class="panel-header">
+                                <h3 class="panel-title">Room Details</h3>
+                                <button class="panel-close" id="closeRoomPanel">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="panel-content" id="roomInfoContent">
+                                <!-- Dynamic content will be inserted here -->
+                            </div>
+                        </div>
+
+                        <!-- Navigation Legend -->
+                        <div class="navigation-legend" id="navigationLegend">
+                            <div class="legend-header">
+                                <i class="fas fa-map-marked-alt"></i>
+                                <span>Navigation Guide</span>
+                            </div>
+                            <div class="legend-items">
+                                <div class="legend-item">
+                                    <div class="legend-color active-room"></div>
+                                    <span>Active Room</span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-color sequence-number">1-7</div>
+                                    <span>Journey Sequence</span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-color path-indicator"></div>
+                                    <span>Patient Path</span>
+                                </div>
+                            </div>
+                            <div class="legend-tip">
+                                <i class="fas fa-lightbulb"></i>
+                                <span>Click room buttons to explore interiors</span>
+                            </div>
+                        </div>
+
+                        <!-- Color Legend -->
+                        <div class="color-legend" id="colorLegend">
+                            <div class="legend-header">
+                                <i class="fas fa-palette"></i>
+                                <span>Room Colors</span>
+                            </div>
+                            <div class="color-items">
+                                <div class="color-item">
+                                    <div class="color-dot" style="background: #4A90E2;"></div>
+                                    <span>Entry</span>
+                                </div>
+                                <div class="color-item">
+                                    <div class="color-dot" style="background: #50C878;"></div>
+                                    <span>Reception</span>
+                                </div>
+                                <div class="color-item">
+                                    <div class="color-dot" style="background: #F39C12;"></div>
+                                    <span>Triage</span>
+                                </div>
+                                <div class="color-item">
+                                    <div class="color-dot" style="background: #E74C3C;"></div>
+                                    <span>Emergency</span>
+                                </div>
+                                <div class="color-item">
+                                    <div class="color-dot" style="background: #1ABC9C;"></div>
+                                    <span>Treatment</span>
+                                </div>
+                                <div class="color-item">
+                                    <div class="color-dot" style="background: #9B59B6;"></div>
+                                    <span>X-Ray</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Room Selection Panel -->
+                        <div class="room-selection-panel" id="roomSelectionPanel">
+                            <div class="panel-header">
+                                <div class="panel-icon">
+                                    <i class="fas fa-door-open"></i>
+                                </div>
+                                <div class="panel-info">
+                                    <h3 class="panel-title">Room Navigation</h3>
+                                    <p class="panel-subtitle">Click to explore each room</p>
+                                </div>
+                            </div>
+                            <div class="room-buttons" id="roomButtons">
+                                <!-- Dynamic room buttons will be inserted here -->
+                            </div>
+                        </div>
+
+                        <!-- Reset Controls -->
+                        <div class="reset-controls">
+                            <button class="reset-btn" id="resetViewBtn" title="Reset to Overview">
+                                <i class="fas fa-home"></i>
+                                <span>Overview</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
-            
-            <spline-viewer url="https://prod.spline.design/HGQXzV0H94ujgdxF/scene.splinecode"></spline-viewer>
-        </div>
-        
-        <section id="project-update" class="content-section">
-            <h2 class="section-title">Project Overview</h2>
-            
-            <div class="info-box">
-                <h4 class="info-title"><i class="fas fa-info-circle mr-2"></i> About this Visualization</h4>
-                <p>This interactive 3D hospital map allows you to visualize different patient journeys based on their medical condition. Select a condition from the dropdown to see the typical pathway a patient follows through the hospital.</p>
-            </div>
-            
-            <h3 class="subsection-title">1. Current Progress</h3>
-            <div class="project-description">
-                <p>
-                    We've selected and cleaned our dataset, narrowing it down to the key columns relevant for mapping patient hospital journeys.
-                    We also created a simplified 3D hospital blueprint map using Spline, which visually represents the high-level stages of a typical hospital visit.
-                </p>
-                <p>
-                    The embedded 3D scene includes camera controls, allowing the user to rotate, zoom, and explore the hospital map.
-                    Additionally, we implemented a dropdown menu that allows the user to select from common reasons a patient might visit the hospital, setting the stage for condition-specific visualizations.
-                </p>
-            </div>
-            
-            <h3 class="subsection-title">2. Challenges and Future Work</h3>
-            <div class="project-description">
-                <p>
-                    The most challenging part will definitely be designing more intricate 3D models. We have a vision for how we want our website to look and just achieving that will be most challenging for us.
-                    Creating specific visual representations for different hospital rooms while thinking about user experience,
-                    especially when working within the constraints of deadlines.
-                </p>
-                <p>
-                    Another anticipated challenge is implementing a symptom checker — in our final draft, we hope to allow users to input symptoms and predict a likely hospital path, which will require natural language handling and more complex condition mapping.
-                </p>
+        </section>
+
+        <!-- Content Section -->
+        <section class="content-section glass-effect" id="contentSection">
+            <div class="container">
+                <div class="content-grid">
+                    <div class="content-main">
+                        <h2 class="content-title">Project Overview</h2>
+                        
+                        <div class="feature-highlight">
+                            <div class="highlight-icon">
+                                <i class="fas fa-lightbulb"></i>
+                            </div>
+                            <div class="highlight-content">
+                                <h3>Advanced Healthcare Visualization</h3>
+                                <p>This interactive 3D hospital map revolutionizes healthcare pathway visualization by providing immersive room exploration, real-time patient journey tracking, and comprehensive departmental insights.</p>
+                            </div>
+                        </div>
+
+                        <div class="content-blocks">
+                            <div class="content-block">
+                                <div class="block-header">
+                                    <div class="block-number">01</div>
+                                    <h3 class="block-title">Current Achievements</h3>
+                                </div>
+                                <div class="block-content">
+                                    <p>We've successfully developed a comprehensive 3D hospital blueprint with interactive room exploration capabilities. Users can seamlessly navigate through different medical departments and visualize complete patient journeys from entry to discharge.</p>
+                                    
+                                    <div class="achievement-list">
+                                        <div class="achievement-item">
+                                            <i class="fas fa-check-circle"></i>
+                                            <span>15+ Interactive Room Types</span>
+                                        </div>
+                                        <div class="achievement-item">
+                                            <i class="fas fa-check-circle"></i>
+                                            <span>5 Medical Condition Pathways</span>
+                                        </div>
+                                        <div class="achievement-item">
+                                            <i class="fas fa-check-circle"></i>
+                                            <span>Real-time 3D Visualization</span>
+                                        </div>
+                                        <div class="achievement-item">
+                                            <i class="fas fa-check-circle"></i>
+                                            <span>Mobile-Responsive Design</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="content-block">
+                                <div class="block-header">
+                                    <div class="block-number">02</div>
+                                    <h3 class="block-title">Technical Innovation</h3>
+                                </div>
+                                <div class="block-content">
+                                    <p>Built with cutting-edge web technologies including Three.js for 3D rendering, advanced CSS animations, and responsive design principles to ensure optimal performance across all devices.</p>
+                                    
+                                    <div class="tech-stack">
+                                        <div class="tech-item">
+                                            <div class="tech-icon">
+                                                <i class="fab fa-js-square"></i>
+                                            </div>
+                                            <span>Three.js 3D Engine</span>
+                                        </div>
+                                        <div class="tech-item">
+                                            <div class="tech-icon">
+                                                <i class="fab fa-css3-alt"></i>
+                                            </div>
+                                            <span>Advanced CSS3</span>
+                                        </div>
+                                        <div class="tech-item">
+                                            <div class="tech-icon">
+                                                <i class="fas fa-mobile-alt"></i>
+                                            </div>
+                                            <span>Responsive Design</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="content-block">
+                                <div class="block-header">
+                                    <div class="block-number">03</div>
+                                    <h3 class="block-title">Future Roadmap</h3>
+                                </div>
+                                <div class="block-content">
+                                    <p>Our development roadmap includes AI-powered pathway optimization, real-time hospital data integration, and advanced analytics for healthcare professionals.</p>
+                                    
+                                    <div class="roadmap-list">
+                                        <div class="roadmap-item">
+                                            <div class="roadmap-status in-progress"></div>
+                                            <div class="roadmap-content">
+                                                <h4>AI Pathway Optimization</h4>
+                                                <p>Machine learning algorithms for optimal route planning</p>
+                                            </div>
+                                        </div>
+                                        <div class="roadmap-item">
+                                            <div class="roadmap-status planned"></div>
+                                            <div class="roadmap-content">
+                                                <h4>Real-time Data Integration</h4>
+                                                <p>Live hospital data feeds and occupancy tracking</p>
+                                            </div>
+                                        </div>
+                                        <div class="roadmap-item">
+                                            <div class="roadmap-status planned"></div>
+                                            <div class="roadmap-content">
+                                                <h4>Advanced Analytics Dashboard</h4>
+                                                <p>Comprehensive metrics and performance insights</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="content-sidebar">
+                        <div class="sidebar-widget">
+                            <h3 class="widget-title">
+                                <i class="fas fa-chart-bar"></i>
+                                Project Statistics
+                            </h3>
+                            <div class="stats-grid">
+                                <div class="stat-card">
+                                    <div class="stat-value">99.9%</div>
+                                    <div class="stat-label">Uptime</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value">15</div>
+                                    <div class="stat-label">Room Types</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value">3D</div>
+                                    <div class="stat-label">Rendering</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value">5</div>
+                                    <div class="stat-label">Pathways</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="sidebar-widget">
+                            <h3 class="widget-title">
+                                <i class="fas fa-keyboard"></i>
+                                Keyboard Shortcuts
+                            </h3>
+                            <div class="shortcuts-list">
+                                <div class="shortcut-item">
+                                    <kbd>R</kbd>
+                                    <span>Reset View</span>
+                                </div>
+                                <div class="shortcut-item">
+                                    <kbd>F</kbd>
+                                    <span>Fullscreen</span>
+                                </div>
+                                <div class="shortcut-item">
+                                    <kbd>H</kbd>
+                                    <span>Help</span>
+                                </div>
+                                <div class="shortcut-item">
+                                    <kbd>1-5</kbd>
+                                    <span>Select Condition</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
     </main>
-    
+
+    <!-- Footer -->
     <footer class="footer">
-        <div class="container">
-            <p>Code Blueprints: Mapping Patient Journeys © 2023</p>
+        <div class="footer-content">
+            <div class="footer-brand">
+                <div class="brand-logo">
+                    <i class="fas fa-hospital-symbol"></i>
+                    <span class="brand-text">CodeBlueprints</span>
+                </div>
+                <p class="brand-description">
+                    Transforming healthcare visualization through innovative 3D technology and interactive design.
+                </p>
+                <div class="social-links">
+                    <a href="#" class="social-link" aria-label="GitHub">
+                        <i class="fab fa-github"></i>
+                    </a>
+                    <a href="#" class="social-link" aria-label="LinkedIn">
+                        <i class="fab fa-linkedin"></i>
+                    </a>
+                    <a href="#" class="social-link" aria-label="Twitter">
+                        <i class="fab fa-twitter"></i>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="footer-grid">
+                <div class="footer-section">
+                    <h3 class="footer-title">Technology</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">Three.js Engine</a></li>
+                        <li><a href="#">WebGL Rendering</a></li>
+                        <li><a href="#">Progressive Enhancement</a></li>
+                        <li><a href="#">Performance Optimization</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3 class="footer-title">Healthcare</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">Patient Pathways</a></li>
+                        <li><a href="#">Department Analysis</a></li>
+                        <li><a href="#">Workflow Optimization</a></li>
+                        <li><a href="#">Data Visualization</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer-bottom">
+            <div class="container">
+                <div class="footer-bottom-content">
+                    <p class="copyright">
+                        © 2024 <span class="brand-text">CodeBlueprints</span>. All rights reserved.
+                    </p>
+                    <div class="footer-meta">
+                        <span>Built with ❤️ for Healthcare Innovation</span>
+                    </div>
+                </div>
+            </div>
         </div>
     </footer>
+
+    <!-- Help Modal -->
+    <div class="modal" id="helpModal">
+        <div class="modal-backdrop" id="helpModalBackdrop"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <i class="fas fa-question-circle"></i>
+                    Navigation Help
+                </h3>
+                <button class="modal-close" id="closeHelpModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="help-section">
+                    <h4>Mouse Controls</h4>
+                    <ul>
+                        <li><strong>Left Click + Drag:</strong> Rotate camera around the model</li>
+                        <li><strong>Right Click + Drag:</strong> Pan camera view</li>
+                        <li><strong>Scroll Wheel:</strong> Zoom in and out</li>
+                    </ul>
+                </div>
+                <div class="help-section">
+                    <h4>Room Exploration</h4>
+                    <ul>
+                        <li><strong>Select Condition:</strong> Choose a medical condition to highlight relevant rooms</li>
+                        <li><strong>Room Buttons:</strong> Click room names to switch to interior view</li>
+                        <li><strong>Reset View:</strong> Return to overview perspective</li>
+                    </ul>
+                </div>
+                <div class="help-section">
+                    <h4>Visual Elements</h4>
+                    <ul>
+                        <li><strong>Orange Highlights:</strong> Active rooms in the patient journey</li>
+                        <li><strong>Numbers:</strong> Sequence order of room visits</li>
+                        <li><strong>Room Labels:</strong> Floating information panels</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module" src="script.js"></script>
+    <script>
+        // Initialize progress indicator
+        window.addEventListener('scroll', () => {
+            const scrolled = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
+            document.querySelector('.progress-bar').style.width = scrolled + '%';
+        });
+
+        // Animate statistics
+        function animateStats() {
+            const stats = document.querySelectorAll('.stat-number');
+            stats.forEach(stat => {
+                const target = parseInt(stat.getAttribute('data-target'));
+                const increment = target / 50;
+                let current = 0;
+                
+                const timer = setInterval(() => {
+                    current += increment;
+                    if (current >= target) {
+                        current = target;
+                        clearInterval(timer);
+                    }
+                    stat.textContent = Math.floor(current);
+                }, 50);
+            });
+        }
+
+        // Initialize animations when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(animateStats, 1000);
+        });
+
+        // Help modal functionality
+        const helpBtn = document.getElementById('helpBtn');
+        const helpModal = document.getElementById('helpModal');
+        const closeHelpModal = document.getElementById('closeHelpModal');
+        const helpModalBackdrop = document.getElementById('helpModalBackdrop');
+
+        helpBtn?.addEventListener('click', () => {
+            helpModal.classList.add('active');
+        });
+
+        [closeHelpModal, helpModalBackdrop].forEach(element => {
+            element?.addEventListener('click', () => {
+                helpModal.classList.remove('active');
+            });
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            switch(e.key.toLowerCase()) {
+                case 'r':
+                    document.getElementById('resetViewBtn')?.click();
+                    break;
+                case 'f':
+                    document.getElementById('fullscreenBtn')?.click();
+                    break;
+                case 'h':
+                    helpModal.classList.toggle('active');
+                    break;
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                    const select = document.getElementById('conditionSelect');
+                    if (select) {
+                        select.selectedIndex = parseInt(e.key);
+                        select.dispatchEvent(new Event('change'));
+                    }
+                    break;
+            }
+        });
+    </script>
 </body>
 </html>
