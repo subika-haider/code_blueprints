@@ -4,40 +4,80 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Code Blueprints: Mapping Patient Journeys</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
     <script type="module" src="https://unpkg.com/@splinetool/viewer@1.9.98/build/spline-viewer.js"></script>
+    <script type="module" src="./model.js"></script>
+    <script type="stylesheet" src="style.css"></script>
 </head>
 <body>
-    <h1>Code Blueprints</h1>
-
-    <label for="conditionSelect">Choose a condition:</label>
-    <select id="conditionSelect">
-        <option value="" disabled selected>Select a condition</option>
-        <option value="broken_bone">Broken Bone</option>
-        <option value="chest_pain">Chest Pain</option>
-        <option value="head_injury">Head Injury</option>
-        <option value="kidney_infection">Kidney Infection</option>
-        <option value="abdominal_pain">Abdominal Pain</option>
-    </select>
+    <header class="header">
+        <div class="container header-content">
+            <h1 class="page-title">Code Blueprints</h1>
+            <p class="subtitle">An interactive visualization system for mapping patient journeys through hospital care pathways</p>
+        </div>
+    </header>
     
-    <spline-viewer url="https://prod.spline.design/HGQXzV0H94ujgdxF/scene.splinecode"></spline-viewer>    <section id="project-update">
-        <h2>Writeup</h2>
-
-        <h3>1. What have we done so far?</h3>
-        <p>
-            We’ve selected and cleaned our dataset, narrowing it down to the key columns relevant for mapping patient hospital journeys.
-            We also created a simplified 3D hospital blueprint map using Spline, which visually represents the high-level stages of a typical hospital visit.
-            The embedded 3D scene includes camera controls, allowing the user to rotate, zoom, and explore the hospital map.
-            Additionally, we implemented a dropdown menu that allows the user to select from common reasons a patient might visit the hospital, setting the stage for condition-specific visualizations.
-        </p>
-
-        <h3>2. What will be the most challenging aspect of our project to design and why?</h3>
-        <p>
-            The most challenging part will definitely be designing more intricate 3D models. We have a vision for how we want our website to look and just achieving that will be most challenging for us.
-            Creating specific visual representations for different hospital rooms while thinking about user experience,
-            especially when working within the constraints of deadlines.
-            Another anticipated challenge is implementing a symptom checker — in our final draft, we hope to allow users to input symptoms and predict a likely hospital path, which will require natural language handling and more complex condition mapping.
-        </p>
-    </section>
-
+    <main class="container">
+        <div class="viewer-container">
+            <div class="controls">
+                <label for="conditionSelect" class="control-label">
+                    <i class="fas fa-heartbeat"></i>Choose a condition:
+                </label>
+                <select id="conditionSelect" class="select-input">
+                    <option value="" disabled selected>Select a condition</option>
+                    <option value="broken_bone">Broken Bone</option>
+                    <option value="chest_pain">Chest Pain</option>
+                    <option value="head_injury">Head Injury</option>
+                    <option value="kidney_infection">Kidney Infection</option>
+                    <option value="abdominal_pain">Abdominal Pain</option>
+                </select>
+            </div>
+            
+            <spline-viewer url="https://prod.spline.design/HGQXzV0H94ujgdxF/scene.splinecode"></spline-viewer>
+        </div>
+        
+        <section id="project-update" class="content-section">
+            <h2 class="section-title">Project Overview</h2>
+            
+            <div class="info-box">
+                <h4 class="info-title"><i class="fas fa-info-circle mr-2"></i> About this Visualization</h4>
+                <p>This interactive 3D hospital map allows you to visualize different patient journeys based on their medical condition. Select a condition from the dropdown to see the typical pathway a patient follows through the hospital.</p>
+            </div>
+            
+            <h3 class="subsection-title">1. Current Progress</h3>
+            <div class="project-description">
+                <p>
+                    We've selected and cleaned our dataset, narrowing it down to the key columns relevant for mapping patient hospital journeys.
+                    We also created a simplified 3D hospital blueprint map using Spline, which visually represents the high-level stages of a typical hospital visit.
+                </p>
+                <p>
+                    The embedded 3D scene includes camera controls, allowing the user to rotate, zoom, and explore the hospital map.
+                    Additionally, we implemented a dropdown menu that allows the user to select from common reasons a patient might visit the hospital, setting the stage for condition-specific visualizations.
+                </p>
+            </div>
+            
+            <h3 class="subsection-title">2. Challenges and Future Work</h3>
+            <div class="project-description">
+                <p>
+                    The most challenging part will definitely be designing more intricate 3D models. We have a vision for how we want our website to look and just achieving that will be most challenging for us.
+                    Creating specific visual representations for different hospital rooms while thinking about user experience,
+                    especially when working within the constraints of deadlines.
+                </p>
+                <p>
+                    Another anticipated challenge is implementing a symptom checker — in our final draft, we hope to allow users to input symptoms and predict a likely hospital path, which will require natural language handling and more complex condition mapping.
+                </p>
+            </div>
+        </section>
+    </main>
+    
+    <footer class="footer">
+        <div class="container">
+            <p>Code Blueprints: Mapping Patient Journeys © 2023</p>
+        </div>
+    </footer>
 </body>
 </html>
