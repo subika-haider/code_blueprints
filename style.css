@@ -727,9 +727,7 @@
     font-weight: 600;
 }
 
-.legend-color.path-indicator {
-    background: var(--accent-orange);
-}
+
 
 .legend-tip {
     display: flex;
