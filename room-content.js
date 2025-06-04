@@ -22,6 +22,7 @@ const roomContent = {
       <div class="room-statistics">
         <p><strong>Average wait time:</strong> 5-10 minutes</p>
         <p><strong>Daily visitors:</strong> 250-300</p>
+        <p><strong>Visualization:</strong> Real-time patient arrival patterns throughout the day</p>
       </div>
     `
   },
@@ -33,6 +34,7 @@ const roomContent = {
     additionalHtml: `
       <div class="room-statistics">
         <p><strong>Key functions:</strong> Patient registration, insurance verification, appointment scheduling</p>
+        <p><strong>Visualization:</strong> Registration status breakdown and completion rates</p>
       </div>
     `
   },
@@ -51,6 +53,7 @@ const roomContent = {
           <li>Green - Standard (120 minutes)</li>
           <li>Blue - Non-Urgent (240 minutes)</li>
         </ul>
+        <p><strong>Visualization:</strong> Current distribution of patients by triage priority</p>
       </div>
     `
   },
@@ -63,6 +66,7 @@ const roomContent = {
       <div class="room-statistics">
         <p><strong>Equipment:</strong> 3 X-ray machines, 1 fluoroscopy unit</p>
         <p><strong>Average procedure time:</strong> 15-30 minutes</p>
+        <p><strong>Visualization:</strong> Real-time equipment utilization rates</p>
       </div>
     `
   },
@@ -75,6 +79,7 @@ const roomContent = {
       <div class="room-statistics">
         <p><strong>Capacity:</strong> 20 beds, 4 trauma bays</p>
         <p><strong>Response time for critical cases:</strong> Under 2 minutes</p>
+        <p><strong>Visualization:</strong> Average response times by case urgency level</p>
       </div>
     `
   },
@@ -86,6 +91,7 @@ const roomContent = {
     additionalHtml: `
       <div class="room-statistics">
         <p><strong>Common procedures:</strong> Wound care, IV therapy, minor surgeries</p>
+        <p><strong>Visualization:</strong> Current room occupancy status</p>
       </div>
     `
   },
@@ -98,6 +104,7 @@ const roomContent = {
       <div class="room-statistics">
         <p><strong>Common conditions treated:</strong> Heart attack, arrhythmia, heart failure</p>
         <p><strong>Average stay:</strong> 3-5 days</p>
+        <p><strong>Visualization:</strong> Continuous heart rate monitoring trends</p>
       </div>
     `
   },
@@ -109,6 +116,7 @@ const roomContent = {
     additionalHtml: `
       <div class="room-statistics">
         <p><strong>Common conditions treated:</strong> Stroke, seizures, headache disorders, nerve damage</p>
+        <p><strong>Visualization:</strong> Neurological assessment scores by category</p>
       </div>
     `
   },
@@ -121,6 +129,7 @@ const roomContent = {
       <div class="room-statistics">
         <p><strong>Tests performed daily:</strong> 500-800</p>
         <p><strong>Turnaround time:</strong> 1-3 hours for routine tests</p>
+        <p><strong>Visualization:</strong> Daily test volume breakdown by test type</p>
       </div>
     `
   },
@@ -132,6 +141,7 @@ const roomContent = {
     additionalHtml: `
       <div class="room-statistics">
         <p><strong>Common conditions treated:</strong> Kidney stones, UTIs, prostate issues</p>
+        <p><strong>Visualization:</strong> Distribution of urological procedures</p>
       </div>
     `
   },
@@ -144,6 +154,7 @@ const roomContent = {
       <div class="room-statistics">
         <p><strong>Common procedures:</strong> Endoscopy, colonoscopy, ERCP</p>
         <p><strong>Average procedure time:</strong> 30-60 minutes</p>
+        <p><strong>Visualization:</strong> Daily procedure scheduling timeline</p>
       </div>
     `
   },
@@ -156,6 +167,7 @@ const roomContent = {
       <div class="room-statistics">
         <p><strong>Operating rooms:</strong> 8 standard, 2 specialized</p>
         <p><strong>Average procedures per day:</strong> 25-30</p>
+        <p><strong>Visualization:</strong> Operating room utilization by hours</p>
       </div>
     `
   },
@@ -168,6 +180,7 @@ const roomContent = {
       <div class="room-statistics">
         <p><strong>Patient capacity:</strong> 15 beds</p>
         <p><strong>Nurse-to-patient ratio:</strong> 1:3</p>
+        <p><strong>Visualization:</strong> Vital signs monitoring performance metrics</p>
       </div>
     `
   },
@@ -180,6 +193,7 @@ const roomContent = {
       <div class="room-statistics">
         <p><strong>Average discharge time:</strong> 30-45 minutes</p>
         <p><strong>Patients discharged daily:</strong> 40-60</p>
+        <p><strong>Visualization:</strong> Discharge destination distribution analysis</p>
       </div>
     `
   }
