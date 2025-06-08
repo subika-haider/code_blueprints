@@ -647,12 +647,12 @@ new TWEEN.Tween(controls.target)
     }
 
     const roomSequences = {
-      broken_bone: ['waiting_area', 'reception', 'triage', 'imaging', 'medication_station', 'discharge'],
-      chest_pain: ['waiting_area', 'reception', 'triage', 'emergency', 'icu', 'staff_room', 'discharge'],
-      head_injury: ['waiting_area', 'reception', 'triage', 'imaging', 'icu', 'medicine_ward_a', 'discharge'],
-      kidney_infection: ['waiting_area', 'reception', 'triage', 'lab', 'department_med', 'medication_station', 'discharge'],
-      abdominal_pain: ['waiting_area', 'reception', 'triage', 'lab', 'department_med', 'medicine_ward_a', 'discharge']
-    };
+      broken_bone:     ['waiting_area', 'reception', 'triage', 'emergency', 'staff_room', 'discharge'],
+      chest_pain:      ['waiting_area', 'reception', 'triage', 'emergency', 'icu', 'discharge'],
+      head_injury:     ['waiting_area', 'reception', 'triage', 'icu', 'staff_room', 'discharge'],
+      kidney_infection:['waiting_area', 'reception', 'triage', 'emergency', 'staff_room', 'discharge'],
+      abdominal_pain:  ['waiting_area', 'reception', 'triage', 'emergency', 'icu', 'discharge']
+    };    
 
     const sequence = roomSequences[condition];
     if (!sequence) return;
