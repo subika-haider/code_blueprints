@@ -3,6 +3,7 @@ import { OrbitControls } from 'https://esm.sh/three@0.150.1/examples/jsm/control
 import { GLTFLoader } from 'https://esm.sh/three@0.150.1/examples/jsm/loaders/GLTFLoader.js';
 import * as TWEEN from 'https://cdn.jsdelivr.net/npm/@tweenjs/tween.js@18.6.4/dist/tween.esm.js';
 import roomContent from './room-content.js';
+import * as d3 from 'https://cdn.jsdelivr.net/npm/d3@7.4.4/dist/d3.min.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   // Core elements
@@ -1150,299 +1151,65 @@ new TWEEN.Tween(controls.target)
   }
 
   // Room-specific visualization functions
+
   function createRoomVisualization(roomType) {
     const canvas = document.getElementById(`roomChart-${roomType}`);
     const loadingElement = document.getElementById(`chartLoading-${roomType}`);
-    
+  
     if (!canvas) {
       console.warn(`Canvas element not found for room type: ${roomType}`);
       return;
     }
-    
+  
     // Show loading spinner
     if (loadingElement) {
       loadingElement.style.display = 'flex';
     }
-    
-    const ctx = canvas.getContext('2d');
-    
-    // Room-specific chart configurations
-    const roomChartConfigs = {
-      entry: {
-        type: 'line',
-        title: 'Daily Patient Arrivals',
-        data: {
-          labels: ['6AM', '9AM', '12PM', '3PM', '6PM', '9PM'],
-          datasets: [{
-            label: 'Patients',
-            data: [15, 45, 65, 55, 40, 25],
-            borderColor: '#3498db',
-            backgroundColor: 'rgba(52, 152, 219, 0.1)',
-            tension: 0.4
-          }]
-        }
-      },
-      reception: {
-        type: 'doughnut',
-        title: 'Registration Status',
-        data: {
-          labels: ['Completed', 'In Progress', 'Waiting'],
-          datasets: [{
-            data: [65, 20, 15],
-            backgroundColor: ['#2ecc71', '#f39c12', '#e74c3c']
-          }]
-        }
-      },
-      triage: {
-        type: 'bar',
-        title: 'Triage Categories Today',
-        data: {
-          labels: ['Red', 'Orange', 'Yellow', 'Green', 'Blue'],
-          datasets: [{
-            label: 'Patients',
-            data: [5, 12, 25, 35, 8],
-            backgroundColor: ['#e74c3c', '#e67e22', '#f1c40f', '#2ecc71', '#3498db']
-          }]
-        }
-      },
-      xray: {
-        type: 'bar',
-        title: 'Equipment Utilization',
-        data: {
-          labels: ['Machine 1', 'Machine 2', 'Machine 3', 'Fluoroscopy'],
-          datasets: [{
-            label: 'Usage %',
-            data: [85, 72, 90, 45],
-            backgroundColor: '#9b59b6'
-          }]
-        }
-      },
-      emergency: {
-        type: 'line',
-        title: 'Response Times (minutes)',
-        data: {
-          labels: ['Critical', 'Urgent', 'Semi-Urgent', 'Non-Urgent'],
-          datasets: [{
-            label: 'Average Response',
-            data: [2, 8, 25, 45],
-            borderColor: '#e74c3c',
-            backgroundColor: 'rgba(231, 76, 60, 0.1)'
-          }]
-        }
-      },
-      treatment: {
-        type: 'doughnut',
-        title: 'Room Occupancy',
-        data: {
-          labels: ['Occupied', 'Available', 'Cleaning'],
-          datasets: [{
-            data: [12, 3, 2],
-            backgroundColor: ['#e74c3c', '#2ecc71', '#f39c12']
-          }]
-        }
-      },
-      cardiac: {
-        type: 'line',
-        title: 'Heart Rate Monitoring',
-        data: {
-          labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
-          datasets: [{
-            label: 'Avg Heart Rate',
-            data: [72, 68, 75, 78, 74, 70],
-            borderColor: '#e74c3c',
-            backgroundColor: 'rgba(231, 76, 60, 0.1)'
-          }]
-        }
-      },
-      neurology: {
-        type: 'radar',
-        title: 'Neurological Assessments',
-        data: {
-          labels: ['Motor', 'Sensory', 'Cognitive', 'Speech', 'Balance'],
-          datasets: [{
-            label: 'Assessment Scores',
-            data: [8, 7, 9, 8, 6],
-            borderColor: '#9b59b6',
-            backgroundColor: 'rgba(155, 89, 182, 0.2)'
-          }]
-        }
-      },
-      lab: {
-        type: 'bar',
-        title: 'Test Volume by Type',
-        data: {
-          labels: ['Blood', 'Urine', 'Cultures', 'Chemistry', 'Hematology'],
-          datasets: [{
-            label: 'Tests Today',
-            data: [120, 85, 45, 95, 110],
-            backgroundColor: '#1abc9c'
-          }]
-        }
-      },
-      urology: {
-        type: 'pie',
-        title: 'Procedure Types',
-        data: {
-          labels: ['Cystoscopy', 'Ultrasound', 'Biopsy', 'Consultation'],
-          datasets: [{
-            data: [35, 25, 15, 25],
-            backgroundColor: ['#3498db', '#2ecc71', '#f39c12', '#9b59b6']
-          }]
-        }
-      },
-      gastro: {
-        type: 'line',
-        title: 'Procedure Schedule',
-        data: {
-          labels: ['8AM', '10AM', '12PM', '2PM', '4PM', '6PM'],
-          datasets: [{
-            label: 'Procedures',
-            data: [3, 5, 2, 4, 3, 1],
-            borderColor: '#e67e22',
-            backgroundColor: 'rgba(230, 126, 34, 0.1)'
-          }]
-        }
-      },
-      surgery: {
-        type: 'bar',
-        title: 'OR Utilization',
-        data: {
-          labels: ['OR 1', 'OR 2', 'OR 3', 'OR 4', 'OR 5', 'OR 6', 'OR 7', 'OR 8'],
-          datasets: [{
-            label: 'Hours Used',
-            data: [8, 6, 10, 9, 7, 8, 5, 9],
-            backgroundColor: '#34495e'
-          }]
-        }
-      },
-      monitoring: {
-        type: 'line',
-        title: 'Vital Signs Monitoring',
-        data: {
-          labels: ['BP', 'Heart Rate', 'O2 Sat', 'Temp', 'Resp Rate'],
-          datasets: [{
-            label: 'Normal Range %',
-            data: [92, 88, 96, 94, 90],
-            borderColor: '#2ecc71',
-            backgroundColor: 'rgba(46, 204, 113, 0.1)'
-          }]
-        }
-      },
-      discharge: {
-        type: 'doughnut',
-        title: 'Discharge Destinations',
-        data: {
-          labels: ['Home', 'Skilled Nursing', 'Rehab', 'Transfer'],
-          datasets: [{
-            data: [70, 15, 10, 5],
-            backgroundColor: ['#2ecc71', '#f39c12', '#3498db', '#9b59b6']
-          }]
-        }
-      }
-    };
-    
-    const config = roomChartConfigs[roomType];
-    if (!config) {
-      console.warn(`No chart configuration found for room type: ${roomType}`);
-      if (loadingElement) {
-        loadingElement.innerHTML = '<p>No visualization available for this room</p>';
-      }
-      return;
-    }
-    
-    try {
-      // Create chart with animation
-      const chart = new Chart(ctx, {
-        type: config.type,
-        data: config.data,
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          animation: {
-            duration: 1000,
-            easing: 'easeInOutQuart',
-            onComplete: function() {
-              // Hide loading spinner and show chart
-              if (loadingElement) {
-                loadingElement.style.display = 'none';
-              }
-              canvas.style.display = 'block';
-              canvas.style.opacity = '0';
-              setTimeout(() => {
-                canvas.style.transition = 'opacity 0.3s ease';
-                canvas.style.opacity = '1';
-              }, 50);
-            }
-          },
-          plugins: {
-            title: {
-              display: true,
-              text: config.title,
-              font: {
-                size: 16,
-                weight: 'bold'
-              },
-              color: '#ffffff'
-            },
-            legend: {
-              display: config.type !== 'line',
-              labels: {
-                color: '#ffffff'
-              }
-            }
-          },
-          scales: config.type === 'radar' ? {
-            r: {
-              angleLines: {
-                color: 'rgba(255, 255, 255, 0.1)'
-              },
-              grid: {
-                color: 'rgba(255, 255, 255, 0.1)'
-              },
-              pointLabels: {
-                color: '#ffffff'
-              },
-              ticks: {
-                color: '#ffffff',
-                backdropColor: 'transparent'
-              }
-            }
-          } : {
-            y: {
-              beginAtZero: true,
-              grid: {
-                color: 'rgba(255, 255, 255, 0.1)'
-              },
-              ticks: {
-                color: '#ffffff'
-              }
-            },
-            x: {
-              grid: {
-                color: 'rgba(255, 255, 255, 0.1)'
-              },
-              ticks: {
-                color: '#ffffff'
-              }
-            }
-          }
-        }
-      });
-      
-      // Store chart instance for potential cleanup
-      if (!window.roomCharts) {
-        window.roomCharts = {};
-      }
-      window.roomCharts[roomType] = chart;
-      
-    } catch (error) {
-      console.error(`Error creating chart for room ${roomType}:`, error);
-      if (loadingElement) {
-        loadingElement.innerHTML = '<p>Error loading visualization</p>';
-      }
+  
+    // Set up chart dimensions and margins
+    const margin = { top: 20, right: 20, bottom: 30, left: 40 };
+    const width = canvas.clientWidth - margin.left - margin.right;
+    const height = canvas.clientHeight - margin.top - margin.bottom;
+  
+    // Create SVG element
+    const svg = d3.select(canvas)
+      .append('svg')
+      .attr('width', width + margin.left + margin.right)
+      .attr('height', height + margin.top + margin.bottom)
+      .append('g')
+      .attr('transform', `translate(${margin.left}, ${margin.top})`);
+  
+    // Define chart data and scales
+    const data = [
+      { label: 'Label 1', value: 10 },
+      { label: 'Label 2', value: 20 },
+      { label: 'Label 3', value: 30 },
+    ];
+  
+    const xScale = d3.scaleBand()
+      .domain(data.map(d => d.label))
+      .range([0, width])
+      .padding(0.2);
+  
+    const yScale = d3.scaleLinear()
+      .domain([0, d3.max(data, d => d.value)])
+      .range([height, 0]);
+  
+    // Create bars
+    svg.selectAll('rect')
+      .data(data)
+      .enter()
+      .append('rect')
+      .attr('x', d => xScale(d.label))
+      .attr('y', d => yScale(d.value))
+      .attr('width', xScale.bandwidth())
+      .attr('height', d => height - yScale(d.value));
+  
+    // Hide loading spinner and show chart
+    if (loadingElement) {
+      loadingElement.style.display = 'none';
     }
   }
-
   function updateConditionInfo(condition) {
     const conditionInfo = document.getElementById('conditionInfo');
     if (!conditionInfo) return;
