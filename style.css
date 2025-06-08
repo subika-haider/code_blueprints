@@ -2859,3 +2859,237 @@ select option {
     -webkit-text-fill-color: transparent;
     background-clip: text;
 }
+
+/* D3 Visualization Enhanced Styles */
+.visualization-container svg {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+  background: transparent;
+  border-radius: var(--radius-md);
+  font-family: 'Poppins', sans-serif;
+}
+
+.d3-axis-label {
+  fill: var(--text-primary, #fff);
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.d3-x-title, .d3-y-title {
+  fill: var(--text-secondary, #a0aec0);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.d3-grid line {
+  stroke: var(--glass-border, #ffffff22);
+  stroke-width: 1.2px;
+  shape-rendering: crispEdges;
+}
+
+.d3-bar {
+  transition: fill 0.2s, opacity 0.2s;
+  cursor: pointer;
+  opacity: 0.92;
+  rx: 7px;
+  filter: drop-shadow(0 2px 8px rgba(79,209,199,0.08));
+}
+.d3-bar:hover {
+  opacity: 1;
+  filter: brightness(1.18) drop-shadow(0 4px 16px rgba(79,209,199,0.18));
+}
+
+.d3-line {
+  stroke-width: 3.5px;
+  fill: none;
+  filter: drop-shadow(0 2px 8px rgba(99,179,237,0.12));
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.d3-pie-slice {
+  cursor: pointer;
+  opacity: 0.93;
+  transition: opacity 0.2s, filter 0.2s;
+  stroke: var(--glass-border, #ffffff22);
+  stroke-width: 2.5px;
+  filter: drop-shadow(0 2px 8px rgba(99,179,237,0.10));
+}
+.d3-pie-slice:hover {
+  opacity: 1;
+  filter: brightness(1.18) drop-shadow(0 4px 16px rgba(99,179,237,0.18));
+}
+
+.d3-radar-area {
+  fill-opacity: 0.55;
+  stroke-width: 2.5px;
+  transition: fill-opacity 0.2s;
+  filter: drop-shadow(0 2px 8px rgba(159,122,234,0.10));
+}
+
+.d3-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 2rem;
+  margin-top: 1.2rem;
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: var(--text-primary, #fff);
+}
+.d3-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-bottom: 0.2rem;
+}
+.d3-legend-color {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-right: 0.5rem;
+  border: 2px solid var(--glass-border, #ffffff22);
+  box-shadow: 0 2px 8px rgba(79,209,199,0.10);
+}
+
+.d3-tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: rgba(30, 41, 59, 0.98);
+  color: #fff;
+  border-radius: 8px;
+  padding: 0.7rem 1.1rem;
+  font-size: 1.08rem;
+  font-weight: 600;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+  z-index: 1000;
+  border: 2px solid var(--accent-teal, #4fd1c7);
+  opacity: 0;
+  transition: opacity 0.18s, transform 0.18s;
+  transform: translateY(-14px);
+  min-width: 120px;
+  max-width: 260px;
+  text-align: center;
+}
+.d3-tooltip.active {
+  opacity: 1;
+  transform: translateY(0);
+}
+.d3-tooltip::after {
+  content: '';
+  position: absolute;
+  left: 20px;
+  bottom: -10px;
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 10px solid var(--accent-teal, #4fd1c7);
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.12));
+}
+
+/* Responsive for D3 SVG */
+@media (max-width: 600px) {
+  .visualization-container svg {
+    height: 220px !important;
+  }
+  .d3-tooltip {
+    font-size: 0.95rem;
+    min-width: 80px;
+    padding: 0.5rem 0.7rem;
+  }
+}
+
+/* Dashboard Grid and Card Styles */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  width: 100%;
+}
+@media (max-width: 900px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: 1.2rem;
+  }
+}
+.dashboard-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: 1.5rem 1.2rem 1.2rem 1.2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  transition: box-shadow 0.2s, transform 0.2s;
+  position: relative;
+  min-width: 0;
+}
+.dashboard-card:hover {
+  box-shadow: var(--shadow-xl);
+  transform: translateY(-2px) scale(1.01);
+}
+.dashboard-card-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--accent-teal);
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.01em;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.dashboard-card-desc {
+  color: var(--text-secondary);
+  font-size: 0.98rem;
+  margin-bottom: 1.1rem;
+  line-height: 1.5;
+}
+.dashboard-chart {
+  width: 100%;
+  min-height: 180px;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Dashboard Metric Card (for future use) */
+.dashboard-metric {
+  background: var(--accent-bg);
+  border-radius: var(--radius-md);
+  padding: 1.2rem 1rem;
+  margin-bottom: 0.7rem;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.dashboard-metric-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--accent-teal);
+}
+.dashboard-metric-label {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+/* Responsive tweaks for dashboard */
+@media (max-width: 600px) {
+  .dashboard-card {
+    padding: 1rem 0.7rem 0.7rem 0.7rem;
+  }
+  .dashboard-card-title {
+    font-size: 1rem;
+  }
+  .dashboard-card-desc {
+    font-size: 0.92rem;
+  }
+}

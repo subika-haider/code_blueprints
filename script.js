@@ -3,7 +3,7 @@ import { OrbitControls } from 'https://esm.sh/three@0.150.1/examples/jsm/control
 import { GLTFLoader } from 'https://esm.sh/three@0.150.1/examples/jsm/loaders/GLTFLoader.js';
 import * as TWEEN from 'https://cdn.jsdelivr.net/npm/@tweenjs/tween.js@18.6.4/dist/tween.esm.js';
 import roomContent from './room-content.js';
-import * as d3 from 'https://cdn.jsdelivr.net/npm/d3@7.4.4/dist/d3.min.js';
+import * as d3 from 'https://cdn.jsdelivr.net/npm/d3@7.4.4/+esm';
 
 document.addEventListener('DOMContentLoaded', () => {
   // Core elements
@@ -1093,123 +1093,251 @@ new TWEEN.Tween(controls.target)
     const projectOverview = document.querySelector('.content-section');
     if (!projectOverview) return;
 
-    const newContent = `
-      <div class="container">
-        <div class="content-grid">
-          <div class="content-with-sidebar">
-            <div class="content-main">
-              <h2 class="content-title">${content.title}</h2>
+    // --- Full Dashboard Layout ---
+    let dashboardHtml = `
+      <div class="room-dashboard">
+        <div class="dashboard-hero-card dashboard-card">
+          <div class="dashboard-card-title">${content.title}</div>
+          <div class="dashboard-card-desc">
               <p class="room-description">${content.description}</p>
-              
-              <h3 class="section-title">Room Features</h3>
-              <ul class="feature-list">
-                ${content.features.map(feature => `<li>${feature}</li>`).join('')}
-              </ul>
-              
-              <h3 class="section-title">Staff Present</h3>
-              <ul class="feature-list">
-                ${content.staff.map(staff => `<li>${staff}</li>`).join('')}
-              </ul>
-              
+            <div class="dashboard-hero-stats">
+              <div><strong>Key Features:</strong> ${content.features.join(', ')}</div>
+              <div><strong>Staff:</strong> ${content.staff.join(', ')}</div>
+            </div>
               ${content.additionalHtml || ''}
             </div>
-            
-            <div class="content-sidebar">
-              <div class="room-visualization-section">
-                <h3 class="section-title">Room Analytics</h3>
-                <div class="visualization-container" id="roomVisualization-${roomType}">
-                  <div class="chart-loading" id="chartLoading-${roomType}">
-                    <div class="loading-spinner"></div>
-                    <p>Loading visualization...</p>
                   </div>
-                  <canvas id="roomChart-${roomType}" width="400" height="300" style="display: none;"></canvas>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <div class="dashboard-grid" id="roomDashboardGrid-${roomType}"></div>
       </div>
     `;
 
-    projectOverview.innerHTML = newContent;
-    
-    // Add fade-in animation to the new content
-    const contentWithSidebar = projectOverview.querySelector('.content-with-sidebar');
-    if (contentWithSidebar) {
-      contentWithSidebar.style.opacity = '0';
-      contentWithSidebar.style.transform = 'translateY(20px)';
-      
+    projectOverview.innerHTML = dashboardHtml;
+
+    // Fade-in animation
+    const dashboard = projectOverview.querySelector('.room-dashboard');
+    if (dashboard) {
+      dashboard.style.opacity = '0';
+      dashboard.style.transform = 'translateY(20px)';
       setTimeout(() => {
-        contentWithSidebar.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
-        contentWithSidebar.style.opacity = '1';
-        contentWithSidebar.style.transform = 'translateY(0)';
+        dashboard.style.transition = 'opacity 0.4s, transform 0.4s';
+        dashboard.style.opacity = '1';
+        dashboard.style.transform = 'translateY(0)';
       }, 50);
     }
     
-    // Create room-specific visualization after content is rendered
-    setTimeout(() => createRoomVisualization(roomType), 100);
+    // Render dashboard visualizations and cards
+    setTimeout(() => createRoomDashboard(roomType, true), 100);
   }
 
   // Room-specific visualization functions
 
-  function createRoomVisualization(roomType) {
-    const canvas = document.getElementById(`roomChart-${roomType}`);
-    const loadingElement = document.getElementById(`chartLoading-${roomType}`);
-  
-    if (!canvas) {
-      console.warn(`Canvas element not found for room type: ${roomType}`);
+  function createRoomDashboard(roomType, fullSection = false) {
+    const grid = fullSection
+      ? document.getElementById(`roomDashboardGrid-${roomType}`)
+      : (() => {
+          const container = document.getElementById(`roomVisualization-${roomType}`);
+          if (!container) return null;
+          container.innerHTML = '';
+          const grid = document.createElement('div');
+          grid.className = 'dashboard-grid';
+          container.appendChild(grid);
+          return grid;
+        })();
+    if (!grid) return;
+
+    // Emergency Department: Use real data from CSVs only
+    if (roomType === 'emergency') {
+      // Load and parse CSVs using d3-fetch (async)
+      Promise.all([
+        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/transfers.csv'),
+        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/services.csv'),
+        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/omr.csv')
+      ]).then(([transfers, services, omr]) => {
+        // --- DEBUG LOGGING ---
+        console.log('Loaded transfers.csv:', transfers.slice(0, 5));
+        console.log('Loaded services.csv:', services.slice(0, 5));
+        console.log('Loaded omr.csv:', omr.slice(0, 5));
+        // --- Patient Arrivals by Hour ---
+        const edRows = transfers.filter(r => r.careunit === 'Emergency Department');
+        console.log('Filtered ED rows:', edRows.slice(0, 5), 'Total:', edRows.length);
+        const arrivalsByHour = Array(24).fill(0);
+        edRows.forEach(row => {
+          if (!row.intime) return;
+          const hour = new Date(row.intime.replace(' ', 'T')).getHours();
+          arrivalsByHour[hour]++;
+        });
+        console.log('Arrivals by hour:', arrivalsByHour);
+        const flowData = arrivalsByHour.map((count, hour) => ({ label: hour + ':00', value: count }));
+        // --- Length of Stay ---
+        const stays = edRows.map(row => {
+          if (!row.intime || !row.outtime) return null;
+          const inTime = new Date(row.intime.replace(' ', 'T'));
+          const outTime = new Date(row.outtime.replace(' ', 'T'));
+          return (outTime - inTime) / (1000 * 60 * 60);
+        }).filter(h => h !== null && h > 0 && h < 48);
+        console.log('Length of stay (hours):', stays.slice(0, 10));
+        const stayBuckets = Array(12).fill(0);
+        stays.forEach(h => {
+          const idx = Math.min(Math.floor(h / 2), 11);
+          stayBuckets[idx]++;
+        });
+        const stayData = stayBuckets.map((count, i) => ({ range: `${i*2}-${i*2+2}h`, count }));
+        // --- Careunit Flow ---
+        const careunitCounts = {};
+        for (let i = 0; i < transfers.length; i++) {
+          const row = transfers[i];
+          if (row.careunit === 'Emergency Department' && row.outtime) {
+            // Find the next row for the same subject/hadm with a later intime
+            const next = transfers.find(r => r.subject_id === row.subject_id && r.hadm_id === row.hadm_id && r.intime && new Date(r.intime.replace(' ', 'T')) > new Date(row.outtime.replace(' ', 'T')));
+            if (next && next.careunit) {
+              careunitCounts[next.careunit] = (careunitCounts[next.careunit] || 0) + 1;
+            }
+          }
+        }
+        console.log('Careunit flow counts:', careunitCounts);
+        const careunitData = Object.entries(careunitCounts).map(([label, value]) => ({ label, value }));
+        // --- Service Distribution ---
+        const edHadmIds = new Set(edRows.map(r => r.hadm_id));
+        const serviceCounts = {};
+        services.forEach(row => {
+          if (edHadmIds.has(row.hadm_id)) {
+            const svc = row.curr_service || 'Unknown';
+            serviceCounts[svc] = (serviceCounts[svc] || 0) + 1;
+          }
+        });
+        const serviceData = Object.entries(serviceCounts).map(([label, value]) => ({ label, value }));
+        // --- Vitals Trend (BMI, Weight, BP) ---
+        // Use the most recent 20 BMI, Weight, BP for patients seen in ED
+        const edSubjectIds = new Set(edRows.map(r => r.subject_id));
+        const vitals = { BMI: [], Weight: [], BP: [] };
+        omr.forEach(row => {
+          if (!edSubjectIds.has(row.subject_id)) return;
+          if (row.result_name === 'BMI (kg/m2)') vitals.BMI.push({ date: row.chartdate, value: parseFloat(row.result_value) });
+          if (row.result_name === 'Weight (Lbs)') vitals.Weight.push({ date: row.chartdate, value: parseFloat(row.result_value) });
+          if (row.result_name === 'Blood Pressure') vitals.BP.push({ date: row.chartdate, value: row.result_value });
+        });
+        // Sort and take most recent 20 for each
+        const sortByDate = arr => arr.sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 20).reverse();
+        const bmiTrend = sortByDate(vitals.BMI).map(d => ({ label: d.date, value: d.value }));
+        const weightTrend = sortByDate(vitals.Weight).map(d => ({ label: d.date, value: d.value }));
+        // For BP, split systolic/diastolic
+        const bpTrend = sortByDate(vitals.BP).map(d => {
+          const [sys, dia] = (d.value || '').split('/').map(Number);
+          return { label: d.date, systolic: sys, diastolic: dia };
+        });
+        // --- Render charts ---
+        grid.innerHTML = '';
+        // Patient Arrivals by Hour
+        const flowCard = document.createElement('div');
+        flowCard.className = 'dashboard-card';
+        flowCard.innerHTML = `<div class=\"dashboard-card-title\">Patient Arrivals by Hour</div><div class=\"dashboard-card-desc\">Shows when the ED is busiest, based on real transfer data.</div>`;
+        const flowDiv = document.createElement('div');
+        flowDiv.className = 'dashboard-chart';
+        flowCard.appendChild(flowDiv);
+        grid.appendChild(flowCard);
+        renderD3Chart(flowDiv, {
+          type: 'bar',
+          data: flowData,
+          color: ['#fc8181'],
+          xTitle: 'Hour of Day',
+          yTitle: 'Arrivals',
+          legend: [{ label: 'Arrivals', color: '#fc8181' }]
+        });
+        renderD3Legend(flowDiv, [{ label: 'Arrivals', color: '#fc8181' }]);
+        // Length of Stay
+        const stayCard = document.createElement('div');
+        stayCard.className = 'dashboard-card';
+        stayCard.innerHTML = `<div class=\"dashboard-card-title\">Length of Stay Distribution</div><div class=\"dashboard-card-desc\">How long patients typically spend in the ED.</div>`;
+        const stayDiv = document.createElement('div');
+        stayDiv.className = 'dashboard-chart';
+        stayCard.appendChild(stayDiv);
+        grid.appendChild(stayCard);
+        renderD3Chart(stayDiv, {
+          type: 'bar',
+          data: stayData.map(d => ({ label: d.range, value: d.count })),
+          color: ['#63b3ed'],
+          xTitle: 'Stay (hours)',
+          yTitle: 'Patients',
+          legend: [{ label: 'Patients', color: '#63b3ed' }]
+        });
+        renderD3Legend(stayDiv, [{ label: 'Patients', color: '#63b3ed' }]);
+        // Careunit Flow
+        const careunitCard = document.createElement('div');
+        careunitCard.className = 'dashboard-card';
+        careunitCard.innerHTML = `<div class=\"dashboard-card-title\">Careunit Flow</div><div class=\"dashboard-card-desc\">Where do patients go after the ED? Top next care units.</div>`;
+        const careunitDiv = document.createElement('div');
+        careunitDiv.className = 'dashboard-chart';
+        careunitCard.appendChild(careunitDiv);
+        grid.appendChild(careunitCard);
+        renderD3Chart(careunitDiv, {
+          type: 'bar',
+          data: careunitData,
+          color: ['#f6ad55'],
+          xTitle: 'Careunit',
+          yTitle: 'Transfers',
+          legend: [{ label: 'Transfers', color: '#f6ad55' }]
+        });
+        renderD3Legend(careunitDiv, [{ label: 'Transfers', color: '#f6ad55' }]);
+        // Service Distribution
+        const serviceCard = document.createElement('div');
+        serviceCard.className = 'dashboard-card';
+        serviceCard.innerHTML = `<div class=\"dashboard-card-title\">Service Distribution</div><div class=\"dashboard-card-desc\">Distribution of services for ED patients.</div>`;
+        const serviceDiv = document.createElement('div');
+        serviceDiv.className = 'dashboard-chart';
+        serviceCard.appendChild(serviceDiv);
+        grid.appendChild(serviceCard);
+        renderD3Chart(serviceDiv, {
+          type: 'bar',
+          data: serviceData,
+          color: ['#68d391'],
+          xTitle: 'Service',
+          yTitle: 'Count',
+          legend: [{ label: 'Service', color: '#68d391' }]
+        });
+        renderD3Legend(serviceDiv, [{ label: 'Service', color: '#68d391' }]);
+        // Service Distribution Pie Chart (legend handled by pie util)
+        // Vitals Trend (BMI, Weight, BP)
+        const vitalsCard = document.createElement('div');
+        vitalsCard.className = 'dashboard-card';
+        vitalsCard.innerHTML = `<div class=\"dashboard-card-title\">Vitals Trend (BMI, Weight, BP)</div><div class=\"dashboard-card-desc\">Recent BMI, Weight, and Blood Pressure for ED patients.</div>`;
+        const vitalsDiv = document.createElement('div');
+        vitalsDiv.className = 'dashboard-chart';
+        vitalsCard.appendChild(vitalsDiv);
+        grid.appendChild(vitalsCard);
+        // BMI
+        renderD3LineChart(vitalsDiv, bmiTrend, { color: '#805ad5' });
+        // Weight
+        const weightDiv = document.createElement('div');
+        weightDiv.className = 'dashboard-chart';
+        vitalsCard.appendChild(weightDiv);
+        renderD3LineChart(weightDiv, weightTrend, { color: '#f56565' });
+        // BP (systolic/diastolic)
+        const bpDiv = document.createElement('div');
+        bpDiv.className = 'dashboard-chart';
+        vitalsCard.appendChild(bpDiv);
+        let legendItems = [
+          { label: 'BMI', color: '#805ad5' },
+          { label: 'Weight', color: '#f56565' }
+        ];
+        if (bpTrend.length > 0) {
+          // Render as two lines
+          const systolic = bpTrend.map(d => ({ label: d.label, value: d.systolic }));
+          const diastolic = bpTrend.map(d => ({ label: d.label, value: d.diastolic }));
+          renderD3LineChart(bpDiv, systolic, { color: '#4299e1' });
+          renderD3LineChart(bpDiv, diastolic, { color: '#ecc94b' });
+          legendItems = legendItems.concat([
+            { label: 'Systolic', color: '#4299e1' },
+            { label: 'Diastolic', color: '#ecc94b' }
+          ]);
+        }
+        renderD3Legend(bpDiv, legendItems);
+      });
       return;
     }
-  
-    // Show loading spinner
-    if (loadingElement) {
-      loadingElement.style.display = 'flex';
-    }
-  
-    // Set up chart dimensions and margins
-    const margin = { top: 20, right: 20, bottom: 30, left: 40 };
-    const width = canvas.clientWidth - margin.left - margin.right;
-    const height = canvas.clientHeight - margin.top - margin.bottom;
-  
-    // Create SVG element
-    const svg = d3.select(canvas)
-      .append('svg')
-      .attr('width', width + margin.left + margin.right)
-      .attr('height', height + margin.top + margin.bottom)
-      .append('g')
-      .attr('transform', `translate(${margin.left}, ${margin.top})`);
-  
-    // Define chart data and scales
-    const data = [
-      { label: 'Label 1', value: 10 },
-      { label: 'Label 2', value: 20 },
-      { label: 'Label 3', value: 30 },
-    ];
-  
-    const xScale = d3.scaleBand()
-      .domain(data.map(d => d.label))
-      .range([0, width])
-      .padding(0.2);
-  
-    const yScale = d3.scaleLinear()
-      .domain([0, d3.max(data, d => d.value)])
-      .range([height, 0]);
-  
-    // Create bars
-    svg.selectAll('rect')
-      .data(data)
-      .enter()
-      .append('rect')
-      .attr('x', d => xScale(d.label))
-      .attr('y', d => yScale(d.value))
-      .attr('width', xScale.bandwidth())
-      .attr('height', d => height - yScale(d.value));
-  
-    // Hide loading spinner and show chart
-    if (loadingElement) {
-      loadingElement.style.display = 'none';
-    }
+    // ... fallback for other rooms ...
+    // ... existing code ...
   }
+
   function updateConditionInfo(condition) {
     const conditionInfo = document.getElementById('conditionInfo');
     if (!conditionInfo) return;
@@ -1371,3 +1499,358 @@ new TWEEN.Tween(controls.target)
   initializeThemeToggle();
   animate();
 });
+
+// Utility to render a D3 chart (currently supports bar charts; extend for more types)
+function renderD3Chart(container, config) {
+  d3.select(container).selectAll('svg').remove();
+  d3.select(container).selectAll('.d3-tooltip').remove();
+  const theme = getD3ThemeColors();
+  const width = 320;
+  const height = 180;
+  const margin = { top: 32, right: 24, bottom: 64, left: 56 };
+  if (config.type === 'bar') {
+    const data = config.data;
+    const color = config.color?.[0] || getD3Color('--d3-bar', '#63b3ed');
+    const maxLabelLength = 10;
+    const maxXTicks = 10;
+    const svg = d3.select(container)
+      .append('svg')
+      .attr('width', width)
+      .attr('height', height)
+      .style('background', theme.background);
+    // Truncate labels if too long
+    const truncatedLabels = data.map(d => d.label.length > maxLabelLength ? d.label.slice(0, maxLabelLength - 1) + '…' : d.label);
+    const labelMap = Object.fromEntries(data.map((d, i) => [truncatedLabels[i], d.label]));
+    // Reduce number of ticks if too many bars
+    let xTickLabels = truncatedLabels;
+    if (data.length > maxXTicks) {
+      const step = Math.ceil(data.length / maxXTicks);
+      xTickLabels = truncatedLabels.map((lbl, i) => (i % step === 0 ? lbl : ''));
+    }
+    const x = d3.scaleBand()
+      .domain(truncatedLabels)
+      .range([margin.left, width - margin.right])
+      .padding(0.18);
+    const y = d3.scaleLinear()
+      .domain([0, d3.max(data, d => d.value) * 1.1])
+      .nice()
+      .range([height - margin.bottom, margin.top]);
+    // X axis
+    const xAxis = svg.append('g')
+      .attr('transform', `translate(0,${height - margin.bottom})`)
+      .call(d3.axisBottom(x).tickFormat((d, i) => xTickLabels[i]))
+      .selectAll('text')
+      .attr('class', 'd3-axis-label')
+      .attr('font-size', 12)
+      .attr('fill', theme.label)
+      .attr('text-anchor', 'middle')
+      .attr('dx', '0em')
+      .attr('dy', '1.2em');
+    // If labels overlap, rotate them
+    const labelNodes = svg.selectAll('g.x.axis g.tick text').nodes();
+    let overlap = false;
+    if (labelNodes.length > 1) {
+      for (let i = 1; i < labelNodes.length; i++) {
+        const prev = labelNodes[i - 1].getBoundingClientRect();
+        const curr = labelNodes[i].getBoundingClientRect();
+        if (prev.right > curr.left) {
+          overlap = true;
+          break;
+        }
+      }
+    }
+    if (overlap || data.length > 6) {
+      svg.selectAll('g.x.axis g.tick text, g > g > text')
+        .attr('text-anchor', 'end')
+        .attr('transform', 'rotate(-32)')
+        .attr('dx', '-0.6em')
+        .attr('dy', '0.2em');
+    }
+    // Add tooltips to axis labels if truncated
+    svg.selectAll('g > g > text').each(function(d, i) {
+      if (truncatedLabels[i] !== labelMap[truncatedLabels[i]]) {
+        d3.select(this)
+          .style('cursor', 'pointer')
+          .append('title')
+          .text(labelMap[truncatedLabels[i]]);
+      }
+    });
+    // X axis title
+    svg.append('text')
+      .attr('class', 'd3-x-title')
+      .attr('x', width / 2)
+      .attr('y', height - 18)
+      .attr('text-anchor', 'middle')
+      .attr('fill', theme.axis)
+      .attr('font-size', 13)
+      .text(config.xTitle || '');
+    // Y axis
+    svg.append('g')
+      .attr('transform', `translate(${margin.left},0)`)
+      .call(d3.axisLeft(y).ticks(5).tickFormat(d3.format('~s')))
+      .selectAll('text')
+      .attr('class', 'd3-axis-label')
+      .attr('font-size', 12)
+      .attr('fill', theme.label);
+    // Y axis title
+    svg.append('text')
+      .attr('class', 'd3-y-title')
+      .attr('x', -height / 2)
+      .attr('y', 16)
+      .attr('transform', 'rotate(-90)')
+      .attr('text-anchor', 'middle')
+      .attr('fill', theme.axis)
+      .attr('font-size', 13)
+      .text(config.yTitle || '');
+    // Tooltip
+    let tooltip = d3.select(container).select('.d3-tooltip');
+    if (tooltip.empty()) {
+      tooltip = d3.select(container)
+        .append('div')
+        .attr('class', 'd3-tooltip')
+        .style('position', 'absolute')
+        .style('pointer-events', 'none')
+        .style('opacity', 0);
+    }
+    
+    // Bars
+    svg.selectAll('.d3-bar')
+      .data(data)
+      .enter()
+      .append('rect')
+      .attr('class', 'd3-bar')
+      .attr('x', (d, i) => x(truncatedLabels[i]))
+      .attr('y', d => y(0))
+      .attr('width', x.bandwidth())
+      .attr('height', 0)
+      .attr('fill', color)
+      .on('mouseover', function (event, d) {
+        d3.select(this)
+          .transition().duration(120)
+          .attr('fill', d3.rgb(color).darker(1));
+        tooltip.transition().duration(100).style('opacity', 1);
+        tooltip.html(`<strong>${d.label}</strong><br/>${d.value}`)
+          .style('left', (event.offsetX + 16) + 'px')
+          .style('top', (event.offsetY - 28) + 'px');
+      })
+      .on('mousemove', function (event, d) {
+        tooltip.style('left', (event.offsetX + 16) + 'px')
+               .style('top', (event.offsetY - 28) + 'px');
+      })
+      .on('mouseout', function () {
+        d3.select(this)
+          .transition().duration(120)
+          .attr('fill', color);
+        tooltip.transition().duration(150).style('opacity', 0);
+      })
+      .transition()
+      .duration(700)
+      .attr('y', d => y(d.value))
+      .attr('height', d => y(0) - y(d.value));
+  }
+  // TODO: Add support for other chart types (line, pie, etc.) as needed
+}
+
+// --- D3 Pie Chart Utility ---
+function renderD3PieChart(container, data, options = {}) {
+  d3.select(container).selectAll('svg').remove();
+  const width = 220, height = 180, radius = Math.min(width, height) / 2 - 10;
+  const svg = d3.select(container)
+    .append('svg')
+    .attr('width', width)
+    .attr('height', height)
+    .append('g')
+    .attr('transform', `translate(${width / 2},${height / 2})`);
+  const color = d3.scaleOrdinal(options.colors || d3.schemeSet2);
+  const pie = d3.pie().value(d => d.value);
+  const arc = d3.arc().innerRadius(0).outerRadius(radius);
+  const arcs = svg.selectAll('arc')
+    .data(pie(data))
+    .enter().append('g');
+  arcs.append('path')
+    .attr('d', arc)
+    .attr('fill', d => color(d.data.label))
+    .attr('class', 'd3-pie-slice')
+    .on('mouseover', function (event, d) {
+      d3.select(this).attr('stroke', '#222').attr('stroke-width', 2);
+      tooltip.transition().duration(100).style('opacity', 1);
+      tooltip.html(`<strong>${d.data.label}</strong><br/>${d.data.value}`)
+        .style('left', (event.offsetX + 16) + 'px')
+        .style('top', (event.offsetY - 28) + 'px');
+    })
+    .on('mousemove', function (event) {
+      tooltip.style('left', (event.offsetX + 16) + 'px')
+             .style('top', (event.offsetY - 28) + 'px');
+    })
+    .on('mouseout', function () {
+      d3.select(this).attr('stroke', null);
+      tooltip.transition().duration(150).style('opacity', 0);
+    });
+  // Tooltip
+  const tooltip = d3.select(container)
+    .append('div')
+    .attr('class', 'd3-tooltip')
+    .style('position', 'absolute')
+    .style('pointer-events', 'none')
+    .style('opacity', 0);
+  // Legend
+  const legend = d3.select(container)
+    .append('div')
+    .attr('class', 'd3-legend')
+    .style('display', 'flex')
+    .style('flex-wrap', 'wrap')
+    .style('gap', '0.5em 1.2em')
+    .style('margin-top', '0.5em');
+  data.forEach(d => {
+    const item = legend.append('div').style('display', 'flex').style('align-items', 'center');
+    item.append('span')
+      .style('display', 'inline-block')
+      .style('width', '1em')
+      .style('height', '1em')
+      .style('border-radius', '50%')
+      .style('background', color(d.label))
+      .style('margin-right', '0.4em');
+    item.append('span').text(d.label);
+  });
+}
+
+// --- D3 Line Chart Utility ---
+function renderD3LineChart(container, data, options = {}) {
+  d3.select(container).selectAll('svg').remove();
+  d3.select(container).selectAll('.d3-tooltip').remove();
+  const width = 320, height = 180, margin = { top: 32, right: 24, bottom: 56, left: 56 };
+  const svg = d3.select(container)
+    .append('svg')
+    .attr('width', width)
+    .attr('height', height);
+  const x = d3.scalePoint()
+    .domain(data.map(d => d.label))
+    .range([margin.left, width - margin.right]);
+  const y = d3.scaleLinear()
+    .domain([d3.min(data, d => d.value) * 0.95, d3.max(data, d => d.value) * 1.05])
+    .nice()
+    .range([height - margin.bottom, margin.top]);
+  svg.append('g')
+    .attr('transform', `translate(0,${height - margin.bottom})`)
+    .call(d3.axisBottom(x))
+    .selectAll('text')
+    .attr('class', 'd3-axis-label')
+    .attr('font-size', 12)
+    .attr('text-anchor', 'end')
+    .attr('transform', 'rotate(-32)')
+    .attr('dx', '-0.6em')
+    .attr('dy', '0.2em');
+  svg.append('g')
+    .attr('transform', `translate(${margin.left},0)`)
+    .call(d3.axisLeft(y).ticks(5).tickFormat(d3.format('~s')))
+    .selectAll('text')
+    .attr('class', 'd3-axis-label')
+    .attr('font-size', 12);
+  svg.append('path')
+    .datum(data)
+    .attr('class', 'd3-line')
+    .attr('fill', 'none')
+    .attr('stroke', options.color || '#4299e1')
+    .attr('stroke-width', 3)
+    .attr('d', d3.line()
+      .x(d => x(d.label))
+      .y(d => y(d.value))
+      .curve(d3.curveMonotoneX)
+    );
+  // Points
+  svg.selectAll('.d3-point')
+    .data(data)
+    .enter()
+    .append('circle')
+    .attr('class', 'd3-point')
+    .attr('cx', d => x(d.label))
+    .attr('cy', d => y(d.value))
+    .attr('r', 4)
+    .attr('fill', options.color || '#4299e1')
+    .on('mouseover', function (event, d) {
+      d3.select(this).attr('r', 7);
+      tooltip.transition().duration(100).style('opacity', 1);
+      tooltip.html(`<strong>${d.label}</strong><br/>${d.value}`)
+        .style('left', (event.offsetX + 16) + 'px')
+        .style('top', (event.offsetY - 28) + 'px');
+    })
+    .on('mousemove', function (event) {
+      tooltip.style('left', (event.offsetX + 16) + 'px')
+             .style('top', (event.offsetY - 28) + 'px');
+    })
+    .on('mouseout', function () {
+      d3.select(this).attr('r', 4);
+      tooltip.transition().duration(150).style('opacity', 0);
+    });
+  // Tooltip
+  const tooltip = d3.select(container)
+    .append('div')
+    .attr('class', 'd3-tooltip')
+    .style('position', 'absolute')
+    .style('pointer-events', 'none')
+    .style('opacity', 0);
+}
+
+// --- Theme-aware D3 color helpers ---
+function getD3Color(varName, fallback) {
+  return getComputedStyle(document.documentElement).getPropertyValue(varName) || fallback;
+}
+
+function getD3ThemeColors() {
+  return {
+    axis: getD3Color('--d3-axis', '#a0aec0'),
+    label: getD3Color('--text-primary', '#222'),
+    grid: getD3Color('--d3-grid', '#e2e8f0'),
+    background: getD3Color('--d3-bg', 'transparent'),
+    tooltipBg: getD3Color('--d3-tooltip-bg', '#222'),
+    tooltipText: getD3Color('--d3-tooltip-text', '#fff'),
+    legendText: getD3Color('--d3-legend-text', '#222'),
+    cardBg: getD3Color('--glass-bg', '#fff'),
+    cardBorder: getD3Color('--glass-border', '#e2e8f0')
+  };
+}
+
+// --- D3 Chart re-render on theme change ---
+function rerenderAllD3Charts() {
+  document.querySelectorAll('.dashboard-chart').forEach(chartDiv => {
+    const parent = chartDiv.closest('.dashboard-card');
+    if (!parent) return;
+    const title = parent.querySelector('.dashboard-card-title')?.textContent || '';
+    // Re-render based on chart type
+    if (title.includes('Arrivals')) createRoomDashboard('emergency', true);
+    if (title.includes('Length of Stay')) createRoomDashboard('emergency', true);
+    if (title.includes('Service Distribution')) createRoomDashboard('emergency', true);
+    if (title.includes('Careunit Flow')) createRoomDashboard('emergency', true);
+    if (title.includes('Vitals Trend')) createRoomDashboard('emergency', true);
+  });
+}
+
+// Listen for theme changes
+const observer = new MutationObserver(() => rerenderAllD3Charts());
+observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+// Update D3 chart rendering functions to use theme colors
+// Example for bar chart:
+
+// ... Repeat for renderD3PieChart, renderD3LineChart, renderD3MultiLineChart, updating all color usages to use theme ...
+// ... existing code ...
+
+// --- D3 Legend Utility ---
+function renderD3Legend(container, legend) {
+  // Remove any existing legend
+  d3.select(container.parentNode).selectAll('.d3-legend').remove();
+  if (!legend || !legend.length) return;
+  const legendDiv = document.createElement('div');
+  legendDiv.className = 'd3-legend';
+  legend.forEach(item => {
+    const legendItem = document.createElement('div');
+    legendItem.className = 'd3-legend-item';
+    const colorBox = document.createElement('span');
+    colorBox.className = 'd3-legend-color';
+    colorBox.style.background = item.color;
+    legendItem.appendChild(colorBox);
+    legendItem.appendChild(document.createTextNode(item.label));
+    legendDiv.appendChild(legendItem);
+  });
+  container.parentNode.appendChild(legendDiv);
+}
