@@ -3027,54 +3027,52 @@ select option {
 
 
 .dashboard-card {
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-xl);
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  height: 100%;
-  min-height: 0; /* Allow card to shrink */
+  box-shadow: var(--card-shadow);
+  transition: var(--transition-normal);
+  min-height: 350px; /* Ensure a minimum height for cards */
+  height: 100%; /* Allow cards to fill available height in grid */
+  position: relative;
+  overflow: hidden; /* Hide overflowing content */
 }
 
 .dashboard-card:hover {
-  box-shadow: var(--shadow-xl);
-  transform: translateY(-2px);
+  transform: translateY(-5px);
+  box-shadow: var(--card-shadow-hover);
 }
 
 .dashboard-card-title {
-  font-size: 1.2rem;
-  font-weight: 600;
+  font-size: 1.25rem;
+  font-weight: 700;
   color: var(--text-primary);
   margin-bottom: 0.5rem;
+  text-align: center; /* Center align titles */
 }
 
 .dashboard-card-desc {
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   color: var(--text-secondary);
-  line-height: 1.5;
-  margin-bottom: 0.5rem;
+  margin-bottom: 1rem;
+  text-align: center; /* Center align descriptions */
+  flex-grow: 0; /* Prevent description from taking too much space */
 }
 
 .dashboard-chart {
-  flex: 1;
-  width: 100%;
-  min-height: 0; /* Allow chart to shrink */
-  position: relative;
-  background: var(--card-bg);
-  border-radius: var(--radius-md);
-  padding: 1rem;
-  display: flex;
-  align-items: center;
+  flex-grow: 1; /* Allow the chart to take up available space */
+  display: flex; /* Use flex to center chart content if needed */
   justify-content: center;
+  align-items: center;
+  min-height: 200px; /* Minimum height for charts */
+  height: 100%; /* Ensure chart fills its container */
+  width: 100%;
 }
 
 .chart-svg {
-  max-width: 100%;
-  max-height: 100%;
-  aspect-ratio: 5/3; /* Maintain aspect ratio */
+  overflow: visible; /* Allow SVG elements to draw outside their bounding box if needed */
 }
 
 /* Vitals Section */
@@ -3368,415 +3366,83 @@ select option {
 /* Dashboard Layout */
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: 2rem;
-  padding: 2rem;
-  position: relative;
-  background: linear-gradient(135deg, 
-    rgba(15, 20, 25, 0.95),
-    rgba(26, 31, 46, 0.98)
-  );
-  border-radius: var(--border-radius-xl);
-  box-shadow: 
-    0 20px 40px rgba(0, 0, 0, 0.2),
-    0 0 0 1px rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(var(--blur-amount));
-  margin: 2rem 0;
-  overflow: visible;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  padding: 1rem;
+  align-items: stretch; /* Stretch items to fill height */
+  min-height: 500px; /* Ensure grid has a minimum height */
+  height: 100%; /* Allow grid to fill available height */
 }
 
 .dashboard-grid::before {
   content: '';
   position: absolute;
-  inset: -1px;
-  background: linear-gradient(135deg, 
-    rgba(79, 209, 199, 0.2),
-    rgba(99, 179, 237, 0.2)
-  );
-  border-radius: calc(var(--border-radius-xl) + 1px);
+  top: -20px;
+  left: -20px;
+  right: -20px;
+  bottom: -20px;
+  background: var(--gradient-overlay);
+  backdrop-filter: blur(var(--blur-amount));
+  -webkit-backdrop-filter: blur(var(--blur-amount));
+  border-radius: var(--border-radius-xl);
   z-index: -1;
-  filter: blur(20px);
-  opacity: 0.5;
 }
 
 .dashboard-column {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  /* min-height: 100%; This might cause issues if content is smaller */
+  /* Remove explicit min-height here, let flex items determine it */
 }
 
 .dashboard-section-header {
-  background: var(--glass-bg);
-  padding: 1.25rem;
-  border-radius: 8px;
-  border: 1px solid var(--glass-border);
+  text-align: center;
   margin-bottom: 1rem;
+  padding: 0 1rem;
 }
 
 .dashboard-section-header h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
   color: var(--text-primary);
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin: 0 0 0.5rem 0;
+  margin-bottom: 0.5rem;
 }
 
 .dashboard-section-header p {
+  font-size: 0.9em;
   color: var(--text-secondary);
-  font-size: 0.95rem;
-  line-height: 1.5;
-  margin: 0;
+  line-height: 1.4;
 }
 
-/* Dashboard Cards */
-  .dashboard-card {
-  background: linear-gradient(145deg,
-    rgba(26, 31, 46, 0.8),
-    rgba(15, 20, 25, 0.9)
-  );
-  border: none;
-  border-radius: var(--border-radius-lg);
-  padding: 2rem;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  overflow: visible;
-  box-shadow: 
-    0 10px 30px rgba(0, 0, 0, 0.15),
-    0 0 0 1px rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(var(--blur-amount));
-}
-
-.dashboard-card::before {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  background: linear-gradient(135deg,
-    rgba(79, 209, 199, 0.2),
-    rgba(99, 179, 237, 0.2)
-  );
-  border-radius: calc(var(--border-radius-lg) + 1px);
-  z-index: -1;
-  opacity: 0;
-  transition: opacity 0.4s ease;
-}
-
-.dashboard-card::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 80%;
-  height: 4px;
-  background: linear-gradient(90deg,
-    transparent,
-    var(--accent-teal),
-    var(--accent-blue),
-    transparent
-  );
-  border-radius: 2px;
-  opacity: 0;
-  transition: opacity 0.4s ease;
-}
-
-.dashboard-card:hover {
-  transform: translateY(-8px) scale(1.01);
-  box-shadow: 
-    0 20px 40px rgba(0, 0, 0, 0.2),
-    0 0 0 1px rgba(255, 255, 255, 0.1);
-}
-
-.dashboard-card:hover::before,
-.dashboard-card:hover::after {
-  opacity: 1;
-}
-
-/* Card Content - Dynamic Layout */
-.dashboard-card-content {
-  flex: 1;
-  min-height: 300px;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  background: rgba(15, 20, 25, 0.3);
-  border-radius: calc(var(--border-radius-lg) - 8px);
-  padding: 1.5rem;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  overflow: hidden;
-}
-
-.dashboard-card-content::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 100%;
-  background: var(--gradient-overlay);
-  opacity: 0.5;
-  pointer-events: none;
-}
-
-/* Chart Containers - Organic Shapes */
-.chart-container {
-  flex: 1;
-  min-height: 250px;
-  position: relative;
-  background: rgba(15, 20, 25, 0.2);
-  border-radius: calc(var(--border-radius-lg) - 12px);
-  padding: 1.5rem;
-  margin-top: 1.5rem;
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  overflow: hidden;
-}
-
-.chart-container::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 40%;
-  background: linear-gradient(to top,
-    rgba(79, 209, 199, 0.05),
-    transparent
-  );
-  pointer-events: none;
-}
-
-/* Chart Elements - Fluid Design */
-.chart-title {
-  font-size: 1.2rem;
-  font-weight: 600;
-  fill: var(--text-primary);
-  text-anchor: middle;
-  letter-spacing: 0.5px;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
-}
-
-.d3-line {
-  stroke-width: 2.5;
-  fill: none;
-  transition: all 0.3s ease;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.d3-line:hover {
-  stroke-width: 3.5;
-  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.3));
-}
-
-.data-point {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
-}
-
-.data-point:hover {
-  r: 8;
-  opacity: 1;
-  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3));
-}
-
-/* Tooltip - Modern Design */
-.d3-tooltip {
-  position: absolute;
-  background: rgba(15, 20, 25, 0.95);
-  border: none;
-  border-radius: 16px;
-  padding: 1.25rem;
-  font-size: 0.9rem;
-  pointer-events: none;
-  z-index: 100;
-  box-shadow: 
-    0 10px 30px rgba(0, 0, 0, 0.2),
-    0 0 0 1px rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(12px);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  transform-origin: center;
-  animation: tooltipFade 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-@keyframes tooltipFade {
-  from {
-    opacity: 0;
-    transform: scale(0.95) translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-
-/* Legend - Organic Design */
-.d3-legend {
-  font-size: 0.9rem;
-  font-weight: 500;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
-}
-
-.d3-legend rect {
-  fill: rgba(15, 20, 25, 0.95);
-  stroke: none;
-  rx: 12;
-  ry: 12;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
-  backdrop-filter: blur(8px);
-}
-
-.d3-legend text {
-  fill: var(--text-primary);
-  font-weight: 500;
-  letter-spacing: 0.3px;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
-}
-
-/* Dashboard Footer - Fluid Design */
-.dashboard-footer {
-  background: linear-gradient(145deg,
-    rgba(26, 31, 46, 0.8),
-    rgba(15, 20, 25, 0.9)
-  );
-  border: none;
-  border-radius: var(--border-radius-lg);
-  padding: 2rem;
-  margin-top: 2rem;
-  box-shadow: 
-    0 10px 30px rgba(0, 0, 0, 0.15),
-    0 0 0 1px rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(var(--blur-amount));
-  position: relative;
-  overflow: hidden;
-}
-
-.dashboard-footer::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: var(--gradient-overlay);
-  opacity: 0.5;
-  pointer-events: none;
-}
-
-/* Insights List - Dynamic Layout */
-.insights-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
-  padding: 0;
-  margin: 0;
-  list-style: none;
-}
-
-.insights-list li {
-  display: flex;
-  align-items: center;
-  gap: 1.25rem;
-  color: var(--text-secondary);
-  font-size: 0.95rem;
-  padding: 1.5rem;
-  background: rgba(15, 20, 25, 0.3);
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  backdrop-filter: blur(8px);
-  position: relative;
-  overflow: hidden;
-}
-
-.insights-list li::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg,
-    rgba(79, 209, 199, 0.1),
-    rgba(99, 179, 237, 0.1)
-  );
-  opacity: 0;
-  transition: opacity 0.4s ease;
-}
-
-.insights-list li:hover {
-  transform: translateY(-4px) scale(1.02);
-  background: rgba(15, 20, 25, 0.4);
-  box-shadow: 
-    0 10px 30px rgba(0, 0, 0, 0.2),
-    0 0 0 1px rgba(255, 255, 255, 0.1);
-}
-
-.insights-list li:hover::before {
-  opacity: 1;
-}
-
-.insights-list li i {
-  color: var(--accent-teal);
-  font-size: 1.4rem;
-  background: rgba(79, 209, 199, 0.1);
-  padding: 1rem;
-  border-radius: 14px;
-  transition: all 0.4s ease;
-}
-
-.insights-list li:hover i {
-  transform: scale(1.1);
-  background: rgba(79, 209, 199, 0.15);
-}
-
-/* Loading States - Organic Animation */
-.loading-spinner {
-  width: 56px;
-  height: 56px;
-  border: 3px solid rgba(79, 209, 199, 0.1);
-  border-top-color: var(--accent-teal);
-  border-radius: 50%;
-  animation: spin 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-  margin-bottom: 1.5rem;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
-}
-
-@keyframes spin {
-  to { 
-    transform: rotate(360deg) scale(1.1);
-  }
-}
-
-/* Responsive Design - Fluid Layout */
+/* Responsive adjustments for dashboard */
 @media (max-width: 1200px) {
   .dashboard-grid {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-    padding: 1.5rem;
-    border-radius: var(--border-radius-lg);
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   }
-
   .dashboard-card {
-    padding: 1.75rem;
+    min-height: 320px;
   }
 }
 
 @media (max-width: 768px) {
   .dashboard-grid {
-    padding: 1.25rem;
-    border-radius: 20px;
-  }
-
-  .dashboard-card {
-    padding: 1.5rem;
-    border-radius: 20px;
-  }
-
-  .dashboard-card-content,
-  .chart-container {
-    border-radius: 16px;
-  }
-
-  .insights-list {
     grid-template-columns: 1fr;
+    padding: 0.5rem;
+    gap: 1rem;
+    min-height: auto; /* Allow height to be determined by content on smaller screens */
+  }
+  .dashboard-card {
+    padding: 1rem;
+    min-height: 300px;
+  }
+  .dashboard-card-content,
+  .dashboard-card-title,
+  .dashboard-card-desc {
+    text-align: left; /* Align text left on small screens */
+  }
+  .insights-list {
+    padding-left: 0;
   }
 }
 
@@ -4023,190 +3689,201 @@ select option {
     0 10px 30px rgba(0, 0, 0, 0.2),
     0 0 0 1px rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(12px);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   transform-origin: center;
-  opacity: 0;
-  visibility: hidden;
-  transform: scale(0.95) translateY(10px);
+  animation: tooltipFade 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.d3-tooltip.active {
-  opacity: 1;
-  visibility: visible;
-  transform: scale(1) translateY(0);
+@keyframes tooltipFade {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
-.tooltip-title {
-  color: var(--accent-teal);
-  font-weight: 600;
-  margin-bottom: 0.75rem;
-    font-size: 1rem;
-  letter-spacing: 0.5px;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.tooltip-value {
-  color: var(--text-primary);
-  margin: 0.5rem 0;
-  font-size: 0.95rem;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.5rem;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-  transition: all 0.2s ease;
-}
-
-.tooltip-value:hover {
-  background: rgba(255, 255, 255, 0.1);
-  transform: translateX(4px);
-}
-
-/* Interactive Legend */
+/* Legend - Organic Design */
 .d3-legend {
-  cursor: pointer;
-  transition: all 0.3s ease;
+  font-size: 0.9rem;
+  font-weight: 500;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
 }
 
-.d3-legend-item {
-  transition: all 0.3s ease;
-  cursor: pointer;
-  opacity: 0.7;
+.d3-legend rect {
+  fill: rgba(15, 20, 25, 0.95);
+  stroke: none;
+  rx: 12;
+  ry: 12;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+  backdrop-filter: blur(8px);
 }
 
-.d3-legend-item:hover {
-  opacity: 1;
-  transform: translateX(4px);
-}
-
-.d3-legend-color {
-  transition: all 0.3s ease;
-  cursor: pointer;
-}
-
-.d3-legend-item:hover .d3-legend-color {
-  transform: scale(1.2);
-  filter: brightness(1.2);
-}
-
-/* Chart Grid and Axes */
-.d3-grid line {
-  stroke: rgba(255, 255, 255, 0.1);
-  stroke-width: 1;
-  transition: all 0.3s ease;
-}
-
-.chart-container:hover .d3-grid line {
-  stroke: rgba(255, 255, 255, 0.15);
-}
-
-.d3-axis text {
-  transition: all 0.3s ease;
-  cursor: default;
-}
-
-.chart-container:hover .d3-axis text {
+.d3-legend text {
   fill: var(--text-primary);
-}
-
-/* Chart Title and Labels */
-.chart-title {
-  transition: all 0.3s ease;
-  cursor: default;
-}
-
-.chart-container:hover .chart-title {
-  fill: var(--accent-teal);
+  font-weight: 500;
+  letter-spacing: 0.3px;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
-.d3-axis-label {
-  transition: all 0.3s ease;
-  cursor: default;
-}
-
-.chart-container:hover .d3-axis-label {
-  fill: var(--text-primary);
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
-}
-
-/* Interactive Chart Area */
-.chart-container {
+/* Dashboard Footer - Fluid Design */
+.dashboard-footer {
+  background: linear-gradient(145deg,
+    rgba(26, 31, 46, 0.8),
+    rgba(15, 20, 25, 0.9)
+  );
+  border: none;
+  border-radius: var(--border-radius-lg);
+  padding: 2rem;
+  margin-top: 2rem;
+  box-shadow: 
+    0 10px 30px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(var(--blur-amount));
   position: relative;
+  overflow: hidden;
 }
 
-.chart-container::after {
+.dashboard-footer::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(to right,
-    rgba(79, 209, 199, 0.05),
-    transparent 20%,
-    transparent 80%,
-    rgba(99, 179, 237, 0.05)
-  );
-  opacity: 0;
-  transition: opacity 0.3s ease;
+  background: var(--gradient-overlay);
+  opacity: 0.5;
   pointer-events: none;
 }
 
-.chart-container:hover::after {
+/* Insights List - Dynamic Layout */
+.insights-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.insights-list li {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  padding: 1.5rem;
+  background: rgba(15, 20, 25, 0.3);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(8px);
+  position: relative;
+  overflow: hidden;
+}
+
+.insights-list li::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg,
+    rgba(79, 209, 199, 0.1),
+    rgba(99, 179, 237, 0.1)
+  );
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.insights-list li:hover {
+  transform: translateY(-4px) scale(1.02);
+  background: rgba(15, 20, 25, 0.4);
+  box-shadow: 
+    0 10px 30px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.insights-list li:hover::before {
   opacity: 1;
 }
 
-/* Blood Pressure Chart Specific */
-.vitals-chart .line.systolic,
-.vitals-chart .line.diastolic {
-  transition: all 0.3s ease;
+.insights-list li i {
+  color: var(--accent-teal);
+  font-size: 1.4rem;
+  background: rgba(79, 209, 199, 0.1);
+  padding: 1rem;
+  border-radius: 14px;
+  transition: all 0.4s ease;
 }
 
-.vitals-chart .line.systolic:hover,
-.vitals-chart .line.diastolic:hover {
-  stroke-width: 4;
-  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.3));
+.insights-list li:hover i {
+  transform: scale(1.1);
+  background: rgba(79, 209, 199, 0.15);
 }
 
-/* Responsive Interactions */
+/* Loading States - Organic Animation */
+.loading-spinner {
+  width: 56px;
+  height: 56px;
+  border: 3px solid rgba(79, 209, 199, 0.1);
+  border-top-color: var(--accent-teal);
+  border-radius: 50%;
+  animation: spin 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  margin-bottom: 1.5rem;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+}
+
+@keyframes spin {
+  to { 
+    transform: rotate(360deg) scale(1.1);
+  }
+}
+
+/* Responsive Design - Fluid Layout */
+@media (max-width: 1200px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    border-radius: var(--border-radius-lg);
+  }
+
+  .dashboard-card {
+    padding: 1.75rem;
+  }
+}
+
 @media (max-width: 768px) {
-  .data-point:hover {
-    r: 6;
-    transform: scale(1.1);
+  .dashboard-grid {
+    padding: 1.25rem;
+    border-radius: 20px;
   }
 
-  .d3-tooltip {
-    padding: 1rem;
-    font-size: 0.85rem;
+  .dashboard-card {
+    padding: 1.5rem;
+    border-radius: 20px;
   }
 
-  .tooltip-value {
-    padding: 0.4rem;
-    font-size: 0.9rem;
+  .dashboard-card-content,
+  .chart-container {
+    border-radius: 16px;
   }
 
-  .d3-legend-item:hover {
-    transform: translateX(2px);
+  .insights-list {
+    grid-template-columns: 1fr;
   }
 }
 
 /* Animation for data updates */
-@keyframes dataPointPulse {
-  0% {
-    transform: scale(1);
-    opacity: 0.7;
+@keyframes fadeIn {
+  from { 
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
   }
-  50% {
-    transform: scale(1.2);
+  to { 
     opacity: 1;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 0.7;
+    transform: translateY(0) scale(1);
   }
 }
 
-.data-point.new {
-  animation: dataPointPulse 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+.dashboard-card-content {
+  animation: fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }

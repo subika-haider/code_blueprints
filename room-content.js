@@ -38,6 +38,29 @@ const roomContent = {
       </div>
     `
   },
+  waiting_area: {
+    title: "Waiting Area",
+    description: "A comfortable space where patients wait for their appointments, procedures, or test results. Designed to provide a calm environment while maintaining efficient patient flow.",
+    features: [
+      "Comfortable seating",
+      "Digital wait time displays",
+      "Patient call system",
+      "Refreshment area",
+      "Reading materials"
+    ],
+    staff: [
+      "Waiting area coordinator",
+      "Patient care assistants",
+      "Volunteer guides"
+    ],
+    additionalHtml: `
+      <div class="room-statistics">
+        <p><strong>Seating capacity:</strong> 50 seats</p>
+        <p><strong>Average wait time:</strong> 15-30 minutes</p>
+        <p><strong>Visualization:</strong> Real-time wait time distribution and seat availability</p>
+      </div>
+    `
+  },
   triage: {
     title: "Triage Station",
     description: "Where patients are assessed to determine the urgency of their condition and prioritize treatment accordingly.",

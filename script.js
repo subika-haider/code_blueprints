@@ -2,7 +2,7 @@ import * as THREE from 'https://esm.sh/three@0.150.1';
 import { OrbitControls } from 'https://esm.sh/three@0.150.1/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'https://esm.sh/three@0.150.1/examples/jsm/loaders/GLTFLoader.js';
 import * as TWEEN from 'https://cdn.jsdelivr.net/npm/@tweenjs/tween.js@18.6.4/dist/tween.esm.js';
-// import roomContent from './room-content.js';
+import roomContent from './room-content.js';
 import * as d3 from 'https://cdn.jsdelivr.net/npm/d3@7.4.4/+esm';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -514,8 +514,16 @@ new TWEEN.Tween(controls.target)
         roomCubes.set(room.type, [bestCube]);
         console.log(`✓ FINAL ASSIGNMENT: cube ${bestCube.name} assigned to room ${room.type} with camera at`, cameraPos);
         console.log(`  Assignment reason: score ${bestScore.toFixed(2)}, name match priority applied`);
+        // Log for reception and triage specific assignment confirmation
+        if (room.type === 'reception' || room.type === 'triage') {
+          console.log(`*** DEBUG: ${room.type} assigned cube ${bestCube.name} with camera at ${cameraPos.x}, ${cameraPos.y}, ${cameraPos.z}`);
+        }
       } else {
         console.log(`⚠ No suitable cube found for room ${room.type}`);
+        // Log for reception and triage specific failure confirmation
+        if (room.type === 'reception' || room.type === 'triage') {
+          console.log(`*** DEBUG: No suitable cube found for ${room.type}.`);
+        }
       }
     });
 
@@ -593,6 +601,70 @@ new TWEEN.Tween(controls.target)
     controls.update();
 
     if (loadingOverlay) loadingOverlay.style.display = 'none';
+
+    // Automatically set camera positions for all rooms that have assigned cubes
+    roomCubes.forEach((cubes, roomType) => {
+      if (cubes.length > 0) {
+        const mainCube = cubes[0]; // Assuming the first cube is the primary one
+        const cubeBoundingBox = new THREE.Box3().setFromObject(mainCube);
+        const cubeCenter = cubeBoundingBox.getCenter(new THREE.Vector3());
+        const cubeSize = cubeBoundingBox.getSize(new THREE.Vector3());
+        
+        // Define a reasonable camera offset from the center of the cube
+        // Adjust these values as needed for optimal view for each room
+        let offsetX = 0;
+        let offsetY = 1.5;
+        let offsetZ = cubeSize.z * 1.5;
+
+        // Special adjustments for specific room types if necessary
+        if (roomType === 'reception') {
+          offsetX = 5;
+          offsetY = 3;
+          offsetZ = 15; 
+        } else if (roomType === 'triage') {
+          offsetX = 15;
+          offsetY = 3;
+          offsetZ = 5;
+        } else if (roomType === 'xray') {
+          offsetX = -10;
+          offsetY = 5;
+          offsetZ = 10;
+        } else if (roomType === 'icu') {
+          offsetX = 10;
+          offsetY = 5;
+          offsetZ = -10;
+        } else if (roomType === 'emergency') {
+          offsetX = -10;
+          offsetY = 5;
+          offsetZ = -10;
+        } else if (roomType === 'treatment') {
+          offsetX = 10;
+          offsetY = 5;
+          offsetZ = 10;
+        } else if (roomType === 'staff_room') {
+          offsetX = 10;
+          offsetY = 5;
+          offsetZ = -10;
+        } else if (roomType === 'discharge') {
+          offsetX = -10;
+          offsetY = 5;
+          offsetZ = 10;
+        }
+
+        setRoomCamera(
+          roomType,
+          cubeCenter.x + offsetX,
+          cubeCenter.y + offsetY,
+          cubeCenter.z + offsetZ,
+          cubeCenter.x,
+          cubeCenter.y,
+          cubeCenter.z
+        );
+      }
+    });
+
+    // Set camera positions for waiting area (existing manual call, ensure it's still needed or remove if automated covers it)
+    // setRoomCamera('waiting_area', -3, 5, 24, -3, 0, 24); // Keep this if waiting_area has a unique position not covered by automation
   });
 
   // Event listeners
@@ -631,12 +703,12 @@ new TWEEN.Tween(controls.target)
 
   // Room highlighting function
   function highlightPatientRooms(condition) {
-    // const roomSelectionPanel = document.getElementById('roomSelectionPanel');
+    const roomSelectionPanel = document.getElementById('roomSelectionPanel');
     
     if (!condition || condition === 'default') {
-      // if (roomSelectionPanel) roomSelectionPanel.classList.remove('visible');
+      if (roomSelectionPanel) roomSelectionPanel.classList.remove('visible');
       resetToDefaultView();
-      // updateConditionInfo('default');
+      updateConditionInfo('default');
       resetToProjectOverview();
       // Hide all cubes
       roomCubes.forEach((cubes, roomType) => {
@@ -647,83 +719,12 @@ new TWEEN.Tween(controls.target)
     }
 
     const roomSequences = {
-      broken_bone: [
-        'main_entrance',
-        'reception',
-        'waiting_area',
-        'emergency',
-        'imaging',
-        'diagnostic_unit',
-        'pharmacy',
-        'medication_station',
-        'department_med',
-        'medicine_ward_a_b',
-        'nurses_station',
-        'discharge'
-      ],
-      chest_pain: [
-        'main_entrance',
-        'reception',
-        'emergency',
-        'lab',
-        'icu',
-        'imaging',
-        'diagnostic_unit',
-        'pharmacy',
-        'medication_station',
-        'department_med',
-        'medicine_ward_a_b',
-        'nurses_station',
-        'discharge'
-      ],
-      head_injury: [
-        'main_entrance',
-        'reception',
-        'emergency',
-        'lab',
-        'icu',
-        'imaging',
-        'pharmacy',
-        'medication_station',
-        'department_med',
-        'medicine_ward_a_b',
-        'nurses_station',
-        'discharge'
-      ],
-      kidney_infection: [
-        'main_entrance',
-        'reception',
-        'waiting_area',
-        'emergency',
-        'lab',
-        'icu',
-        'imaging',
-        'diagnostic_unit',
-        'pharmacy',
-        'medication_station',
-        'department_med',
-        'medicine_ward_a_b',
-        'nurses_station',
-        'discharge'
-      ],
-      abdominal_pain: [
-        'main_entrance',
-        'reception',
-        'waiting_area',
-        'emergency',
-        'lab',
-        'icu',
-        'imaging',
-        'diagnostic_unit',
-        'pharmacy',
-        'medication_station',
-        'department_med',
-        'medicine_ward_a_b',
-        'nurses_station',
-        'discharge'
-      ]
-    };
-    
+      broken_bone:     ['waiting_area', 'reception', 'triage', 'emergency', 'staff_room', 'discharge'],
+      chest_pain:      ['waiting_area', 'reception', 'triage', 'emergency', 'icu', 'discharge'],
+      head_injury:     ['waiting_area', 'reception', 'triage', 'icu', 'staff_room', 'discharge'],
+      kidney_infection:['waiting_area', 'reception', 'triage', 'emergency', 'staff_room', 'discharge'],
+      abdominal_pain:  ['waiting_area', 'reception', 'triage', 'emergency', 'icu', 'discharge']
+    };    
 
     const sequence = roomSequences[condition];
     if (!sequence) return;
@@ -762,9 +763,8 @@ new TWEEN.Tween(controls.target)
     // Show and highlight cubes for rooms in the sequence
     highlightRoomCubes(sequence, 0xff5722);
 
-    // populateRoomSelectionPanel(sequence);
-    // roomSelectionPanel.classList.add('visible');
-        // updateConditionInfo(condition);
+    populateRoomSelectionPanel(sequence);
+    updateConditionInfo(condition);
   }
 
   function resetToDefaultView() {
@@ -1046,47 +1046,47 @@ new TWEEN.Tween(controls.target)
   }
 
   // Room panel population
-  // function populateRoomSelectionPanel(sequence) {
-  //   const roomSelectionPanel = document.getElementById('roomSelectionPanel');
-  //   const roomButtons = document.getElementById('roomButtons');
+  function populateRoomSelectionPanel(sequence) {
+    const roomSelectionPanel = document.getElementById('roomSelectionPanel');
+    const roomButtons = document.getElementById('roomButtons');
     
-  //   if (!roomSelectionPanel || !roomButtons) return;
+    if (!roomSelectionPanel || !roomButtons) return;
 
-  //   roomButtons.innerHTML = '';
+    roomButtons.innerHTML = '';
     
-  //   const panelSubtitle = roomSelectionPanel.querySelector('.panel-subtitle');
-  //   if (panelSubtitle) panelSubtitle.textContent = `${sequence.length} locations`;
+    const panelSubtitle = roomSelectionPanel.querySelector('.panel-subtitle');
+    if (panelSubtitle) panelSubtitle.textContent = `${sequence.length} locations`;
 
-  //   sequence.forEach((roomType, index) => {
-  //     const roomBtn = document.createElement('button');
-  //     roomBtn.className = 'room-btn';
-  //     roomBtn.dataset.roomType = roomType;
+    sequence.forEach((roomType, index) => {
+      const roomBtn = document.createElement('button');
+      roomBtn.className = 'room-btn';
+      roomBtn.dataset.roomType = roomType;
       
-  //     const displayName = roomType.charAt(0).toUpperCase() + roomType.slice(1).replace(/_/g, ' ');
+      const displayName = roomType.charAt(0).toUpperCase() + roomType.slice(1).replace(/_/g, ' ');
       
-  //     roomBtn.innerHTML = `
-  //       <div class="room-btn-content">
-  //         <div class="room-number">${index + 1}</div>
-  //         <div class="room-name">${displayName}</div>
-  //       </div>
-  //     `;
+      roomBtn.innerHTML = `
+        <div class="room-btn-content">
+          <div class="room-number">${index + 1}</div>
+          <div class="room-name">${displayName}</div>
+        </div>
+      `;
       
 
 
-  //     roomBtn.addEventListener('click', () => {
-  //       document.querySelectorAll('.room-btn').forEach(btn => btn.classList.remove('active'));
-  //       roomBtn.classList.add('active');
-  //       moveCameraToRoom(roomType);
-  //       updateRoomContent(roomType);
-  //     });
+      roomBtn.addEventListener('click', () => {
+        document.querySelectorAll('.room-btn').forEach(btn => btn.classList.remove('active'));
+        roomBtn.classList.add('active');
+        moveCameraToRoom(roomType);
+        updateRoomContent(roomType);
+      });
 
 
       
-  //     roomButtons.appendChild(roomBtn);
-  //   });
+      roomButtons.appendChild(roomBtn);
+    });
 
-  //   roomSelectionPanel.classList.add('visible');
-  // }
+    roomSelectionPanel.classList.add('visible');
+  }
 
   // Manual camera placement function
   function setRoomCamera(roomType, x, y, z, targetX, targetY, targetZ) {
@@ -1157,460 +1157,2534 @@ new TWEEN.Tween(controls.target)
   window.getRoomInfo = getRoomInfo;
   window.moveCameraToRoom = moveCameraToRoom;
 
-  // // Content updates
-  // function updateRoomContent(roomType) {
-  //   const content = roomContent[roomType];
-  //   if (!content) return;
+  // Content updates
+  function updateRoomContent(roomType) {
+    const content = roomContent[roomType];
+    if (!content) return;
 
-  //   const projectOverview = document.querySelector('.content-section');
-  //   if (!projectOverview) return;
+    const projectOverview = document.querySelector('.content-section');
+    if (!projectOverview) return;
 
-  //   // --- Full Dashboard Layout ---
-  //   let dashboardHtml = `
-  //     <div class="room-dashboard">
-  //       <div class="dashboard-hero-card dashboard-card">
-  //         <div class="dashboard-card-title">${content.title}</div>
-  //         <div class="dashboard-card-desc">
-  //             <p class="room-description">${content.description}</p>
-  //           <div class="dashboard-hero-stats">
-  //             <div><strong>Key Features:</strong> ${content.features.join(', ')}</div>
-  //             <div><strong>Staff:</strong> ${content.staff.join(', ')}</div>
-  //           </div>
-  //             ${content.additionalHtml || ''}
-  //           </div>
-  //                 </div>
-  //       <div class="dashboard-grid" id="roomDashboardGrid-${roomType}"></div>
-  //     </div>
-  //   `;
+    // --- Full Dashboard Layout ---
+    let dashboardHtml = `
+      <div class="room-dashboard">
+        <div class="dashboard-hero-card dashboard-card">
+          <div class="dashboard-card-title">${content.title}</div>
+          <div class="dashboard-card-desc">
+              <p class="room-description">${content.description}</p>
+            <div class="dashboard-hero-stats">
+              <div><strong>Key Features:</strong> ${content.features.join(', ')}</div>
+              <div><strong>Staff:</strong> ${content.staff.join(', ')}</div>
+            </div>
+              ${content.additionalHtml || ''}
+            </div>
+                  </div>
+        <div class="dashboard-grid" id="roomDashboardGrid-${roomType}"></div>
+      </div>
+    `;
 
-  //   projectOverview.innerHTML = dashboardHtml;
+    projectOverview.innerHTML = dashboardHtml;
 
-  //   // Fade-in animation
-  //   const dashboard = projectOverview.querySelector('.room-dashboard');
-  //   if (dashboard) {
-  //     dashboard.style.opacity = '0';
-  //     dashboard.style.transform = 'translateY(20px)';
-  //     setTimeout(() => {
-  //       dashboard.style.transition = 'opacity 0.4s, transform 0.4s';
-  //       dashboard.style.opacity = '1';
-  //       dashboard.style.transform = 'translateY(0)';
-  //     }, 50);
-  //   }
+    // Fade-in animation
+    const dashboard = projectOverview.querySelector('.room-dashboard');
+    if (dashboard) {
+      dashboard.style.opacity = '0';
+      dashboard.style.transform = 'translateY(20px)';
+      setTimeout(() => {
+        dashboard.style.transition = 'opacity 0.4s, transform 0.4s';
+        dashboard.style.opacity = '1';
+        dashboard.style.transform = 'translateY(0)';
+      }, 50);
+    }
     
-  //   // Render dashboard visualizations and cards
-  //   setTimeout(() => createRoomDashboard(roomType, true), 100);
-  // }
+    // Render dashboard visualizations and cards
+    setTimeout(() => createRoomDashboard(roomType, true), 100);
+  }
 
-  // // Room-specific visualization functions
+  // Room-specific visualization functions
 
-  // function createRoomDashboard(roomType, fullSection = false) {
-  //   const grid = fullSection
-  //     ? document.getElementById(`roomDashboardGrid-${roomType}`)
-  //     : (() => {
-  //         const container = document.getElementById(`roomVisualization-${roomType}`);
-  //         if (!container) return null;
-  //         container.innerHTML = '';
-  //         const grid = document.createElement('div');
-  //         grid.className = 'dashboard-grid';
-  //         container.appendChild(grid);
-  //         return grid;
-  //       })();
-  //   if (!grid) return;
+  function createRoomDashboard(roomType, fullSection = false) {
+    const grid = fullSection
+      ? document.getElementById(`roomDashboardGrid-${roomType}`)
+      : (() => {
+          const container = document.getElementById(`roomVisualization-${roomType}`);
+          if (!container) return null;
+          container.innerHTML = '';
+          const grid = document.createElement('div');
+          grid.className = 'dashboard-grid';
+          container.appendChild(grid);
+          return grid;
+        })();
+    if (!grid) return;
 
-  //   // Cardiac Unit Dashboard
-  //   if (roomType === 'cardiac') {
-  //     // Show loading state
-  //     grid.innerHTML = `
-  //       <div class="dashboard-loading">
-  //         <div class="loading-spinner"></div>
-  //         <p>Loading cardiac unit analytics...</p>
-  //       </div>
-  //     `;
+    // ICU Dashboard
+    if (roomType === 'icu') {
+      grid.innerHTML = `
+        <div class="dashboard-loading">
+          <div class="loading-spinner"></div>
+          <p>Loading ICU analytics...</p>
+        </div>
+      `;
 
-  //     // Load and parse CSVs using d3-fetch
-  //     Promise.all([
-  //       d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/transfers.csv').catch(err => {
-  //         console.error('Error loading transfers.csv:', err);
-  //         return [];
-  //       }),
-  //       d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/services.csv').catch(err => {
-  //         console.error('Error loading services.csv:', err);
-  //         return [];
-  //       }),
-  //       d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/omr.csv').catch(err => {
-  //         console.error('Error loading omr.csv:', err);
-  //         return [];
-  //       })
-  //     ]).then(([transfers, services, omr]) => {
-  //       if (!transfers.length || !services.length || !omr.length) {
-  //         grid.innerHTML = `
-  //           <div class="dashboard-error">
-  //             <i class="fas fa-exclamation-triangle"></i>
-  //             <p>Unable to load cardiac unit data. Please try again later.</p>
-  //           </div>
-  //         `;
-  //         return;
-  //       }
+      Promise.all([
+        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/transfers.csv'),
+        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/services.csv')
+      ]).then(([transfers, services]) => {
+        if (!transfers.length || !services.length) {
+          grid.innerHTML = `
+            <div class="dashboard-error">
+              <i class="fas fa-exclamation-triangle"></i>
+              <p>Unable to load ICU data. Please try again later.</p>
+            </div>
+          `;
+          return;
+        }
 
-  //       try {
-  //         // Process data for cardiac unit analytics
-  //         const cardiacData = transfers.filter(r => 
-  //           r.careunit === 'Coronary Care Unit' || 
-  //           r.careunit === 'Cardiac Intensive Care Unit' ||
-  //           r.careunit === 'Cardiac Stepdown'
-  //         );
+        try {
+          // Process ICU data
+          const icuData = transfers.filter(r => 
+            r.careunit === 'MICU' || 
+            r.careunit === 'SICU' || 
+            r.careunit === 'CCU'
+          );
 
-  //         // Simulate cardiac unit status
-  //         const roomStatus = {
-  //           'CCU-101': { 
-  //             status: 'Occupied', 
-  //             patient: 'Robert Johnson', 
-  //             condition: 'Acute MI',
-  //             vitals: {
-  //               heartRate: 78,
-  //               bloodPressure: '120/80',
-  //               oxygenSat: 98,
-  //               rhythm: 'Normal Sinus'
-  //             },
-  //             timeRemaining: 120,
-  //             acuity: 'Level 2'
-  //           },
-  //           'CCU-102': { 
-  //             status: 'Occupied', 
-  //             patient: 'Mary Williams', 
-  //             condition: 'Heart Failure',
-  //             vitals: {
-  //               heartRate: 92,
-  //               bloodPressure: '135/85',
-  //               oxygenSat: 95,
-  //               rhythm: 'Atrial Fibrillation'
-  //             },
-  //             timeRemaining: 180,
-  //             acuity: 'Level 1'
-  //           },
-  //           'CCU-103': { 
-  //             status: 'Cleaning', 
-  //             patient: null, 
-  //             condition: null,
-  //             vitals: null,
-  //             timeRemaining: 30,
-  //             acuity: null
-  //           },
-  //           'CCU-104': { 
-  //             status: 'Available', 
-  //             patient: null, 
-  //             condition: null,
-  //             vitals: null,
-  //             timeRemaining: 0,
-  //             acuity: null
-  //           }
-  //         };
+          // Patient Status Distribution
+          const patientStatusData = [
+            { label: 'Critical', value: 0, color: '#fc8181' },
+            { label: 'Stable', value: 0, color: '#68d391' },
+            { label: 'Improving', value: 0, color: '#4299e1' },
+            { label: 'Deteriorating', value: 0, color: '#f6ad55' }
+          ];
 
-  //         // Cardiac Conditions Distribution
-  //         const conditionTypes = {
-  //           'Acute MI': 0,
-  //           'Heart Failure': 0,
-  //           'Arrhythmia': 0,
-  //           'Chest Pain': 0,
-  //           'Other': 0
-  //         };
+          // Resource Utilization
+          const resourceData = [
+            { label: 'Ventilators', value: 0, color: '#4299e1' },
+            { label: 'Dialysis', value: 0, color: '#f6ad55' },
+            { label: 'ECMO', value: 0, color: '#fc8181' },
+            { label: 'Available', value: 0, color: '#68d391' }
+          ];
 
-  //         // Vital Signs Trends
-  //         const vitalSigns = {
-  //           heartRate: [],
-  //           bloodPressure: [],
-  //           oxygenSat: []
-  //         };
+          // Length of Stay Distribution
+          const stayData = [
+            { label: '< 24h', value: 0, color: '#68d391' },
+            { label: '1-3 days', value: 0, color: '#4299e1' },
+            { label: '3-7 days', value: 0, color: '#f6ad55' },
+            { label: '> 7 days', value: 0, color: '#fc8181' }
+          ];
 
-  //         // Process cardiac data
-  //         cardiacData.forEach(row => {
-  //           if (row.service) {
-  //             if (row.service.includes('CARDIAC')) {
-  //               conditionTypes['Acute MI']++;
-  //             } else if (row.service.includes('MED')) {
-  //               conditionTypes['Heart Failure']++;
-  //             } else if (row.service.includes('SURG')) {
-  //               conditionTypes['Arrhythmia']++;
-  //             } else if (row.service.includes('TRAUMA')) {
-  //               conditionTypes['Chest Pain']++;
-  //             } else {
-  //               conditionTypes['Other']++;
-  //             }
-  //           }
-  //         });
+          // Process data
+          icuData.forEach(row => {
+            // Calculate length of stay
+            const intime = new Date(row.intime.replace(' ', 'T'));
+            const outtime = row.outtime ? new Date(row.outtime.replace(' ', 'T')) : new Date();
+            const stayHours = (outtime - intime) / (1000 * 60 * 60);
 
-  //         // Process vital signs from OMR data
-  //         const cardiacSubjectIds = new Set(cardiacData.map(r => r.subject_id));
-  //         omr.forEach(row => {
-  //           if (!cardiacSubjectIds.has(row.subject_id)) return;
+            // Update stay distribution
+            if (stayHours < 24) {
+              stayData[0].value++;
+            } else if (stayHours < 72) {
+              stayData[1].value++;
+            } else if (stayHours < 168) {
+              stayData[2].value++;
+            } else {
+              stayData[3].value++;
+            }
+
+            // Update patient status based on service and care unit
+            if (row.service?.includes('CRIT')) {
+              patientStatusData[0].value++; // Critical
+              resourceData[0].value++; // Ventilator
+            } else if (row.service?.includes('NEPH')) {
+              patientStatusData[3].value++; // Deteriorating
+              resourceData[1].value++; // Dialysis
+            } else if (row.careunit === 'CCU') {
+              patientStatusData[2].value++; // Improving
+              resourceData[2].value++; // ECMO
+            } else {
+              patientStatusData[1].value++; // Stable
+              resourceData[3].value++; // Available
+            }
+          });
+
+          // Calculate total patients and average stay
+          const totalPatients = patientStatusData.reduce((sum, d) => sum + d.value, 0);
+          const averageStay = icuData.reduce((sum, row) => {
+            const intime = new Date(row.intime.replace(' ', 'T'));
+            const outtime = row.outtime ? new Date(row.outtime.replace(' ', 'T')) : new Date();
+            return sum + (outtime - intime) / (1000 * 60 * 60);
+          }, 0) / totalPatients;
+
+          grid.innerHTML = '';
+          const dashboardLayout = document.createElement('div');
+          dashboardLayout.className = 'emergency-dashboard-layout';
+          
+          dashboardLayout.innerHTML = `
+            <div class="dashboard-header">
+              <h2>ICU Analytics</h2>
+              <p class="dashboard-summary">
+                Real-time monitoring of critical care metrics, patient status, and resource utilization
+                to ensure optimal care delivery and resource management.
+              </p>
+            </div>
+          `;
+          
+          // Create a two-column layout with explicit heights
+          const dashboardGrid = document.createElement('div');
+          dashboardGrid.className = 'dashboard-grid';
+          dashboardGrid.style.cssText = `
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            padding: 1rem;
+            min-height: 600px;
+          `;
+          
+          // Left column container with explicit height
+          const leftColumn = document.createElement('div');
+          leftColumn.className = 'dashboard-column';
+          leftColumn.style.cssText = `
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            min-height: 600px;
+          `;
+          
+          // Add patient status card with explicit height and container
+          const patientStatusContainer = document.createElement('div');
+          patientStatusContainer.style.cssText = `
+            flex: 1;
+            min-height: 300px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+          `;
+          
+          const patientStatusCard = createDashboardCard(
+            'Patient Status Distribution',
+            'Current distribution of patients by their critical care status.',
+            patientStatusData,
+            'doughnut',
+            patientStatusData.map(d => d.color),
+            'Status',
+            'Number of Patients'
+          );
+          patientStatusContainer.appendChild(patientStatusCard);
+          leftColumn.appendChild(patientStatusContainer);
+          
+          // Add resource utilization card with explicit height and container
+          const resourceContainer = document.createElement('div');
+          resourceContainer.style.cssText = `
+            flex: 1;
+            min-height: 300px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+          `;
+          
+          const resourceCard = createDashboardCard(
+            'Resource Utilization',
+            'Current usage of critical care equipment and resources.',
+            resourceData,
+            'bar',
+            resourceData.map(d => d.color),
+            'Resource Type',
+            'Number in Use'
+          );
+          resourceContainer.appendChild(resourceCard);
+          leftColumn.appendChild(resourceContainer);
+          
+          // Right column container with explicit height
+          const rightColumn = document.createElement('div');
+          rightColumn.className = 'dashboard-column';
+          rightColumn.style.cssText = `
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            min-height: 600px;
+          `;
+          
+          // Add length of stay card with explicit height and container
+          const stayContainer = document.createElement('div');
+          stayContainer.style.cssText = `
+            flex: 1;
+            min-height: 600px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+          `;
+          
+          const stayCard = createDashboardCard(
+            'Length of Stay Distribution',
+            'Distribution of patient stays in the ICU.',
+            stayData,
+            'bar',
+            stayData.map(d => d.color),
+            'Duration',
+            'Number of Patients'
+          );
+          stayContainer.appendChild(stayCard);
+          rightColumn.appendChild(stayContainer);
+          
+          // Add columns to grid
+          dashboardGrid.appendChild(leftColumn);
+          dashboardGrid.appendChild(rightColumn);
+          dashboardLayout.appendChild(dashboardGrid);
+          
+          // Add dashboard footer with insights
+          const dashboardFooter = document.createElement('div');
+          dashboardFooter.className = 'dashboard-footer';
+          dashboardFooter.innerHTML = `
+            <h3>Key Insights</h3>
+            <ul class="insights-list">
+              <li>
+                <i class="fas fa-procedures"></i>
+                <span>Total patients: ${totalPatients}</span>
+              </li>
+              <li>
+                <i class="fas fa-clock"></i>
+                <span>Average stay: ${Math.round(averageStay)} hours</span>
+              </li>
+              <li>
+                <i class="fas fa-heartbeat"></i>
+                <span>Critical patients: ${patientStatusData[0].value}</span>
+              </li>
+              <li>
+                <i class="fas fa-lungs"></i>
+                <span>Ventilator usage: ${resourceData[0].value}</span>
+              </li>
+            </ul>
+          `;
+          dashboardLayout.appendChild(dashboardFooter);
+          
+          grid.appendChild(dashboardLayout);
+
+        } catch (error) {
+          console.error('Error processing ICU data:', error);
+          grid.innerHTML = `
+            <div class="dashboard-error">
+              <i class="fas fa-exclamation-triangle"></i>
+              <p>Error processing ICU data. Please try again later.</p>
+              <p class="error-details">${error.message}</p>
+            </div>
+          `;
+        }
+      }).catch(error => {
+        console.error('Error loading ICU data:', error);
+        grid.innerHTML = `
+          <div class="dashboard-error">
+            <i class="fas fa-exclamation-triangle"></i>
+            <p>Error loading ICU data. Please try again later.</p>
+            <p class="error-details">${error.message}</p>
+          </div>
+        `;
+      });
+      return;
+    }
+
+    // Waiting Area Dashboard
+    if (roomType === 'waiting_area') {
+      grid.innerHTML = `
+        <div class="dashboard-loading">
+          <div class="loading-spinner"></div>
+          <p>Loading waiting area analytics...</p>
+        </div>
+      `;
+
+      Promise.all([
+        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/transfers.csv'),
+        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/services.csv')
+      ]).then(([transfers, services]) => {
+        if (!transfers.length || !services.length) {
+          grid.innerHTML = `
+            <div class="dashboard-error">
+              <i class="fas fa-exclamation-triangle"></i>
+              <p>Unable to load waiting area data. Please try again later.</p>
+            </div>
+          `;
+          return;
+        }
+
+        try {
+          const waitingData = transfers.filter(r => 
+            r.careunit === 'Emergency Department' || 
+            r.careunit === 'Medicine' || 
+            r.careunit === 'Surgery'
+          );
+
+          // Wait Time Distribution
+          const waitTimeData = [
+            { label: '0-15 minutes', value: 0, color: '#68d391' },
+            { label: '15-30 minutes', value: 0, color: '#f6ad55' },
+            { label: '30-60 minutes', value: 0, color: '#fc8181' },
+            { label: '60+ minutes', value: 0, color: '#e53e3e' }
+          ];
+
+          // Waiting Room Capacity
+          const capacityData = [
+            { label: 'Available Seats', value: 50, color: '#68d391' },
+            { label: 'Occupied Seats', value: 0, color: '#4299e1' },
+            { label: 'Reserved Seats', value: 0, color: '#f6ad55' }
+          ];
+
+          // Process data
+          waitingData.forEach(row => {
+            if (row.intime && row.outtime) {
+              const waitTime = (new Date(row.outtime.replace(' ', 'T')) - 
+                              new Date(row.intime.replace(' ', 'T'))) / (1000 * 60); // in minutes
+              
+              if (waitTime <= 15) waitTimeData[0].value++;
+              else if (waitTime <= 30) waitTimeData[1].value++;
+              else if (waitTime <= 60) waitTimeData[2].value++;
+              else waitTimeData[3].value++;
+
+              // Update capacity
+              if (row.service) {
+                if (row.service.includes('SURG') || row.service.includes('TRAUMA')) {
+                  capacityData[2].value++; // Reserved for urgent cases
+                } else {
+                  capacityData[1].value++; // Occupied
+                }
+              }
+            }
+          });
+
+          // Calculate available seats
+          capacityData[0].value = Math.max(0, capacityData[0].value - capacityData[1].value - capacityData[2].value);
+
+          grid.innerHTML = '';
+          const dashboardLayout = document.createElement('div');
+          dashboardLayout.className = 'emergency-dashboard-layout';
+          
+          dashboardLayout.innerHTML = `
+            <div class="dashboard-header">
+              <h2>Waiting Area Analytics</h2>
+              <p class="dashboard-summary">
+                Real-time insights into wait times and waiting room capacity
+                to optimize patient flow and resource allocation.
+              </p>
+            </div>
+          `;
+          
+          const dashboardGrid = document.createElement('div');
+          dashboardGrid.className = 'dashboard-grid';
+          
+          // Add wait time distribution card
+          dashboardGrid.appendChild(createDashboardCard(
+            'Current Wait Time Distribution',
+            'Monitor the distribution of patient wait times to identify bottlenecks.',
+            waitTimeData,
+            'doughnut',
+            waitTimeData.map(d => d.color),
+            'Wait Time Range',
+            'Number of Patients'
+          ));
+          
+          // Add waiting room capacity card
+          dashboardGrid.appendChild(createDashboardCard(
+            'Waiting Room Capacity',
+            'Track available, occupied, and reserved seats in the waiting area.',
+            capacityData,
+            'bar',
+            capacityData.map(d => d.color),
+            'Seat Status',
+            'Number of Seats'
+          ));
+          
+          dashboardLayout.appendChild(dashboardGrid);
+          
+          // Add dashboard footer with insights
+          const dashboardFooter = document.createElement('div');
+          dashboardFooter.className = 'dashboard-footer';
+          dashboardFooter.innerHTML = `
+            <h3>Key Insights</h3>
+            <ul class="insights-list">
+              <li>
+                <i class="fas fa-clock"></i>
+                <span>Average wait time: ${calculateAverageWaitTime(waitTimeData)} minutes</span>
+              </li>
+              <li>
+                <i class="fas fa-chair"></i>
+                <span>Available seats: ${capacityData[0].value} of ${capacityData[0].value + capacityData[1].value + capacityData[2].value}</span>
+              </li>
+              <li>
+                <i class="fas fa-exclamation-circle"></i>
+                <span>Long waits (>60 min): ${waitTimeData[3].value} patients</span>
+              </li>
+            </ul>
+          `;
+          dashboardLayout.appendChild(dashboardFooter);
+          
+          grid.appendChild(dashboardLayout);
+
+          // Helper function for average wait time calculation
+          function calculateAverageWaitTime(data) {
+            const totalPatients = data.reduce((sum, d) => sum + d.value, 0);
+            if (!totalPatients) return 0;
             
-  //           if (row.result_name === 'Heart Rate') {
-  //             vitalSigns.heartRate.push({
-  //               date: row.chartdate,
-  //               value: parseFloat(row.result_value)
-  //             });
-  //           } else if (row.result_name === 'Blood Pressure') {
-  //             vitalSigns.bloodPressure.push({
-  //               date: row.chartdate,
-  //               value: row.result_value
-  //             });
-  //           } else if (row.result_name === 'Oxygen Saturation') {
-  //             vitalSigns.oxygenSat.push({
-  //               date: row.chartdate,
-  //               value: parseFloat(row.result_value)
-  //             });
-  //           }
-  //         });
+            const weightedTime = data.reduce((sum, d) => {
+              const midPoint = d.label.includes('0-15') ? 7.5 :
+                              d.label.includes('15-30') ? 22.5 :
+                              d.label.includes('30-60') ? 45 : 75;
+              return sum + (d.value * midPoint);
+            }, 0);
+            
+            return Math.round(weightedTime / totalPatients);
+          }
+        } catch (error) {
+          console.error('Error processing waiting area data:', error);
+          grid.innerHTML = `
+            <div class="dashboard-error">
+              <i class="fas fa-exclamation-triangle"></i>
+              <p>Error processing waiting area data. Please try again later.</p>
+              <p class="error-details">${error.message}</p>
+            </div>
+          `;
+        }
+      }).catch(error => {
+        console.error('Error loading waiting area data:', error);
+        grid.innerHTML = `
+          <div class="dashboard-error">
+            <i class="fas fa-exclamation-triangle"></i>
+            <p>Error loading waiting area data. Please try again later.</p>
+            <p class="error-details">${error.message}</p>
+          </div>
+        `;
+      });
+      return;
+    }
 
-  //         // Sort vital signs by date
-  //         const sortByDate = arr => arr
-  //           .sort((a, b) => new Date(b.date) - new Date(a.date))
-  //           .slice(0, 20)
-  //           .reverse();
+    // Discharge Area Dashboard
+    if (roomType === 'discharge') {
+      grid.innerHTML = `
+        <div class="dashboard-loading">
+          <div class="loading-spinner"></div>
+          <p>Loading discharge analytics...</p>
+        </div>
+      `;
 
-  //         const heartRateTrend = sortByDate(vitalSigns.heartRate)
-  //           .map(d => ({ label: d.date, value: d.value }));
-  //         const bpTrend = sortByDate(vitalSigns.bloodPressure)
-  //           .map(d => {
-  //             const [sys, dia] = (d.value || '').split('/').map(Number);
-  //             return { label: d.date, systolic: sys, diastolic: dia };
-  //           });
-  //         const oxygenTrend = sortByDate(vitalSigns.oxygenSat)
-  //           .map(d => ({ label: d.date, value: d.value }));
+      Promise.all([
+        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/transfers.csv'),
+        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/services.csv')
+      ]).then(([transfers, services]) => {
+        if (!transfers.length || !services.length) {
+          grid.innerHTML = `
+            <div class="dashboard-error">
+              <i class="fas fa-exclamation-triangle"></i>
+              <p>Unable to load discharge data. Please try again later.</p>
+            </div>
+          `;
+          return;
+        }
 
-  //         const conditionData = Object.entries(conditionTypes)
-  //           .map(([label, value]) => ({ 
-  //             label, 
-  //             value,
-  //             color: label.includes('MI') ? '#e53e3e' : 
-  //                    label.includes('Failure') ? '#dd6b20' : 
-  //                    label.includes('Arrhythmia') ? '#d69e2e' : 
-  //                    label.includes('Pain') ? '#38a169' : 
-  //                    '#4299e1'
-  //           }));
+        try {
+          const dischargeData = transfers.filter(r => 
+            r.careunit === 'Emergency Department' || 
+            r.careunit === 'Medicine' || 
+            r.careunit === 'Surgery'
+          );
 
-  //         // Clear loading state and render dashboard
-  //         grid.innerHTML = '';
+          const statusData = [
+            { label: 'Ready for Discharge', value: 0, color: '#68d391' },
+            { label: 'Awaiting Transport', value: 0, color: '#f6ad55' },
+            { label: 'Discharge in Progress', value: 0, color: '#4299e1' },
+            { label: 'Discharge Complete', value: 0, color: '#38a169' },
+            { label: 'Delayed', value: 0, color: '#e53e3e' }
+          ];
+
+          const typeData = [
+            { label: 'Home', value: 0, color: '#68d391' },
+            { label: 'Rehabilitation', value: 0, color: '#4299e1' },
+            { label: 'Long-term Care', value: 0, color: '#f6ad55' },
+            { label: 'Transfer to Another Facility', value: 0, color: '#805ad5' },
+            { label: 'Against Medical Advice', value: 0, color: '#e53e3e' }
+          ];
+
+          dischargeData.forEach(row => {
+            if (row.service) {
+              if (row.service.includes('SURG')) {
+                statusData[0].value++;
+                typeData[0].value++;
+              } else if (row.service.includes('MED')) {
+                statusData[1].value++;
+                typeData[1].value++;
+              } else if (row.service.includes('NEURO')) {
+                statusData[2].value++;
+                typeData[2].value++;
+              } else if (row.service.includes('CARDIAC')) {
+                statusData[3].value++;
+                typeData[3].value++;
+              } else {
+                statusData[4].value++;
+                typeData[4].value++;
+              }
+            }
+          });
+
+          grid.innerHTML = '';
+          const dashboardLayout = document.createElement('div');
+          dashboardLayout.className = 'emergency-dashboard-layout';
           
-  //         // Create dashboard layout
-  //         const dashboardLayout = document.createElement('div');
-  //         dashboardLayout.className = 'emergency-dashboard-layout';
+          dashboardLayout.innerHTML = `
+            <div class="dashboard-header">
+              <h2>Discharge Area Analytics</h2>
+              <p class="dashboard-summary">
+                Real-time insights into discharge processing and patient throughput
+                to optimize discharge operations and patient flow.
+              </p>
+            </div>
+          `;
           
-  //         // Add dashboard header with summary
-  //         const dashboardHeader = document.createElement('div');
-  //         dashboardHeader.className = 'dashboard-header';
-  //         dashboardHeader.innerHTML = `
-  //           <h2>Cardiac Unit Analytics</h2>
-  //           <p class="dashboard-summary">
-  //             Real-time insights into cardiac patient monitoring, vital signs,
-  //             and treatment status to optimize cardiac care delivery.
-  //           </p>
-  //         `;
-  //         dashboardLayout.appendChild(dashboardHeader);
+          const dashboardGrid = document.createElement('div');
+          dashboardGrid.className = 'dashboard-grid';
           
-  //         // Create main content grid
-  //         const dashboardGrid = document.createElement('div');
-  //         dashboardGrid.className = 'dashboard-grid';
+          dashboardGrid.appendChild(createDashboardCard(
+            'Current Discharge Status',
+            'Monitor the current status of patients in the discharge process.',
+            statusData,
+            'doughnut',
+            statusData.map(d => d.color),
+            'Status',
+            'Number of Patients'
+          ));
           
-  //         // Left column - Patient Status and Conditions
-  //         const leftColumn = document.createElement('div');
-  //         leftColumn.className = 'dashboard-column';
+          dashboardGrid.appendChild(createDashboardCard(
+            'Discharge Type Distribution',
+            'Track the distribution of discharge destinations to plan resources accordingly.',
+            typeData,
+            'bar',
+            typeData.map(d => d.color),
+            'Discharge Type',
+            'Number of Patients'
+          ));
           
-  //         // Add section header
-  //         const statusHeader = document.createElement('div');
-  //         statusHeader.className = 'dashboard-section-header';
-  //         statusHeader.innerHTML = `
-  //           <h3>Patient Status</h3>
-  //           <p>Monitor current patient conditions and vital signs in the cardiac unit.</p>
-  //         `;
-  //         leftColumn.appendChild(statusHeader);
+          dashboardLayout.appendChild(dashboardGrid);
           
-  //         // Add room status cards
-  //         Object.entries(roomStatus).forEach(([room, status]) => {
-  //           const roomCard = document.createElement('div');
-  //           roomCard.className = 'room-status-card cardiac';
-  //           roomCard.innerHTML = `
-  //             <div class="room-header">
-  //               <h4>${room}</h4>
-  //               <span class="status-badge ${status.status.toLowerCase()}">${status.status}</span>
-  //             </div>
-  //             ${status.patient ? `
-  //               <div class="room-details">
-  //                 <p><strong>Patient:</strong> ${status.patient}</p>
-  //                 <p><strong>Condition:</strong> ${status.condition}</p>
-  //                 <p><strong>Time Remaining:</strong> ${status.timeRemaining} minutes</p>
-  //                 <p><strong>Acuity Level:</strong> ${status.acuity}</p>
-  //                 <div class="vitals-grid">
-  //                   <div class="vital-item">
-  //                     <span class="vital-label">HR</span>
-  //                     <span class="vital-value ${getVitalStatus(status.vitals.heartRate, 'hr')}">${status.vitals.heartRate}</span>
-  //                   </div>
-  //                   <div class="vital-item">
-  //                     <span class="vital-label">BP</span>
-  //                     <span class="vital-value ${getVitalStatus(status.vitals.bloodPressure, 'bp')}">${status.vitals.bloodPressure}</span>
-  //                   </div>
-  //                   <div class="vital-item">
-  //                     <span class="vital-label">O₂</span>
-  //                     <span class="vital-value ${getVitalStatus(status.vitals.oxygenSat, 'o2')}">${status.vitals.oxygenSat}%</span>
-  //                   </div>
-  //                   <div class="vital-item">
-  //                     <span class="vital-label">Rhythm</span>
-  //                     <span class="vital-value ${getVitalStatus(status.vitals.rhythm, 'rhythm')}">${status.vitals.rhythm}</span>
-  //                   </div>
-  //                 </div>
-  //               </div>
-  //             ` : status.status === 'Cleaning' ? `
-  //               <div class="room-details">
-  //                 <p><strong>Status:</strong> Under Cleaning</p>
-  //                 <p><strong>Time Remaining:</strong> ${status.timeRemaining} minutes</p>
-  //               </div>
-  //             ` : `
-  //               <div class="room-details">
-  //                 <p><strong>Status:</strong> Available</p>
-  //                 <p><strong>Ready for next patient</strong></p>
-  //               </div>
-  //             `}
-  //           `;
-  //           leftColumn.appendChild(roomCard);
-  //         });
+          const dashboardFooter = document.createElement('div');
+          dashboardFooter.className = 'dashboard-footer';
+          dashboardFooter.innerHTML = `
+            <h3>Key Insights</h3>
+            <ul class="insights-list">
+              <li>
+                <i class="fas fa-check-circle"></i>
+                <span>Ready for discharge: ${statusData[0].value} patients</span>
+              </li>
+              <li>
+                <i class="fas fa-ambulance"></i>
+                <span>Awaiting transport: ${statusData[1].value} patients</span>
+              </li>
+              <li>
+                <i class="fas fa-home"></i>
+                <span>Home discharges: ${typeData[0].value} patients</span>
+              </li>
+            </ul>
+          `;
+          dashboardLayout.appendChild(dashboardFooter);
           
-  //         // Add columns to grid
-  //         dashboardGrid.appendChild(leftColumn);
-  //         dashboardGrid.appendChild(rightColumn);
-  //         dashboardLayout.appendChild(dashboardGrid);
+          grid.appendChild(dashboardLayout);
+        } catch (error) {
+          console.error('Error processing discharge data:', error);
+          grid.innerHTML = `
+            <div class="dashboard-error">
+              <i class="fas fa-exclamation-triangle"></i>
+              <p>Error processing discharge data. Please try again later.</p>
+              <p class="error-details">${error.message}</p>
+            </div>
+          `;
+        }
+      }).catch(error => {
+        console.error('Error loading discharge data:', error);
+        grid.innerHTML = `
+          <div class="dashboard-error">
+            <i class="fas fa-exclamation-triangle"></i>
+            <p>Error loading discharge data. Please try again later.</p>
+            <p class="error-details">${error.message}</p>
+          </div>
+        `;
+      });
+      return;
+    }
+
+    // Triage Area Dashboard
+    if (roomType === 'triage') {
+      // Show loading state
+      grid.innerHTML = `
+        <div class="dashboard-loading">
+          <div class="loading-spinner"></div>
+          <p>Loading triage analytics...</p>
+        </div>
+      `;
+
+      // Load and parse CSVs using d3-fetch
+      Promise.all([
+        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/transfers.csv').catch(err => {
+          console.error('Error loading transfers.csv:', err);
+          return [];
+        }),
+        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/services.csv').catch(err => {
+          console.error('Error loading services.csv:', err);
+          return [];
+        })
+      ]).then(([transfers, services]) => {
+        if (!transfers.length || !services.length) {
+          grid.innerHTML = `
+            <div class="dashboard-error">
+              <i class="fas fa-exclamation-triangle"></i>
+              <p>Unable to load triage data. Please try again later.</p>
+            </div>
+          `;
+          return;
+        }
+
+        try {
+          // Process data for triage analytics with unique variable name
+          const triageAnalyticsData = transfers.filter(r => 
+            r.careunit === 'Emergency Department' || 
+            r.careunit === 'Medicine' || 
+            r.careunit === 'Surgery'
+          );
+
+          // Acuity Level Distribution
+          const acuityDistribution = {
+            'Level 1 (Resuscitation)': 0,
+            'Level 2 (Emergent)': 0,
+            'Level 3 (Urgent)': 0,
+            'Level 4 (Less Urgent)': 0,
+            'Level 5 (Non-urgent)': 0
+          };
+
+          // Current Triage Status
+          const triageStatus = {
+            'Waiting for Assessment': 0,
+            'Being Assessed': 0,
+            'Assessment Complete': 0,
+            'Requires Immediate Care': 0
+          };
+
+          // Process data
+          triageAnalyticsData.forEach(row => {
+            if (row.service) {
+              // Assign acuity levels based on service type
+              if (row.service.includes('SURG') || row.service.includes('TRAUMA')) {
+                acuityDistribution['Level 1 (Resuscitation)']++;
+                triageStatus['Requires Immediate Care']++;
+              } else if (row.service.includes('MED') || row.service.includes('CARDIAC')) {
+                acuityDistribution['Level 2 (Emergent)']++;
+                triageStatus['Being Assessed']++;
+              } else if (row.service.includes('NEURO')) {
+                acuityDistribution['Level 3 (Urgent)']++;
+                triageStatus['Waiting for Assessment']++;
+              } else if (row.service.includes('GASTRO')) {
+                acuityDistribution['Level 4 (Less Urgent)']++;
+                triageStatus['Assessment Complete']++;
+              } else {
+                acuityDistribution['Level 5 (Non-urgent)']++;
+                triageStatus['Waiting for Assessment']++;
+              }
+            }
+          });
+
+          // Prepare chart data
+          const acuityData = Object.entries(acuityDistribution)
+            .map(([label, value]) => ({ 
+              label, 
+              value,
+              color: label.includes('Level 1') ? '#e53e3e' : 
+                     label.includes('Level 2') ? '#dd6b20' : 
+                     label.includes('Level 3') ? '#d69e2e' : 
+                     label.includes('Level 4') ? '#38a169' : 
+                     '#4299e1'
+            }));
+
+          const statusData = Object.entries(triageStatus)
+            .map(([label, value]) => ({ 
+              label, 
+              value,
+              color: label.includes('Waiting') ? '#e53e3e' : 
+                     label.includes('Being') ? '#f6ad55' : 
+                     label.includes('Complete') ? '#68d391' : 
+                     '#e53e3e'
+            }));
+
+          // Clear loading state and render dashboard
+          grid.innerHTML = '';
           
-  //         // Add dashboard footer with insights
-  //         const dashboardFooter = document.createElement('div');
-  //         dashboardFooter.className = 'dashboard-footer';
-  //         dashboardFooter.innerHTML = `
-  //           <h3>Key Insights</h3>
-  //           <ul class="insights-list">
-  //             <li>
-  //               <i class="fas fa-x-ray"></i>
-  //               <span>Most common exam: ${getMostCommonExam(imagingData)}</span>
-  //             </li>
-  //             <li>
-  //               <i class="fas fa-clock"></i>
-  //               <span>Average wait time: ${getAverageWaitTime(queueData)} minutes</span>
-  //             </li>
-  //             <li>
-  //               <i class="fas fa-cogs"></i>
-  //               <span>Machine utilization: ${getMachineUtilization(machineStatus)}%</span>
-  //             </li>
-  //           </ul>
-  //         `;
-  //         dashboardLayout.appendChild(dashboardFooter);
+          // Create dashboard layout
+          const dashboardLayout = document.createElement('div');
+          dashboardLayout.className = 'emergency-dashboard-layout';
           
-  //         grid.appendChild(dashboardLayout);
+          // Add dashboard header
+          dashboardLayout.innerHTML = `
+            <div class="dashboard-header">
+              <h2>Triage Area Analytics</h2>
+              <p class="dashboard-summary">
+                Real-time insights into patient acuity levels and triage status
+                to optimize patient flow and resource allocation.
+              </p>
+            </div>
+          `;
           
-  //         // Helper functions for insights
-  //         function getMostCommonExam(data) {
-  //           const maxExam = data.reduce((max, curr) => 
-  //             curr.value > max.value ? curr : max
-  //           );
-  //           return `${maxExam.label} (${maxExam.value} exams)`;
-  //         }
+          // Create main content grid
+          const dashboardGrid = document.createElement('div');
+          dashboardGrid.className = 'dashboard-grid';
           
-  //         function getAverageWaitTime(data) {
-  //           const waiting = data.find(d => d.label === 'Waiting')?.value || 0;
-  //           const inProgress = data.find(d => d.label === 'In Progress')?.value || 0;
-  //           const total = waiting + inProgress;
-  //           return total ? Math.round((waiting * 30 + inProgress * 15) / total) : 0;
-  //         }
+          // Add acuity levels card
+          const acuityCard = createDashboardCard(
+            'Current Acuity Distribution',
+            'Track the distribution of patient acuity levels to optimize staff allocation.',
+            acuityData,
+            'doughnut',
+            acuityData.map(d => d.color),
+            'Acuity Level',
+            'Number of Patients'
+          );
+          dashboardGrid.appendChild(acuityCard);
           
-  //         function getMachineUtilization(status) {
-  //           const activeMachines = Object.values(status).filter(m => m.status === 'Active').length;
-  //           const totalMachines = Object.keys(status).length;
-  //           return Math.round((activeMachines / totalMachines) * 100);
-  //         }
-  //       } catch (error) {
-  //         console.error('Error processing X-Ray department data:', error);
-  //         grid.innerHTML = `
-  //           <div class="dashboard-error">
-  //             <i class="fas fa-exclamation-triangle"></i>
-  //             <p>Error processing X-Ray department data. Please try again later.</p>
-  //             <p class="error-details">${error.message}</p>
-  //           </div>
-  //         `;
-  //       }
-  //     }).catch(error => {
-  //       console.error('Error loading X-Ray department data:', error);
-  //       grid.innerHTML = `
-  //         <div class="dashboard-error">
-  //           <i class="fas fa-exclamation-triangle"></i>
-  //           <p>Error loading X-Ray department data. Please try again later.</p>
-  //           <p>Error loading emergency department data. Please try again later.</p>
-  //           <p class="error-details">${error.message}</p>
-  //         </div>
-  //       `;
-  //     });
-  //     return;
-  //   }
+          // Add triage status card
+          const statusCard = createDashboardCard(
+            'Current Triage Status',
+            'Monitor the current status of patients in the triage process.',
+            statusData,
+            'bar',
+            statusData.map(d => d.color),
+            'Status',
+            'Number of Patients'
+          );
+          dashboardGrid.appendChild(statusCard);
+          
+          dashboardLayout.appendChild(dashboardGrid);
+          
+          // Add dashboard footer with insights
+          const dashboardFooter = document.createElement('div');
+          dashboardFooter.className = 'dashboard-footer';
+          dashboardFooter.innerHTML = `
+            <h3>Key Insights</h3>
+            <ul class="insights-list">
+              <li>
+                <i class="fas fa-heartbeat"></i>
+                <span>High acuity patients (Level 1-2): ${getHighAcuityPercentage(acuityData)}%</span>
+              </li>
+              <li>
+                <i class="fas fa-user-clock"></i>
+                <span>Patients waiting for assessment: ${getWaitingCount(statusData)}</span>
+              </li>
+              <li>
+                <i class="fas fa-exclamation-circle"></i>
+                <span>Requiring immediate care: ${getImmediateCareCount(statusData)}</span>
+              </li>
+            </ul>
+          `;
+          dashboardLayout.appendChild(dashboardFooter);
+          
+          grid.appendChild(dashboardLayout);
+          
+          // Helper functions for insights
+          function getHighAcuityPercentage(data) {
+            const highAcuity = data
+              .filter(d => d.label.includes('Level 1') || d.label.includes('Level 2'))
+              .reduce((sum, d) => sum + d.value, 0);
+            const total = data.reduce((sum, d) => sum + d.value, 0);
+            return total ? Math.round((highAcuity / total) * 100) : 0;
+          }
+          
+          function getWaitingCount(data) {
+            const waiting = data.find(d => d.label === 'Waiting for Assessment');
+            return waiting ? waiting.value : 0;
+          }
+          
+          function getImmediateCareCount(data) {
+            const immediate = data.find(d => d.label === 'Requires Immediate Care');
+            return immediate ? immediate.value : 0;
+          }
+        } catch (error) {
+          console.error('Error processing triage data:', error);
+          grid.innerHTML = `
+            <div class="dashboard-error">
+              <i class="fas fa-exclamation-triangle"></i>
+              <p>Error processing triage data. Please try again later.</p>
+              <p class="error-details">${error.message}</p>
+            </div>
+          `;
+        }
+      }).catch(error => {
+        console.error('Error loading triage data:', error);
+        grid.innerHTML = `
+          <div class="dashboard-error">
+            <i class="fas fa-exclamation-triangle"></i>
+            <p>Error loading triage data. Please try again later.</p>
+            <p class="error-details">${error.message}</p>
+          </div>
+        `;
+      });
+      return;
+    }
+
+    // Treatment Rooms Dashboard
+    if (roomType === 'treatment') {
+      // Show loading state
+      grid.innerHTML = `
+        <div class="dashboard-loading">
+          <div class="loading-spinner"></div>
+          <p>Loading treatment rooms analytics...</p>
+        </div>
+      `;
+
+      // Load and parse CSVs using d3-fetch
+      Promise.all([
+        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/transfers.csv').catch(err => {
+          console.error('Error loading transfers.csv:', err);
+          return [];
+        }),
+        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/services.csv').catch(err => {
+          console.error('Error loading services.csv:', err);
+          return [];
+        })
+      ]).then(([transfers, services]) => {
+        if (!transfers.length || !services.length) {
+          grid.innerHTML = `
+            <div class="dashboard-error">
+              <i class="fas fa-exclamation-triangle"></i>
+              <p>Unable to load treatment rooms data. Please try again later.</p>
+            </div>
+          `;
+          return;
+        }
+
+        try {
+          // Process data for treatment rooms analytics
+          const treatmentRoomData = transfers.filter(r => 
+            r.careunit === 'Emergency Department' || 
+            r.careunit === 'Medicine' || 
+            r.careunit === 'Surgery'
+          );
+
+          // Room Occupancy Status
+          const roomStatus = {
+            'Room 1': { status: 'Occupied', patient: 'John Doe', service: 'Medicine', timeRemaining: 45 },
+            'Room 2': { status: 'Available', patient: null, service: null, timeRemaining: 0 },
+            'Room 3': { status: 'Occupied', patient: 'Jane Smith', service: 'Surgery', timeRemaining: 30 },
+            'Room 4': { status: 'Cleaning', patient: null, service: null, timeRemaining: 15 },
+            'Room 5': { status: 'Occupied', patient: 'Mike Johnson', service: 'Emergency', timeRemaining: 60 }
+          };
+
+          // Treatment Type Distribution
+          const treatmentTypes = {
+            'Emergency Care': 0,
+            'Minor Procedures': 0,
+            'Wound Care': 0,
+            'Medication Administration': 0,
+            'Other': 0
+          };
+
+          // Patient Flow Status
+          const flowStatus = {
+            'Waiting for Room': 0,
+            'In Treatment': 0,
+            'Post-Treatment': 0,
+            'Ready for Discharge': 0
+          };
+
+          // Simulate data based on service types
+          treatmentRoomData.forEach(row => {
+            if (row.service) {
+              // Assign treatment types based on service
+              if (row.service.includes('EMERGENCY')) {
+                treatmentTypes['Emergency Care']++;
+                flowStatus['In Treatment']++;
+              } else if (row.service.includes('SURG')) {
+                treatmentTypes['Minor Procedures']++;
+                flowStatus['Post-Treatment']++;
+              } else if (row.service.includes('MED')) {
+                treatmentTypes['Medication Administration']++;
+                flowStatus['Waiting for Room']++;
+              } else if (row.service.includes('TRAUMA')) {
+                treatmentTypes['Wound Care']++;
+                flowStatus['Ready for Discharge']++;
+              } else {
+                treatmentTypes['Other']++;
+                flowStatus['Waiting for Room']++;
+              }
+            }
+          });
+
+          const treatmentData = Object.entries(treatmentTypes)
+            .map(([label, value]) => ({ 
+              label, 
+              value,
+              color: label.includes('Emergency') ? '#e53e3e' : 
+                     label.includes('Minor') ? '#ed8936' : 
+                     label.includes('Wound') ? '#48bb78' : 
+                     label.includes('Medication') ? '#4299e1' : 
+                     '#a0aec0'
+            }));
+
+          const flowData = Object.entries(flowStatus)
+            .map(([label, value]) => ({ 
+              label, 
+              value,
+              color: label.includes('Waiting') ? '#e53e3e' : 
+                     label.includes('In Treatment') ? '#f6ad55' : 
+                     label.includes('Post') ? '#68d391' : 
+                     '#4299e1'
+          }));
+
+          // Clear loading state and render dashboard
+          grid.innerHTML = '';
+          
+          // Create dashboard layout
+          const dashboardLayout = document.createElement('div');
+          dashboardLayout.className = 'emergency-dashboard-layout';
+          
+          // Add dashboard header with summary
+          const dashboardHeader = document.createElement('div');
+          dashboardHeader.className = 'dashboard-header';
+          dashboardHeader.innerHTML = `
+            <h2>Triage Area Analytics</h2>
+            <p class="dashboard-summary">
+              Real-time insights into patient acuity levels and wait times
+              to optimize triage efficiency and resource allocation.
+            </p>
+          `;
+          dashboardLayout.appendChild(dashboardHeader);
+          
+          // Create main content grid
+          const dashboardGrid = document.createElement('div');
+          dashboardGrid.className = 'dashboard-grid';
+          
+          // Left column - Acuity Levels
+          const leftColumn = document.createElement('div');
+          leftColumn.className = 'dashboard-column';
+          
+          // Add section header
+          const acuityHeader = document.createElement('div');
+          acuityHeader.className = 'dashboard-section-header';
+          acuityHeader.innerHTML = `
+            <h3>Patient Acuity Levels</h3>
+            <p>Monitor the distribution of patient acuity levels to ensure appropriate resource allocation and prioritization.</p>
+          `;
+          leftColumn.appendChild(acuityHeader);
+          
+          // Add acuity levels card
+          const acuityCard = createDashboardCard(
+            'Current Acuity Distribution',
+            'Track the distribution of patient acuity levels to optimize staff allocation and resource planning.',
+            acuityData,
+            'doughnut',
+            acuityData.map(d => d.color),
+            'Acuity Level',
+            'Number of Patients'
+          );
+          leftColumn.appendChild(acuityCard);
+          
+          // Right column - Wait Times
+          const rightColumn = document.createElement('div');
+          rightColumn.className = 'dashboard-column';
+          
+          // Add section header
+          const waitTimeHeader = document.createElement('div');
+          waitTimeHeader.className = 'dashboard-section-header';
+          waitTimeHeader.innerHTML = `
+            <h3>Wait Time Analysis</h3>
+            <p>Analyze patient wait times to identify bottlenecks and improve triage efficiency.</p>
+          `;
+          rightColumn.appendChild(waitTimeHeader);
+          
+          // Add wait time card
+          const waitTimeCard = createDashboardCard(
+            'Wait Time Distribution',
+            'Monitor wait time patterns to identify areas for improvement in patient flow.',
+            waitTimeData,
+            'bar',
+            waitTimeData.map(d => d.color),
+            'Wait Time Range',
+            'Number of Patients'
+          );
+          rightColumn.appendChild(waitTimeCard);
+          
+          // Add columns to grid
+          dashboardGrid.appendChild(leftColumn);
+          dashboardGrid.appendChild(rightColumn);
+          dashboardLayout.appendChild(dashboardGrid);
+          
+          // Add dashboard footer with insights
+          const dashboardFooter = document.createElement('div');
+          dashboardFooter.className = 'dashboard-footer';
+          dashboardFooter.innerHTML = `
+            <h3>Key Insights</h3>
+            <ul class="insights-list">
+              <li>
+                <i class="fas fa-heartbeat"></i>
+                <span>High acuity patients (Level 1-2): ${getHighAcuityPercentage(acuityData)}%</span>
+              </li>
+              <li>
+                <i class="fas fa-clock"></i>
+                <span>Average wait time: ${getAverageWaitTime(waitTimeData)} minutes</span>
+              </li>
+              <li>
+                <i class="fas fa-exclamation-circle"></i>
+                <span>Patients waiting > 60 min: ${getLongWaitCount(waitTimeData)}</span>
+              </li>
+            </ul>
+          `;
+          dashboardLayout.appendChild(dashboardFooter);
+          
+          grid.appendChild(dashboardLayout);
+          
+          // Helper functions for insights
+          function getHighAcuityPercentage(data) {
+            const highAcuity = data
+              .filter(d => d.label.includes('Level 1') || d.label.includes('Level 2'))
+              .reduce((sum, d) => sum + d.value, 0);
+            const total = data.reduce((sum, d) => sum + d.value, 0);
+            return total ? Math.round((highAcuity / total) * 100) : 0;
+          }
+          
+          function getAverageWaitTime(data) {
+            const totalPatients = data.reduce((sum, d) => sum + d.value, 0);
+            const weightedTime = data.reduce((sum, d) => {
+              const midPoint = d.label.includes('0-15') ? 7.5 :
+                              d.label.includes('15-30') ? 22.5 :
+                              d.label.includes('30-60') ? 45 : 75;
+              return sum + (d.value * midPoint);
+            }, 0);
+            return totalPatients ? Math.round(weightedTime / totalPatients) : 0;
+          }
+          
+          function getLongWaitCount(data) {
+            const longWait = data.find(d => d.label === '60+ min');
+            return longWait ? longWait.value : 0;
+          }
+        } catch (error) {
+          console.error('Error processing triage data:', error);
+          grid.innerHTML = `
+            <div class="dashboard-error">
+              <i class="fas fa-exclamation-triangle"></i>
+              <p>Error processing triage data. Please try again later.</p>
+              <p class="error-details">${error.message}</p>
+            </div>
+          `;
+        }
+      }).catch(error => {
+        console.error('Error loading triage data:', error);
+        grid.innerHTML = `
+          <div class="dashboard-error">
+            <i class="fas fa-exclamation-triangle"></i>
+            <p>Error loading triage data. Please try again later.</p>
+            <p class="error-details">${error.message}</p>
+          </div>
+        `;
+      });
+      return;
+    }
+
+    // X-Ray Department Dashboard
+    if (roomType === 'xray') {
+      // Show loading state
+      grid.innerHTML = `
+        <div class="dashboard-loading">
+          <div class="loading-spinner"></div>
+          <p>Loading X-Ray analytics...</p>
+        </div>
+      `;
+
+      // Load and parse CSVs using d3-fetch
+      Promise.all([
+        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/transfers.csv').catch(err => {
+          console.error('Error loading transfers.csv:', err);
+          return [];
+        }),
+        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/services.csv').catch(err => {
+          console.error('Error loading services.csv:', err);
+          return [];
+        })
+      ]).then(([transfers, services]) => {
+        if (!transfers.length || !services.length) {
+          grid.innerHTML = `
+            <div class="dashboard-error">
+              <i class="fas fa-exclamation-triangle"></i>
+              <p>Unable to load X-Ray data. Please try again later.</p>
+            </div>
+          `;
+          return;
+        }
+
+        try {
+          // Process data for X-Ray analytics
+          const xrayAnalyticsData = transfers.filter(r => 
+            r.careunit === 'Radiology' || 
+            r.careunit === 'Imaging'
+          );
+
+          // X-Ray Type Distribution
+          const xrayTypes = {
+            'CT Scan': 0,
+            'X-Ray': 0,
+            'MRI': 0,
+            'Ultrasound': 0
+          };
+
+          // Patient Flow Status
+          const flowStatus = {
+            'Waiting for Scan': 0,
+            'In Scan': 0,
+            'Post-Scan': 0,
+            'Ready for Discharge': 0
+          };
+
+          // Simulate data based on service types
+          xrayAnalyticsData.forEach(row => {
+            if (row.service) {
+              // Assign X-Ray types based on service
+              if (row.service.includes('CT')) {
+                xrayTypes['CT Scan']++;
+                flowStatus['In Scan']++;
+              } else if (row.service.includes('X-Ray')) {
+                xrayTypes['X-Ray']++;
+                flowStatus['Waiting for Scan']++;
+              } else if (row.service.includes('MRI')) {
+                xrayTypes['MRI']++;
+                flowStatus['Post-Scan']++;
+              } else if (row.service.includes('Ultrasound')) {
+                xrayTypes['Ultrasound']++;
+                flowStatus['Ready for Discharge']++;
+              } else {
+                xrayTypes['Other']++;
+                flowStatus['Waiting for Scan']++;
+              }
+            }
+          });
+
+          const xrayData = Object.entries(xrayTypes)
+            .map(([label, value]) => ({ 
+              label, 
+              value,
+              color: label.includes('CT') ? '#e53e3e' : 
+                     label.includes('X-Ray') ? '#ed8936' : 
+                     label.includes('MRI') ? '#48bb78' : 
+                     label.includes('Ultrasound') ? '#4299e1' : 
+                     '#a0aec0'
+            }));
+
+          const flowData = Object.entries(flowStatus)
+            .map(([label, value]) => ({ 
+              label, 
+              value,
+              color: label.includes('Waiting') ? '#e53e3e' : 
+                     label.includes('In Scan') ? '#f6ad55' : 
+                     label.includes('Post') ? '#68d391' : 
+                     '#4299e1'
+          }));
+
+          // Clear loading state and render dashboard
+          grid.innerHTML = '';
+          
+          // Create dashboard layout
+          const dashboardLayout = document.createElement('div');
+          dashboardLayout.className = 'emergency-dashboard-layout';
+          
+          // Add dashboard header with summary
+          const dashboardHeader = document.createElement('div');
+          dashboardHeader.className = 'dashboard-header';
+          dashboardHeader.innerHTML = `
+            <h2>X-Ray Department Analytics</h2>
+            <p class="dashboard-summary">
+              Real-time insights into X-Ray types and patient flow
+              to optimize imaging operations and resource allocation.
+            </p>
+          `;
+          dashboardLayout.appendChild(dashboardHeader);
+          
+          // Create main content grid
+          const dashboardGrid = document.createElement('div');
+          dashboardGrid.className = 'dashboard-grid';
+          
+          // Left column - X-Ray Types
+          const leftColumn = document.createElement('div');
+          leftColumn.className = 'dashboard-column';
+          
+          // Add section header
+          const xrayHeader = document.createElement('div');
+          xrayHeader.className = 'dashboard-section-header';
+          xrayHeader.innerHTML = `
+            <h3>X-Ray Types</h3>
+            <p>Monitor the distribution of X-Ray types to ensure appropriate resource allocation and prioritization.</p>
+          `;
+          leftColumn.appendChild(xrayHeader);
+          
+          // Add xray types card
+          const xrayCard = createDashboardCard(
+            'Current X-Ray Distribution',
+            'Track the distribution of X-Ray types to optimize staff allocation and resource planning.',
+            xrayData,
+            'doughnut',
+            xrayData.map(d => d.color),
+            'X-Ray Type',
+            'Number of Patients'
+          );
+          leftColumn.appendChild(xrayCard);
+          
+          // Right column - X-Ray Flow
+          const rightColumn = document.createElement('div');
+          rightColumn.className = 'dashboard-column';
+          
+          // Add section header
+          const xrayFlowHeader = document.createElement('div');
+          xrayFlowHeader.className = 'dashboard-section-header';
+          xrayFlowHeader.innerHTML = `
+            <h3>X-Ray Flow</h3>
+            <p>Analyze X-Ray flow patterns to identify bottlenecks and improve imaging efficiency.</p>
+          `;
+          rightColumn.appendChild(xrayFlowHeader);
+          
+          // Add xray flow card
+          const xrayFlowCard = createDashboardCard(
+            'X-Ray Flow by Type',
+            'Monitor X-Ray flow patterns to anticipate peak periods and adjust staffing accordingly.',
+            flowData,
+            'bar',
+            ['#63b3ed'],
+            'X-Ray Type',
+            'Number of Patients'
+          );
+          rightColumn.appendChild(xrayFlowCard);
+          
+          // Add columns to grid
+          dashboardGrid.appendChild(leftColumn);
+          dashboardGrid.appendChild(rightColumn);
+          dashboardLayout.appendChild(dashboardGrid);
+          
+          // Add dashboard footer with insights
+          const dashboardFooter = document.createElement('div');
+          dashboardFooter.className = 'dashboard-footer';
+          dashboardFooter.innerHTML = `
+            <h3>Key Insights</h3>
+            <ul class="insights-list">
+              <li>
+                <i class="fas fa-heartbeat"></i>
+                <span>High X-Ray types (CT, MRI): ${getHighXRayPercentage(xrayData)}%</span>
+              </li>
+              <li>
+                <i class="fas fa-clock"></i>
+                <span>Average wait time: ${getAverageWaitTime(flowData)} minutes</span>
+              </li>
+              <li>
+                <i class="fas fa-exclamation-circle"></i>
+                <span>Patients waiting > 60 min: ${getLongWaitCount(flowData)}</span>
+              </li>
+            </ul>
+          `;
+          dashboardLayout.appendChild(dashboardFooter);
+          
+          grid.appendChild(dashboardLayout);
+          
+          // Helper functions for insights
+          function getHighXRayPercentage(data) {
+            const highXRay = data
+              .filter(d => d.label.includes('CT') || d.label.includes('MRI'))
+              .reduce((sum, d) => sum + d.value, 0);
+            const total = data.reduce((sum, d) => sum + d.value, 0);
+            return total ? Math.round((highXRay / total) * 100) : 0;
+          }
+          
+          function getAverageWaitTime(data) {
+            const totalPatients = data.reduce((sum, d) => sum + d.value, 0);
+            const weightedTime = data.reduce((sum, d) => {
+              const midPoint = d.label.includes('0-15') ? 7.5 :
+                              d.label.includes('15-30') ? 22.5 :
+                              d.label.includes('30-60') ? 45 : 75;
+              return sum + (d.value * midPoint);
+            }, 0);
+            return totalPatients ? Math.round(weightedTime / totalPatients) : 0;
+          }
+          
+          function getLongWaitCount(data) {
+            const longWait = data.find(d => d.label === '60+ min');
+            return longWait ? longWait.value : 0;
+          }
+        } catch (error) {
+          console.error('Error processing X-Ray data:', error);
+          grid.innerHTML = `
+            <div class="dashboard-error">
+              <i class="fas fa-exclamation-triangle"></i>
+              <p>Error processing X-Ray data. Please try again later.</p>
+              <p class="error-details">${error.message}</p>
+            </div>
+          `;
+        }
+      }).catch(error => {
+        console.error('Error loading X-Ray data:', error);
+        grid.innerHTML = `
+          <div class="dashboard-error">
+            <i class="fas fa-exclamation-triangle"></i>
+            <p>Error loading X-Ray data. Please try again later.</p>
+            <p class="error-details">${error.message}</p>
+          </div>
+        `;
+      });
+      return;
+    }
+
+    // Reception Area Dashboard
+    if (roomType === 'reception') {
+      // Show loading state
+      grid.innerHTML = `
+        <div class="dashboard-loading">
+          <div class="loading-spinner"></div>
+          <p>Loading reception analytics...</p>
+        </div>
+      `;
+
+      // Load and parse CSVs using d3-fetch
+      Promise.all([
+        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/transfers.csv').catch(err => {
+          console.error('Error loading transfers.csv:', err);
+          return [];
+        }),
+        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/services.csv').catch(err => {
+          console.error('Error loading services.csv:', err);
+          return [];
+        })
+      ]).then(([transfers, services]) => {
+        if (!transfers.length || !services.length) {
+          grid.innerHTML = `
+            <div class="dashboard-error">
+              <i class="fas fa-exclamation-triangle"></i>
+              <p>Unable to load reception data. Please try again later.</p>
+            </div>
+          `;
+          return;
+        }
+
+        try {
+          // Process data for reception analytics
+          const receptionData = transfers.filter(r => 
+            r.careunit === 'Emergency Department' || 
+            r.careunit === 'Medicine' || 
+            r.careunit === 'Surgery'
+          );
+
+          // Registration Status Distribution
+          const registrationStatus = {
+            'Completed': 0,
+            'In Progress': 0,
+            'Waiting': 0
+          };
+
+          receptionData.forEach(row => {
+            if (row.intime) {
+              const registrationTime = new Date(row.intime.replace(' ', 'T'));
+              const currentTime = new Date();
+              const timeDiff = (currentTime - registrationTime) / (1000 * 60); // in minutes
+
+              if (timeDiff < 5) {
+                registrationStatus['In Progress']++;
+              } else if (timeDiff < 15) {
+                registrationStatus['Waiting']++;
+              } else {
+                registrationStatus['Completed']++;
+              }
+            }
+          });
+
+          const registrationData = Object.entries(registrationStatus)
+            .map(([label, value]) => ({ 
+              label, 
+              value,
+              color: label === 'Completed' ? '#68d391' : 
+                     label === 'In Progress' ? '#f6ad55' : 
+                     '#fc8181'
+            }));
+
+          // Queue Length by Hour
+          const queueByHour = Array(24).fill(0);
+          receptionData.forEach(row => {
+            if (row.intime) {
+              const hour = new Date(row.intime.replace(' ', 'T')).getHours();
+              queueByHour[hour]++;
+            }
+          });
+          const queueData = queueByHour.map((count, hour) => ({
+            label: `${hour}:00`,
+            value: count
+          }));
+
+          // Clear loading state and render dashboard
+          grid.innerHTML = '';
+          
+          // Create dashboard layout
+          const dashboardLayout = document.createElement('div');
+          dashboardLayout.className = 'emergency-dashboard-layout';
+          
+          // Add dashboard header with summary
+          const dashboardHeader = document.createElement('div');
+          dashboardHeader.className = 'dashboard-header';
+          dashboardHeader.innerHTML = `
+            <h2>Reception Area Analytics</h2>
+            <p class="dashboard-summary">
+              Real-time insights into registration status and queue management
+              to optimize patient flow and resource allocation.
+            </p>
+          `;
+          dashboardLayout.appendChild(dashboardHeader);
+          
+          // Create main content grid
+          const dashboardGrid = document.createElement('div');
+          dashboardGrid.className = 'dashboard-grid';
+          
+          // Left column - Registration Status
+          const leftColumn = document.createElement('div');
+          leftColumn.className = 'dashboard-column';
+          
+          // Add section header
+          const statusHeader = document.createElement('div');
+          statusHeader.className = 'dashboard-section-header';
+          statusHeader.innerHTML = `
+            <h3>Registration Status</h3>
+            <p>Monitor the current state of patient registrations to manage queue length and staff allocation.</p>
+          `;
+          leftColumn.appendChild(statusHeader);
+          
+          // Add registration status card
+          const statusCard = createDashboardCard(
+            'Current Registration Status',
+            'Track the distribution of registration statuses to optimize staff allocation and reduce wait times.',
+            registrationData,
+            'doughnut',
+            registrationData.map(d => d.color),
+            'Status',
+            'Number of Patients'
+          );
+          leftColumn.appendChild(statusCard);
+          
+          // Right column - Queue Management
+          const rightColumn = document.createElement('div');
+          rightColumn.className = 'dashboard-column';
+          
+          // Add section header
+          const queueHeader = document.createElement('div');
+          queueHeader.className = 'dashboard-section-header';
+          queueHeader.innerHTML = `
+            <h3>Queue Management</h3>
+            <p>Analyze queue patterns throughout the day to optimize staffing and reduce wait times.</p>
+          `;
+          rightColumn.appendChild(queueHeader);
+          
+          // Add queue length card
+          const queueCard = createDashboardCard(
+            'Queue Length by Hour',
+            'Monitor queue length patterns to anticipate peak periods and adjust staffing accordingly.',
+            queueData,
+            'bar',
+            ['#63b3ed'],
+            'Hour of Day',
+            'Queue Length'
+          );
+          rightColumn.appendChild(queueCard);
+          
+          // Add columns to grid
+          dashboardGrid.appendChild(leftColumn);
+          dashboardGrid.appendChild(rightColumn);
+          dashboardLayout.appendChild(dashboardGrid);
+          
+          // Add dashboard footer with insights
+          const dashboardFooter = document.createElement('div');
+          dashboardFooter.className = 'dashboard-footer';
+          dashboardFooter.innerHTML = `
+            <h3>Key Insights</h3>
+            <ul class="insights-list">
+              <li>
+                <i class="fas fa-check-circle"></i>
+                <span>Registration completion rate: ${getCompletionRate(registrationData)}%</span>
+              </li>
+              <li>
+                <i class="fas fa-clock"></i>
+                <span>Peak queue hours: ${getPeakQueueHours(queueData)}</span>
+              </li>
+              <li>
+                <i class="fas fa-users"></i>
+                <span>Average queue length: ${getAverageQueueLength(queueData)}</span>
+              </li>
+            </ul>
+          `;
+          dashboardLayout.appendChild(dashboardFooter);
+          
+          grid.appendChild(dashboardLayout);
+          
+          // Helper functions for insights
+          function getCompletionRate(data) {
+            const completed = data.find(d => d.label === 'Completed')?.value || 0;
+            const total = data.reduce((sum, d) => sum + d.value, 0);
+            return total ? Math.round((completed / total) * 100) : 0;
+          }
+          
+          function getPeakQueueHours(data) {
+            const peakHours = data
+              .map((d, i) => ({ hour: i, value: d.value }))
+              .sort((a, b) => b.value - a.value)
+              .slice(0, 3)
+              .map(d => `${d.hour}:00`)
+              .join(', ');
+            return peakHours;
+          }
+          
+          function getAverageQueueLength(data) {
+            const total = data.reduce((sum, d) => sum + d.value, 0);
+            return Math.round(total / data.length);
+          }
+        } catch (error) {
+          console.error('Error processing reception data:', error);
+          grid.innerHTML = `
+            <div class="dashboard-error">
+              <i class="fas fa-exclamation-triangle"></i>
+              <p>Error processing reception data. Please try again later.</p>
+              <p class="error-details">${error.message}</p>
+            </div>
+          `;
+        }
+      }).catch(error => {
+        console.error('Error loading reception data:', error);
+        grid.innerHTML = `
+          <div class="dashboard-error">
+            <i class="fas fa-exclamation-triangle"></i>
+            <p>Error loading reception data. Please try again later.</p>
+            <p class="error-details">${error.message}</p>
+          </div>
+        `;
+      });
+      return;
+    }
+
+    // Entry Room Dashboard
+    if (roomType === 'entry') {
+      // Show loading state
+      grid.innerHTML = `
+        <div class="dashboard-loading">
+          <div class="loading-spinner"></div>
+          <p>Loading entry analytics...</p>
+        </div>
+      `;
+
+      // Load and parse CSVs using d3-fetch
+      Promise.all([
+        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/transfers.csv').catch(err => {
+          console.error('Error loading transfers.csv:', err);
+          return [];
+        }),
+        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/services.csv').catch(err => {
+          console.error('Error loading services.csv:', err);
+          return [];
+        })
+      ]).then(([transfers, services]) => {
+        if (!transfers.length || !services.length) {
+          grid.innerHTML = `
+            <div class="dashboard-error">
+              <i class="fas fa-exclamation-triangle"></i>
+              <p>Unable to load entry data. Please try again later.</p>
+            </div>
+          `;
+          return;
+        }
+
+        try {
+          // Process data for entry analytics
+          const entryData = transfers.filter(r => r.careunit === 'Emergency Department' || r.careunit === 'Medicine' || r.careunit === 'Surgery');
+
+          // Patient Arrivals by Hour
+          const arrivalsByHour = Array(24).fill(0);
+          entryData.forEach(row => {
+            if (row.intime) {
+              const hour = new Date(row.intime.replace(' ', 'T')).getHours();
+              arrivalsByHour[hour]++;
+            }
+          });
+          const flowData = arrivalsByHour.map((count, hour) => ({
+            label: `${hour}:00`,
+            value: count
+          }));
+
+          // Service Distribution
+          const serviceCounts = {};
+          entryData.forEach(row => {
+            const service = services.find(s => s.hadm_id === row.hadm_id)?.curr_service || 'Unknown';
+            serviceCounts[service] = (serviceCounts[service] || 0) + 1;
+          });
+          const serviceData = Object.entries(serviceCounts)
+            .map(([label, value]) => ({ label, value }))
+            .sort((a, b) => b.value - a.value)
+            .slice(0, 6);
+
+          // Clear loading state and render dashboard
+          grid.innerHTML = '';
+          
+          // Create dashboard layout
+          const dashboardLayout = document.createElement('div');
+          dashboardLayout.className = 'emergency-dashboard-layout';
+          
+          // Add dashboard header with summary
+          const dashboardHeader = document.createElement('div');
+          dashboardHeader.className = 'dashboard-header';
+          dashboardHeader.innerHTML = `
+            <h2>Hospital Entry Analytics</h2>
+            <p class="dashboard-summary">
+              Real-time insights into patient arrival patterns and service distribution
+              to help optimize entry operations and resource allocation.
+            </p>
+          `;
+          dashboardLayout.appendChild(dashboardHeader);
+          
+          // Create main content grid
+          const dashboardGrid = document.createElement('div');
+          dashboardGrid.className = 'dashboard-grid';
+          
+          // Left column - Patient Flow
+          const leftColumn = document.createElement('div');
+          leftColumn.className = 'dashboard-column';
+          
+          // Add section header
+          const flowHeader = document.createElement('div');
+          flowHeader.className = 'dashboard-section-header';
+          flowHeader.innerHTML = `
+            <h3>Patient Arrival Patterns</h3>
+            <p>Understanding when patients arrive helps optimize staffing and resource allocation at the entry point.</p>
+          `;
+          leftColumn.appendChild(flowHeader);
+          
+          // Add cards with improved descriptions
+          const arrivalsCard = createDashboardCard(
+            'Patient Arrivals by Hour',
+            'Track peak hours and patient volume patterns throughout the day to optimize entry staffing levels.',
+            flowData,
+            'bar',
+            ['#4fd1c7'],
+            'Hour of Day',
+            'Number of Patients'
+          );
+          leftColumn.appendChild(arrivalsCard);
+          
+          // Right column - Service Distribution
+          const rightColumn = document.createElement('div');
+          rightColumn.className = 'dashboard-column';
+          
+          // Add section header
+          const serviceHeader = document.createElement('div');
+          serviceHeader.className = 'dashboard-section-header';
+          serviceHeader.innerHTML = `
+            <h3>Service Distribution</h3>
+            <p>Analyze the types of services patients require upon entry to ensure appropriate resource allocation.</p>
+          `;
+          rightColumn.appendChild(serviceHeader);
+          
+          // Add service distribution card
+          const serviceCard = createDashboardCard(
+            'Initial Service Distribution',
+            'Monitor the types of services patients require upon entry to ensure appropriate resource allocation.',
+            serviceData,
+            'bar',
+            ['#63b3ed'],
+            'Service Type',
+            'Number of Patients'
+          );
+          rightColumn.appendChild(serviceCard);
+          
+          // Add columns to grid
+          dashboardGrid.appendChild(leftColumn);
+          dashboardGrid.appendChild(rightColumn);
+          dashboardLayout.appendChild(dashboardGrid);
+          
+          // Add dashboard footer with insights
+          const dashboardFooter = document.createElement('div');
+          dashboardFooter.className = 'dashboard-footer';
+          dashboardFooter.innerHTML = `
+            <h3>Key Insights</h3>
+            <ul class="insights-list">
+              <li>
+                <i class="fas fa-clock"></i>
+                <span>Peak arrival hours: ${getPeakHours(flowData)}</span>
+              </li>
+              <li>
+                <i class="fas fa-hospital"></i>
+                <span>Most common service: ${getTopService(serviceData)}</span>
+              </li>
+              <li>
+                <i class="fas fa-users"></i>
+                <span>Total daily arrivals: ${getTotalArrivals(flowData)}</span>
+              </li>
+            </ul>
+          `;
+          dashboardLayout.appendChild(dashboardFooter);
+          
+          grid.appendChild(dashboardLayout);
+          
+          // Helper functions for insights
+          function getPeakHours(data) {
+            const peakHours = data
+              .map((d, i) => ({ hour: i, value: d.value }))
+              .sort((a, b) => b.value - a.value)
+              .slice(0, 3)
+              .map(d => `${d.hour}:00`)
+              .join(', ');
+            return peakHours;
+          }
+          
+          function getTopService(data) {
+            return data[0]?.label || 'N/A';
+          }
+          
+          function getTotalArrivals(data) {
+            return data.reduce((sum, d) => sum + d.value, 0);
+          }
+        } catch (error) {
+          console.error('Error processing entry data:', error);
+          grid.innerHTML = `
+            <div class="dashboard-error">
+              <i class="fas fa-exclamation-triangle"></i>
+              <p>Error processing entry data. Please try again later.</p>
+              <p class="error-details">${error.message}</p>
+            </div>
+          `;
+        }
+      }).catch(error => {
+        console.error('Error loading entry data:', error);
+        grid.innerHTML = `
+          <div class="dashboard-error">
+            <i class="fas fa-exclamation-triangle"></i>
+            <p>Error loading entry data. Please try again later.</p>
+            <p class="error-details">${error.message}</p>
+          </div>
+        `;
+      });
+      return;
+    }
+
+    // Emergency Department: Use real data from CSVs
+    if (roomType === 'emergency') {
+      // Show loading state
+      grid.innerHTML = `
+        <div class="dashboard-loading">
+          <div class="loading-spinner"></div>
+          <p>Loading emergency department analytics...</p>
+        </div>
+      `;
+
+      // Load and parse CSVs using d3-fetch
+      Promise.all([
+        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/transfers.csv').catch(err => {
+          console.error('Error loading transfers.csv:', err);
+          return [];
+        }),
+        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/services.csv').catch(err => {
+          console.error('Error loading services.csv:', err);
+          return [];
+        }),
+        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/omr.csv').catch(err => {
+          console.error('Error loading omr.csv:', err);
+          return [];
+        })
+      ]).then(([transfers, services, omr]) => {
+        if (!transfers.length || !services.length || !omr.length) {
+          grid.innerHTML = `
+            <div class="dashboard-error">
+              <i class="fas fa-exclamation-triangle"></i>
+              <p>Unable to load emergency department data. Please try again later.</p>
+            </div>
+          `;
+          return;
+        }
+
+        try {
+          // Process data
+        const edRows = transfers.filter(r => r.careunit === 'Emergency Department');
+          if (!edRows.length) {
+            throw new Error('No emergency department data found');
+          }
+
+          // Patient Arrivals by Hour
+        const arrivalsByHour = Array(24).fill(0);
+        edRows.forEach(row => {
+            if (row.intime) {
+          const hour = new Date(row.intime.replace(' ', 'T')).getHours();
+          arrivalsByHour[hour]++;
+            }
+          });
+          const flowData = arrivalsByHour.map((count, hour) => ({
+            label: `${hour}:00`,
+            value: count
+          }));
+
+          // Length of Stay
+          const stays = edRows
+            .map(row => {
+          if (!row.intime || !row.outtime) return null;
+          const inTime = new Date(row.intime.replace(' ', 'T'));
+          const outTime = new Date(row.outtime.replace(' ', 'T'));
+          return (outTime - inTime) / (1000 * 60 * 60);
+            })
+            .filter(h => h !== null && h > 0 && h < 48);
+
+        const stayBuckets = Array(12).fill(0);
+        stays.forEach(h => {
+          const idx = Math.min(Math.floor(h / 2), 11);
+          stayBuckets[idx]++;
+        });
+          const stayData = stayBuckets.map((count, i) => ({
+            range: `${i*2}-${i*2+2}h`,
+            count
+          }));
+
+          // Careunit Flow
+        const careunitCounts = {};
+          edRows.forEach(row => {
+            if (row.outtime) {
+              // Find all subsequent transfers for this patient
+              const subsequentTransfers = transfers.filter(r => 
+                r.subject_id === row.subject_id && 
+                r.hadm_id === row.hadm_id && 
+                r.intime && 
+                new Date(r.intime.replace(' ', 'T')) > new Date(row.outtime.replace(' ', 'T'))
+              ).sort((a, b) => new Date(a.intime.replace(' ', 'T')) - new Date(b.intime.replace(' ', 'T')));
+
+              // Get the next immediate destination
+              const nextTransfer = subsequentTransfers[0];
+              if (nextTransfer?.careunit) {
+                // Clean up care unit name for better display
+                const cleanUnitName = nextTransfer.careunit
+                  .replace('Intensive Care Unit', 'ICU')
+                  .replace('Coronary Care Unit', 'CCU')
+                  .replace('Medical Intensive Care Unit', 'MICU')
+                  .replace('Surgical Intensive Care Unit', 'SICU')
+                  .replace('Neuro Stepdown', 'Neuro Unit')
+                  .replace('Emergency Department', 'ED')
+                  .trim();
+              
+                careunitCounts[cleanUnitName] = (careunitCounts[cleanUnitName] || 0) + 1;
+              } else {
+                // If no subsequent transfer found, count as discharged
+                careunitCounts['Discharged'] = (careunitCounts['Discharged'] || 0) + 1;
+              }
+            }
+          }
+          );
+          // Sort destinations by count and take top 8
+          const careunitData = Object.entries(careunitCounts)
+            .map(([label, value]) => ({ 
+              label, 
+              value,
+              // Add color based on unit type
+              color: label.includes('ICU') ? '#4299e1' : 
+                     label.includes('CCU') ? '#f56565' :
+                     label.includes('Neuro') ? '#48bb78' :
+                     label.includes('Medicine') ? '#ed8936' :
+                     label.includes('Surgery') ? '#9f7aea' :
+                     label === 'Discharged' ? '#718096' :
+                     '#a0aec0'
+            }))
+            .sort((a, b) => b.value - a.value)
+            .slice(0, 8);
+
+          // Service Distribution
+        const edHadmIds = new Set(edRows.map(r => r.hadm_id));
+        const serviceCounts = {};
+        services.forEach(row => {
+          if (edHadmIds.has(row.hadm_id)) {
+            const svc = row.curr_service || 'Unknown';
+            serviceCounts[svc] = (serviceCounts[svc] || 0) + 1;
+          }
+        });
+          const serviceData = Object.entries(serviceCounts)
+            .map(([label, value]) => ({ label, value }))
+            .sort((a, b) => b.value - a.value)
+            .slice(0, 6); // Show top 6 services
+
+          // Vitals Trend
+        const edSubjectIds = new Set(edRows.map(r => r.subject_id));
+          console.log('Processing vitals data for', edSubjectIds.size, 'patients');
+
+        const vitals = { BMI: [], Weight: [], BP: [] };
+        omr.forEach(row => {
+          if (!edSubjectIds.has(row.subject_id)) return;
+            if (row.result_name === 'BMI (kg/m2)') {
+              vitals.BMI.push({ date: row.chartdate, value: parseFloat(row.result_value) });
+            }
+            if (row.result_name === 'Weight (Lbs)') {
+              vitals.Weight.push({ date: row.chartdate, value: parseFloat(row.result_value) });
+            }
+            if (row.result_name === 'Blood Pressure') {
+              vitals.BP.push({ date: row.chartdate, value: row.result_value });
+            }
+          });
+
+          console.log('Vitals data collected:', {
+            BMI: vitals.BMI.length,
+            Weight: vitals.Weight.length,
+            BP: vitals.BP.length
+          });
+
+          const sortByDate = arr => {
+            console.log('Sorting array of length:', arr.length);
+            const sorted = arr
+              .sort((a, b) => new Date(b.date) - new Date(a.date))
+              .slice(0, 20)
+              .reverse();
+            console.log('Sorted array length:', sorted.length);
+            return sorted;
+          };
+
+          const bmiTrend = sortByDate(vitals.BMI)
+            .map(d => ({ label: d.date, value: d.value }));
+          const weightTrend = sortByDate(vitals.Weight)
+            .map(d => ({ label: d.date, value: d.value }));
+          const bpTrend = sortByDate(vitals.BP)
+            .map(d => {
+          const [sys, dia] = (d.value || '').split('/').map(Number);
+          return { label: d.date, systolic: sys, diastolic: dia };
+        });
+
+          console.log('Processed trends:', {
+            BMI: bmiTrend.length,
+            Weight: weightTrend.length,
+            BP: bpTrend.length
+          });
+
+          // Clear loading state and render dashboard
+        grid.innerHTML = '';
+          
+          // Create dashboard layout
+          const dashboardLayout = document.createElement('div');
+          dashboardLayout.className = 'emergency-dashboard-layout';
+          
+          // Add dashboard header with summary
+          const dashboardHeader = document.createElement('div');
+          dashboardHeader.className = 'dashboard-header';
+          dashboardHeader.innerHTML = `
+            <h2>Emergency Department Analytics</h2>
+            <p class="dashboard-summary">
+              Real-time insights into patient flow, care patterns, and operational metrics
+              to help optimize emergency care delivery and resource allocation.
+            </p>
+          `;
+          dashboardLayout.appendChild(dashboardHeader);
+          
+          // Create main content grid
+          const dashboardGrid = document.createElement('div');
+          dashboardGrid.className = 'dashboard-grid';
+          
+          // Left column - Patient Flow
+          const leftColumn = document.createElement('div');
+          leftColumn.className = 'dashboard-column';
+          
+          // Add section header
+          const flowHeader = document.createElement('div');
+          flowHeader.className = 'dashboard-section-header';
+          flowHeader.innerHTML = `
+            <h3>Patient Flow Analysis</h3>
+            <p>Understanding when patients arrive and how long they stay helps optimize staffing and resource allocation.</p>
+          `;
+          leftColumn.appendChild(flowHeader);
+          
+          // Add cards with improved descriptions
+          const arrivalsCard = createDashboardCard(
+            'Patient Arrivals by Hour',
+            'Track peak hours and patient volume patterns throughout the day to optimize staffing levels and resource allocation.',
+            flowData,
+            'bar',
+            ['#fc8181'],
+            'Hour of Day',
+            'Number of Patients'
+          );
+          leftColumn.appendChild(arrivalsCard);
+          
+          const stayCard = createDashboardCard(
+            'Length of Stay Distribution',
+            'Monitor how long patients typically spend in the ED to identify bottlenecks and improve patient flow.',
+            stayData.map(d => ({ label: d.range, value: d.count })),
+            'bar',
+            ['#63b3ed'],
+            'Duration',
+            'Number of Patients'
+          );
+          leftColumn.appendChild(stayCard);
+          
+          // Right column - Patient Care
+          const rightColumn = document.createElement('div');
+          rightColumn.className = 'dashboard-column';
+          
+          // Add section header
+          const careHeader = document.createElement('div');
+          careHeader.className = 'dashboard-section-header';
+          careHeader.innerHTML = `
+            <h3>Care Patterns & Outcomes</h3>
+            <p>Analyze patient care pathways and service utilization to improve care delivery and resource planning.</p>
+          `;
+          rightColumn.appendChild(careHeader);
+          
+          // Add cards with improved descriptions
+          const careunitCard = createDashboardCard(
+            'Patient Flow After ED',
+            'Track where patients go after emergency care to optimize care transitions and resource allocation across departments.',
+            careunitData,
+            'bar',
+            careunitData.map(d => d.color), // Use the color property from the data
+            'Destination Department',
+            'Number of Patients'
+          );
+          rightColumn.appendChild(careunitCard);
+          
+          const serviceCard = createDashboardCard(
+            'Service Distribution',
+            'Monitor the types of services provided in the ED to ensure appropriate resource allocation and staffing.',
+            serviceData,
+            'bar',
+            ['#68d391'],
+            'Service Type',
+            'Number of Cases'
+          );
+          rightColumn.appendChild(serviceCard);
+          
+          // After creating the vitals section
+          const vitalsSection = document.createElement('div');
+          vitalsSection.className = 'dashboard-section vitals-section';
+          vitalsSection.innerHTML = `
+            <div class="dashboard-section-header">
+              <h3>Patient Vitals Monitoring</h3>
+              <p>Track key vital signs trends to monitor patient health and identify potential issues early.</p>
+            </div>
+            <div class="vitals-charts">
+              <div class="vitals-chart" id="bmiChart">
+                <div class="chart-loading">
+                  <div class="loading-spinner"></div>
+                  <p>Loading BMI data...</p>
+                </div>
+              </div>
+              <div class="vitals-chart" id="weightChart">
+                <div class="chart-loading">
+                  <div class="loading-spinner"></div>
+                  <p>Loading weight data...</p>
+                </div>
+              </div>
+              <div class="vitals-chart" id="bpChart">
+                <div class="chart-loading">
+                  <div class="loading-spinner"></div>
+                  <p>Loading blood pressure data...</p>
+                </div>
+              </div>
+            </div>
+            <div class="vitals-insights">
+              <h4>Key Insights</h4>
+              <ul class="insights-list">
+                <li>
+                  <i class="fas fa-chart-line"></i>
+                  <span>BMI trends help identify nutritional status changes</span>
+                </li>
+                <li>
+                  <i class="fas fa-weight"></i>
+                  <span>Weight monitoring tracks fluid balance and nutrition</span>
+                </li>
+                <li>
+                  <i class="fas fa-heartbeat"></i>
+                  <span>Blood pressure trends indicate cardiovascular stability</span>
+                </li>
+              </ul>
+            </div>
+          `;
+
+          // Append vitals section to dashboard layout
+          dashboardLayout.appendChild(vitalsSection);
+
+          // Render the vitals charts
+          console.log('Starting chart rendering...');
+
+          // Use requestAnimationFrame to ensure DOM is ready
+          requestAnimationFrame(() => {
+            const bmiChart = document.getElementById('bmiChart');
+            const weightChart = document.getElementById('weightChart');
+            const bpChart = document.getElementById('bpChart');
+
+            console.log('Chart containers found:', {
+              bmiChart: !!bmiChart,
+              weightChart: !!weightChart,
+              bpChart: !!bpChart
+            });
+
+            if (bmiChart && bmiTrend.length) {
+              console.log('Rendering BMI chart with', bmiTrend.length, 'data points');
+              try {
+                const loadingElement = bmiChart.querySelector('.chart-loading');
+                if (loadingElement) {
+                  loadingElement.remove();
+                }
+                renderD3LineChart(bmiChart, bmiTrend, {
+                  color: '#4299e1',
+                  title: 'BMI Trend',
+                  yTitle: 'BMI (kg/m²)'
+                });
+                console.log('BMI chart rendered successfully');
+              } catch (error) {
+                console.error('Error rendering BMI chart:', error);
+                console.error('Error stack:', error.stack);
+              }
+            }
+
+            if (weightChart && weightTrend.length) {
+              console.log('Rendering weight chart with', weightTrend.length, 'data points');
+              try {
+                const loadingElement = weightChart.querySelector('.chart-loading');
+                if (loadingElement) {
+                  loadingElement.remove();
+                }
+                renderD3LineChart(weightChart, weightTrend, {
+                  color: '#68d391',
+                  title: 'Weight Trend',
+                  yTitle: 'Weight (lbs)'
+                });
+                console.log('Weight chart rendered successfully');
+              } catch (error) {
+                console.error('Error rendering weight chart:', error);
+                console.error('Error stack:', error.stack);
+              }
+            }
+
+            if (bpChart && bpTrend.length) {
+              console.log('Rendering blood pressure chart with', bpTrend.length, 'data points');
+              try {
+                const loadingElement = bpChart.querySelector('.chart-loading');
+                if (loadingElement) {
+                  loadingElement.remove();
+                }
+                renderD3LineChart(bpChart, bpTrend, {
+                  color: '#fc8181',
+                  title: 'Blood Pressure Trend',
+                  yTitle: 'mmHg'
+                });
+                console.log('Blood pressure chart rendered successfully');
+              } catch (error) {
+                console.error('Error rendering blood pressure chart:', error);
+                console.error('Error stack:', error.stack);
+              }
+            }
+          });
+
+          // Add columns to grid
+          dashboardGrid.appendChild(leftColumn);
+          dashboardGrid.appendChild(rightColumn);
+          dashboardLayout.appendChild(dashboardGrid);
+          
+          // Add dashboard footer with insights
+          const dashboardFooter = document.createElement('div');
+          dashboardFooter.className = 'dashboard-footer';
+          dashboardFooter.innerHTML = `
+            <h3>Key Insights</h3>
+            <ul class="insights-list">
+              <li>
+                <i class="fas fa-clock"></i>
+                <span>Peak hours are typically between ${getPeakHours(flowData)}</span>
+              </li>
+              <li>
+                <i class="fas fa-bed"></i>
+                <span>Average length of stay: ${getAverageStay(stayData)} hours</span>
+              </li>
+              <li>
+                <i class="fas fa-arrow-right"></i>
+                <span>Most common destination: ${getTopDestination(careunitData)}</span>
+              </li>
+            </ul>
+          `;
+          dashboardLayout.appendChild(dashboardFooter);
+          
+          grid.appendChild(dashboardLayout);
+          
+          // Helper functions for insights
+          function getPeakHours(data) {
+            const peakHours = data
+              .map((d, i) => ({ hour: i, value: d.value }))
+              .sort((a, b) => b.value - a.value)
+              .slice(0, 3)
+              .map(d => `${d.hour}:00`)
+              .join(', ');
+            return peakHours;
+          }
+          
+          function getAverageStay(data) {
+            const total = data.reduce((sum, d) => sum + (d.count * (parseInt(d.range) + 1)), 0);
+            const count = data.reduce((sum, d) => sum + d.count, 0);
+            return (total / count).toFixed(1);
+          }
+          
+          function getTopDestination(data) {
+            return data[0]?.label || 'N/A';
+          }
+          
+          // ... rest of the existing code for rendering charts ...
+        } catch (error) {
+          console.error('Error processing emergency department data:', error);
+          grid.innerHTML = `
+            <div class="dashboard-error">
+              <i class="fas fa-exclamation-triangle"></i>
+              <p>Error processing emergency department data. Please try again later.</p>
+              <p class="error-details">${error.message}</p>
+            </div>
+          `;
+        }
+      }).catch(error => {
+        console.error('Error loading emergency department data:', error);
+        grid.innerHTML = `
+          <div class="dashboard-error">
+            <i class="fas fa-exclamation-triangle"></i>
+            <p>Error loading emergency department data. Please try again later.</p>
+            <p class="error-details">${error.message}</p>
+          </div>
+        `;
+      });
+      return;
+    }
     
+    // Staff Room Dashboard
+    if (roomType === 'staff_room') {
+      grid.innerHTML = `
+        <div class="dashboard-loading">
+          <div class="loading-spinner"></div>
+          <p>Loading staff room analytics...</p>
+        </div>
+      `;
+
+      Promise.all([
+        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/transfers.csv'),
+        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/services.csv')
+      ]).then(([transfers, services]) => {
+        if (!transfers.length || !services.length) {
+          grid.innerHTML = `
+            <div class="dashboard-error">
+              <i class="fas fa-exclamation-triangle"></i>
+              <p>Unable to load staff room data. Please try again later.</p>
+            </div>
+          `;
+          return;
+        }
+
+        try {
+          // Process staff room data
+          const staffData = transfers.filter(r => 
+            r.careunit === 'Medicine' || 
+            r.careunit === 'Surgery' || 
+            r.careunit === 'Emergency Department'
+          );
+
+          // Room Utilization Data
+          const utilizationData = [
+            { label: 'Break Time', value: 0, color: '#68d391' },
+            { label: 'Meeting Time', value: 0, color: '#4299e1' },
+            { label: 'Documentation', value: 0, color: '#f6ad55' },
+            { label: 'Available', value: 0, color: '#a0aec0' }
+          ];
+
+          // Staff Distribution by Department
+          const staffDistributionData = [
+            { label: 'Medicine', value: 0, color: '#4299e1' },
+            { label: 'Surgery', value: 0, color: '#f6ad55' },
+            { label: 'Emergency', value: 0, color: '#fc8181' },
+            { label: 'Other', value: 0, color: '#a0aec0' }
+          ];
+
+          // Process data
+          staffData.forEach(row => {
+            if (row.service) {
+              // Update staff distribution
+              if (row.service.includes('MED')) {
+                staffDistributionData[0].value++;
+              } else if (row.service.includes('SURG')) {
+                staffDistributionData[1].value++;
+              } else if (row.service.includes('EMERG')) {
+                staffDistributionData[2].value++;
+              } else {
+                staffDistributionData[3].value++;
+              }
+
+              // Update utilization based on time of day
+              const hour = new Date(row.intime.replace(' ', 'T')).getHours();
+              if (hour >= 9 && hour <= 10 || hour >= 14 && hour <= 15) {
+                utilizationData[0].value++; // Break time
+              } else if (hour >= 8 && hour <= 9 || hour >= 15 && hour <= 16) {
+                utilizationData[1].value++; // Meeting time
+              } else if (hour >= 11 && hour <= 14) {
+                utilizationData[2].value++; // Documentation
+              } else {
+                utilizationData[3].value++; // Available
+              }
+            }
+          });
+
+          // Calculate total staff
+          const totalStaff = staffDistributionData.reduce((sum, d) => sum + d.value, 0);
+
+          grid.innerHTML = '';
+          const dashboardLayout = document.createElement('div');
+          dashboardLayout.className = 'emergency-dashboard-layout';
+          
+          dashboardLayout.innerHTML = `
+            <div class="dashboard-header">
+              <h2>Staff Room Analytics</h2>
+              <p class="dashboard-summary">
+                Real-time insights into staff room utilization and department distribution
+                to optimize space usage and staff coordination.
+              </p>
+            </div>
+          `;
+          
+          const dashboardGrid = document.createElement('div');
+          dashboardGrid.className = 'dashboard-grid';
+          
+          // Add room utilization card
+          dashboardGrid.appendChild(createDashboardCard(
+            'Room Utilization',
+            'Track how the staff room is being used throughout the day.',
+            utilizationData,
+            'doughnut',
+            utilizationData.map(d => d.color),
+            'Activity Type',
+            'Number of Staff'
+          ));
+          
+          // Add staff distribution card
+          dashboardGrid.appendChild(createDashboardCard(
+            'Staff Distribution',
+            'Distribution of staff using the room by department.',
+            staffDistributionData,
+            'bar',
+            staffDistributionData.map(d => d.color),
+            'Department',
+            'Number of Staff'
+          ));
+          
+          dashboardLayout.appendChild(dashboardGrid);
+          
+          // Add dashboard footer with insights
+          const dashboardFooter = document.createElement('div');
+          dashboardFooter.className = 'dashboard-footer';
+          dashboardFooter.innerHTML = `
+            <h3>Key Insights</h3>
+            <ul class="insights-list">
+              <li>
+                <i class="fas fa-users"></i>
+                <span>Total staff using room: ${totalStaff}</span>
+              </li>
+              <li>
+                <i class="fas fa-clock"></i>
+                <span>Peak usage: ${getPeakUsageTime(utilizationData)}</span>
+              </li>
+              <li>
+                <i class="fas fa-chart-pie"></i>
+                <span>Largest department: ${getLargestDepartment(staffDistributionData)}</span>
+              </li>
+            </ul>
+          `;
+          dashboardLayout.appendChild(dashboardFooter);
+          
+          grid.appendChild(dashboardLayout);
+
+          // Helper functions
+          function getPeakUsageTime(data) {
+            const peakActivity = data.reduce((max, curr) => curr.value > max.value ? curr : max, data[0]);
+            return `${peakActivity.label} (${peakActivity.value} staff)`;
+          }
+
+          function getLargestDepartment(data) {
+            const largest = data.reduce((max, curr) => curr.value > max.value ? curr : max, data[0]);
+            return `${largest.label} (${largest.value} staff)`;
+          }
+
+        } catch (error) {
+          console.error('Error processing staff room data:', error);
+          grid.innerHTML = `
+            <div class="dashboard-error">
+              <i class="fas fa-exclamation-triangle"></i>
+              <p>Error processing staff room data. Please try again later.</p>
+              <p class="error-details">${error.message}</p>
+            </div>
+          `;
+        }
+      }).catch(error => {
+        console.error('Error loading staff room data:', error);
+        grid.innerHTML = `
+          <div class="dashboard-error">
+            <i class="fas fa-exclamation-triangle"></i>
+            <p>Error loading staff room data. Please try again later.</p>
+            <p class="error-details">${error.message}</p>
+          </div>
+        `;
+      });
+      return;
+    }
+
     // ... fallback for other rooms ...
     // ... existing code ...
-
+  }
 
   // Helper function to create dashboard cards
-  // function createDashboardCard(title, description, data, chartType, colors, xTitle, yTitle) {
-  //   const card = document.createElement('div');
-  //   card.className = 'dashboard-card';
-  //   card.innerHTML = `
-  //     <div class="dashboard-card-title">${title}</div>
-  //     <div class="dashboard-card-desc">${description}</div>
-  //     <div class="dashboard-chart"></div>
-  //   `;
+  function createDashboardCard(title, description, data, chartType, colors, xTitle, yTitle) {
+    const card = document.createElement('div');
+    card.className = 'dashboard-card';
+    card.innerHTML = `
+      <div class="dashboard-card-title">${title}</div>
+      <div class="dashboard-card-desc">${description}</div>
+      <div class="dashboard-chart"></div>
+    `;
     
-  //   const chartDiv = card.querySelector('.dashboard-chart');
-  //   renderD3Chart(chartDiv, {
-  //     type: chartType,
-  //     data: data,
-  //     color: colors,
-  //     xTitle: xTitle,
-  //     yTitle: yTitle,
-  //     legend: [{ label: yTitle, color: colors[0] }]
-  //   });
+    const chartDiv = card.querySelector('.dashboard-chart');
+    requestAnimationFrame(() => {
+      renderD3Chart(chartDiv, {
+        type: chartType,
+        data: data,
+        color: colors,
+        xTitle: xTitle,
+        yTitle: yTitle,
+        legend: [{ label: yTitle, color: colors[0] }]
+      });
+    });
     
-  //   return card;
-  // }
+    return card;
+  }
 
-  // function updateConditionInfo(condition) {
-  //   const conditionInfo = document.getElementById('conditionInfo');
-  //   if (!conditionInfo) return;
+  function updateConditionInfo(condition) {
+    const conditionInfo = document.getElementById('conditionInfo');
+    if (!conditionInfo) return;
 
-  //   if (condition === 'default') {
-  //     conditionInfo.innerHTML = `
-  //       <div class="info-content">
-  //         <div class="info-icon"><i class="fas fa-info-circle"></i></div>
-  //         <div class="info-text">
-  //           <p class="info-title">Get Started</p>
-  //           <p class="info-description">Choose a condition above to see the patient journey</p>
-  //         </div>
-  //       </div>
-  //     `;
-  //     return;
-  //   }
+    if (condition === 'default') {
+      conditionInfo.innerHTML = `
+        <div class="info-content">
+          <div class="info-icon"><i class="fas fa-info-circle"></i></div>
+          <div class="info-text">
+            <p class="info-title">Get Started</p>
+            <p class="info-description">Choose a condition above to see the patient journey</p>
+          </div>
+        </div>
+      `;
+      return;
+    }
 
-  //   const conditionNames = {
-  //     broken_bone: 'Broken Bone Treatment',
-  //     chest_pain: 'Chest Pain Evaluation',
-  //     head_injury: 'Head Injury Assessment',
-  //     kidney_infection: 'Kidney Infection Care',
-  //     abdominal_pain: 'Abdominal Pain Diagnosis'
-  //   };
+    const conditionNames = {
+      broken_bone: 'Broken Bone Treatment',
+      chest_pain: 'Chest Pain Evaluation',
+      head_injury: 'Head Injury Assessment',
+      kidney_infection: 'Kidney Infection Care',
+      abdominal_pain: 'Abdominal Pain Diagnosis'
+    };
 
-  //   const conditionName = conditionNames[condition] || condition;
+    const conditionName = conditionNames[condition] || condition;
     
-  //   conditionInfo.innerHTML = `
-  //     <div class="info-content">
-  //       <div class="info-icon"><i class="fas fa-route"></i></div>
-  //       <div class="info-text">
-  //         <p class="info-title">${conditionName}</p>
-  //         <p class="info-description">Patient journey path is highlighted. Use room navigation to explore.</p>
-  //       </div>
-  //     </div>
-  //   `;
-  // }
+    conditionInfo.innerHTML = `
+      <div class="info-content">
+        <div class="info-icon"><i class="fas fa-route"></i></div>
+        <div class="info-text">
+          <p class="info-title">${conditionName}</p>
+          <p class="info-description">Patient journey path is highlighted. Use room navigation to explore.</p>
+        </div>
+      </div>
+    `;
+  }
 
   // Theme toggle
   function initializeThemeToggle() {
@@ -1681,13 +3755,13 @@ new TWEEN.Tween(controls.target)
     }
   }
 
-  // function selectCondition(value) {
-  //   const conditionSelect = document.getElementById('conditionSelect');
-  //   if (conditionSelect) {
-  //     conditionSelect.value = value;
-  //     conditionSelect.dispatchEvent(new Event('change'));
-  //   }
-  // }
+  function selectCondition(value) {
+    const conditionSelect = document.getElementById('conditionSelect');
+    if (conditionSelect) {
+      conditionSelect.value = value;
+      conditionSelect.dispatchEvent(new Event('change'));
+    }
+  }
 
   // Keyboard event handling
   document.addEventListener('keydown', (event) => {
@@ -1736,38 +3810,84 @@ new TWEEN.Tween(controls.target)
   animate();
 
   // ... rest of the code ...
+
+  // Add camera position for waiting area
+  setRoomCamera('waiting_area', -3, 5, 24, -3, 0, 24);
+
+  // ... rest of the code ...
 });
 
-// Utility to render a D3 chart (currently supports bar charts; extend for more types)
 function renderD3Chart(container, config) {
-  if (!container || !config || !config.data || !config.data.length) return;
+  // Log container dimensions for debugging
+  console.log(`DEBUG: renderD3Chart called for ${config.title || 'a chart'}. Container dimensions: ${container.clientWidth}x${container.clientHeight}`);
+
+  // If the container is too small, render a message
+  if (container.clientWidth <= 0 || container.clientHeight <= 0) {
+    console.warn('Chart container has zero or negative dimensions. Skipping rendering.');
+    container.innerHTML = '<div style="color: red; padding: 20px;">Chart container not visible or has invalid dimensions.</div>';
+    return;
+  }
 
   // Clear previous content
   container.innerHTML = '';
 
   // Set up dimensions and margins
-  const margin = { top: 40, right: 30, bottom: 60, left: 60 };
-  const aspectRatio = 0.6;
+  // Increased left margin for y-axis label and bottom margin for x-axis label
+  const margin = { top: 40, right: 30, bottom: 70, left: 90 }; 
   const containerWidth = container.clientWidth;
-  const containerHeight = Math.min(containerWidth * aspectRatio, container.clientHeight);
+  const containerHeight = container.clientHeight;
   const width = containerWidth - margin.left - margin.right;
   const height = containerHeight - margin.top - margin.bottom;
 
-  // Create SVG with responsive viewBox
-    const svg = d3.select(container)
-      .append('svg')
-    .attr('class', 'chart-svg')
-    .attr('viewBox', `0 0 ${containerWidth} ${containerHeight}`)
-    .attr('preserveAspectRatio', 'xMidYMid meet');
+  // Ensure that width and height are not negative
+  if (width < 0 || height < 0) {
+    console.warn('Calculated chart dimensions are negative. Adjusting to minimum 0.');
+    const effectiveWidth = Math.max(0, width);
+    const effectiveHeight = Math.max(0, height);
 
-  // Add chart group
-  const g = svg.append('g')
-    .attr('transform', `translate(${margin.left},${margin.top})`);
+    // Clear previous content if dimensions are invalid
+    container.innerHTML = '<div style="color: red; padding: 20px;">Chart area too small to render. Please expand.</div>';
+    return;
+  }
+
+  const svg = d3.select(container).append("svg")
+    .attr("width", containerWidth)
+    .attr("height", containerHeight)
+    .attr("viewBox", `0 0 ${containerWidth} ${containerHeight}`)
+    .attr("preserveAspectRatio", "xMidYMid meet")
+    .append("g")
+    .attr("transform", `translate(${margin.left},${margin.top})`);
+
+  // Chart Title
+  svg.append("text")
+    .attr("x", width / 2)
+    .attr("y", -margin.top / 2)
+    .attr("text-anchor", "middle")
+    .style("font-size", "1.2em")
+    .style("font-weight", "bold")
+    .style("fill", "#ffffff")
+    .text(config.title);
+
+  // Create tooltip div
+  let tooltip = d3.select("body").select("#chart-tooltip");
+  if (tooltip.empty()) {
+    tooltip = d3.select("body").append("div")
+      .attr("id", "chart-tooltip")
+      .style("position", "absolute")
+      .style("background-color", "rgba(0, 0, 0, 0.8)")
+      .style("color", "#fff")
+      .style("padding", "8px")
+      .style("border-radius", "4px")
+      .style("pointer-events", "none")
+      .style("opacity", 0)
+      .style("font-size", "0.9em")
+      .style("z-index", 1000);
+  }
 
   // Process data to ensure valid values
   const processedData = config.data.map(d => ({
     ...d,
-    value: Math.max(0, parseFloat(d.value) || 0), // Ensure non-negative values
+    value: Math.max(0, parseFloat(d.value) || 0),
     label: d.label
   })).filter(d => !isNaN(d.value));
 
@@ -1776,31 +3896,27 @@ function renderD3Chart(container, config) {
     return;
   }
 
-  if (config.type === 'bar') {
-    // For bar charts, ensure y scale starts at 0 and has proper padding
+  if (config.chartType === 'bar') {
     const x = d3.scaleBand()
       .domain(processedData.map(d => d.label))
       .range([0, width])
       .padding(0.2);
 
-    // Calculate y domain with proper padding
     const maxValue = d3.max(processedData, d => d.value);
-    const yPadding = maxValue * 0.1; // 10% padding at top
+    const yPadding = maxValue * 0.1;
     const y = d3.scaleLinear()
       .domain([0, maxValue + yPadding])
       .range([height, 0])
       .nice();
 
-    // Add grid lines
-    g.append('g')
+    svg.append('g')
       .attr('class', 'd3-grid')
       .call(d3.axisLeft(y)
         .ticks(5)
         .tickSize(-width)
         .tickFormat(''));
 
-    // Add axes
-    g.append('g')
+    svg.append('g')
       .attr('class', 'd3-axis x-axis')
       .attr('transform', `translate(0,${height})`)
       .call(d3.axisBottom(x))
@@ -1810,29 +3926,27 @@ function renderD3Chart(container, config) {
       .attr('dy', '.15em')
       .attr('transform', 'rotate(-45)');
 
-    g.append('g')
+    svg.append('g')
       .attr('class', 'd3-axis y-axis')
       .call(d3.axisLeft(y)
         .ticks(5));
 
-    // Add axis labels
-    g.append('text')
+    svg.append('text')
       .attr('class', 'd3-axis-label')
       .attr('x', width / 2)
       .attr('y', height + margin.bottom - 10)
       .style('text-anchor', 'middle')
       .text(config.xTitle || '');
 
-    g.append('text')
+    svg.append('text')
       .attr('class', 'd3-axis-label')
       .attr('transform', 'rotate(-90)')
       .attr('x', -height / 2)
-      .attr('y', -margin.left + 15)
+      .attr('y', -margin.left + 25) // Adjusted y position to prevent cutoff
       .style('text-anchor', 'middle')
       .text(config.yTitle || '');
 
-    // Add bars with proper height calculation
-    const bars = g.selectAll('.d3-bar')
+    const bars = svg.selectAll('.d3-bar')
       .data(processedData)
       .enter()
       .append('rect')
@@ -1840,22 +3954,15 @@ function renderD3Chart(container, config) {
       .attr('x', d => x(d.label))
       .attr('width', x.bandwidth())
       .attr('fill', (d, i) => {
-        if (Array.isArray(config.color)) {
-          return config.color[i % config.color.length];
+        if (Array.isArray(config.colors)) {
+          return config.colors[i % config.colors.length];
         }
-        return config.color || '#4299e1';
+        return config.colors || '#4299e1';
       });
 
-    // Set bar heights after ensuring y scale is properly set up
     bars
       .attr('y', d => y(d.value))
-      .attr('height', d => Math.max(0, height - y(d.value))); // Ensure non-negative height
-
-    // Add hover effects
-    const tooltip = d3.select(container)
-      .append('div')
-      .attr('class', 'd3-tooltip')
-      .style('opacity', 0);
+      .attr('height', d => Math.max(0, height - y(d.value)));
 
     bars
       .on('mouseover', function(event, d) {
@@ -1875,600 +3982,96 @@ function renderD3Chart(container, config) {
       })
       .on('mouseout', function() {
         d3.select(this)
-      .transition()
+          .transition()
           .duration(200)
           .attr('opacity', 1);
 
         tooltip.style('opacity', 0);
       });
 
-    // Add chart title
-    g.append('text')
-      .attr('class', 'chart-title')
-      .attr('x', width / 2)
-      .attr('y', -margin.top / 2)
-      .style('text-anchor', 'middle')
-      .style('font-size', '1.1em')
-      .style('font-weight', '600')
-      .text(config.title || '');
+  } else if (config.chartType === 'doughnut') {
+    const radius = Math.min(width, height) / 2;
+    const innerRadius = radius * 0.6;
+    const outerRadius = radius * 0.9;
 
-    // Add responsive behavior
-    const resizeObserver = new ResizeObserver(entries => {
-      for (const entry of entries) {
-        const newWidth = entry.contentRect.width;
-        const newHeight = Math.min(newWidth * aspectRatio, entry.contentRect.height);
-        
-        svg
-          .attr('viewBox', `0 0 ${newWidth} ${newHeight}`)
-          .attr('width', '100%')
-          .attr('height', '100%');
+    const color = d3.scaleOrdinal()
+      .domain(config.data.map(d => d.label))
+      .range(config.colors || d3.schemeCategory10);
 
-        const newInnerWidth = newWidth - margin.left - margin.right;
-        const newInnerHeight = newHeight - margin.top - margin.bottom;
+    const pie = d3.pie()
+      .value(d => d.value)
+      .sort(null);
 
-        // Update scales
-        x.range([0, newInnerWidth]);
-        y.range([newInnerHeight, 0]);
+    const arc = d3.arc()
+      .innerRadius(innerRadius)
+      .outerRadius(outerRadius);
 
-        // Update axes
-        g.select('.d3-axis.x-axis')
-          .attr('transform', `translate(0,${newInnerHeight})`)
-          .call(d3.axisBottom(x));
+    const gDoughnut = svg.append("g")
+      .attr("transform", `translate(${width / 2},${height / 2})`);
 
-        g.select('.d3-axis.y-axis')
-          .call(d3.axisLeft(y));
+    const arcs = gDoughnut.selectAll(".arc")
+      .data(pie(config.data))
+      .enter().append("g")
+      .attr("class", "arc");
 
-        // Update bars
-        g.selectAll('.d3-bar')
-          .attr('x', d => x(d.label))
-          .attr('width', x.bandwidth())
-      .attr('y', d => y(d.value))
-          .attr('height', d => Math.max(0, newInnerHeight - y(d.value))); // Ensure non-negative height
-      }
-    });
+    arcs.append("path")
+      .attr("d", arc)
+      .attr("fill", d => color(d.data.label))
+      .attr("stroke", "#1e1e1e")
+      .style("stroke-width", "2px")
+      .on("mouseover", function(event, d) {
+        d3.select(this).transition().duration(200).attr("d", d3.arc().innerRadius(innerRadius).outerRadius(outerRadius * 1.08));
+        tooltip.style("opacity", 1)
+          .html(`<strong>${d.data.label}:</strong> ${d.data.value} (${((d.data.value / d3.sum(config.data, p => p.value)) * 100).toFixed(1)}%)`)
+          .style("left", (event.pageX + 10) + "px")
+          .style("top", (event.pageY - 20) + "px");
+      })
+      .on("mouseout", function(event, d) {
+        d3.select(this).transition().duration(200).attr("d", arc);
+        tooltip.style("opacity", 0);
+      });
 
-    resizeObserver.observe(container);
-  } else if (config.type === 'line') {
-    // Handle line charts using the existing renderD3LineChart function
-    renderD3LineChart(container, config.data, {
-      color: config.color,
-      title: config.title,
-      yTitle: config.yTitle
-    });
-  }
-}
-
-
-
-function renderD3LineChart(container, data, config = {}) {
-  console.log('renderD3LineChart called with:', {
-    containerExists: !!container,
-    dataLength: data?.length,
-    config
-  });
-
-  if (!container || !data || !data.length) {
-    console.warn('Invalid input for renderD3LineChart:', { container, dataLength: data?.length });
-    return;
-  }
-
-  // Clear previous content
-  container.innerHTML = '';
-
-
-
-  // Set up dimensions and margins
-  const margin = { top: 60, right: 100, bottom: 70, left: 90 };
-  const aspectRatio = 0.6;
-  const containerWidth = container.clientWidth;
-  const containerHeight = Math.min(containerWidth * aspectRatio, container.clientHeight);
-  const width = containerWidth - margin.left - margin.right;
-  const height = containerHeight - margin.top - margin.bottom;
-
-  // Create SVG with responsive viewBox
-  const svg = d3.select(container)
-    .append('svg')
-    .attr('class', 'chart-svg')
-    .attr('viewBox', `0 0 ${containerWidth} ${containerHeight}`)
-    .attr('preserveAspectRatio', 'xMidYMid meet');
-
-  // Add chart group
-  const g = svg.append('g')
-    .attr('transform', `translate(${margin.left},${margin.top})`);
-
-  // Process data
-  const processedData = data.map(d => ({
-    ...d,
-    date: new Date(d.label),
-    value: parseFloat(d.value) || 0,
-    systolic: parseFloat(d.systolic) || 0,
-    diastolic: parseFloat(d.diastolic) || 0
-  })).filter(d => !isNaN(d.value) || !isNaN(d.systolic));
-
-  // Create scales
-  const x = d3.scaleTime()
-    .domain(d3.extent(processedData, d => d.date))
-    .range([0, width])
-    .nice();
-
-  // For blood pressure chart, use both systolic and diastolic values
-  const isBloodPressure = processedData.some(d => !isNaN(d.systolic));
-  const y = d3.scaleLinear()
-    .domain([
-      0,
-      isBloodPressure 
-        ? Math.max(
-            d3.max(processedData, d => d.systolic || 0),
-            d3.max(processedData, d => d.diastolic || 0)
-          ) * 1.1
-        : d3.max(processedData, d => d.value) * 1.1
-    ])
-    .range([height, 0])
-    .nice();
-
-  // Add grid lines
-  g.append('g')
-    .attr('class', 'd3-grid')
-    .call(d3.axisLeft(y)
-      .ticks(5)
-      .tickSize(-width)
-      .tickFormat(''));
-
-  // Add axes
-  g.append('g')
-    .attr('class', 'd3-axis x-axis')
-    .attr('transform', `translate(0,${height})`)
-    .call(d3.axisBottom(x)
-      .ticks(5)
-      .tickFormat(d3.timeFormat('%b %d')));
-
-  g.append('g')
-    .attr('class', 'd3-axis y-axis')
-    .call(d3.axisLeft(y)
-      .ticks(5));
-
-  // Add axis labels
-  g.append('text')
-    .attr('class', 'd3-axis-label')
-    .attr('x', width / 2)
-    .attr('y', height + margin.bottom - 15)
-    .style('text-anchor', 'middle')
-    .style('fill', 'var(--text-primary)')
-    .style('font-size', '0.9rem')
-    .style('font-weight', '500')
-    .text('Date');
-
-  g.append('text')
-    .attr('class', 'd3-axis-label')
-    .attr('transform', `rotate(-90) translate(${-height/2}, ${-margin.left + 25})`)
-    .style('text-anchor', 'middle')
-    .style('fill', 'var(--text-primary)')
-    .style('font-size', '0.9rem')
-    .style('font-weight', '500')
-    .text(config.yTitle || 'Value');
-
-  // Create line generator
-  const line = d3.line()
-    .x(d => x(d.date))
-    .y(d => y(isBloodPressure ? d.systolic : d.value))
-    .curve(d3.curveMonotoneX);
-
-  // Add the line path
-  g.append('path')
-    .datum(processedData)
-    .attr('class', 'd3-line')
-    .attr('fill', 'none')
-    .attr('stroke', config.color || '#4299e1')
-    .attr('stroke-width', 2)
-    .attr('d', line);
-
-  // Add data points
-  const points = g.selectAll('.data-point')
-    .data(processedData)
-    .enter()
-    .append('circle')
-    .attr('class', 'data-point')
-    .attr('cx', d => x(d.date))
-    .attr('cy', d => y(isBloodPressure ? d.systolic : d.value))
-    .attr('r', 4)
-    .attr('fill', config.color || '#4299e1')
-    .attr('opacity', 0.7);
-
-  // For blood pressure, add diastolic line and points
-  if (isBloodPressure) {
-    const diastolicLine = d3.line()
-      .x(d => x(d.date))
-      .y(d => y(d.diastolic))
-      .curve(d3.curveMonotoneX);
-
-    g.append('path')
-      .datum(processedData)
-      .attr('class', 'd3-line diastolic')
-      .attr('fill', 'none')
-      .attr('stroke', '#f6ad55')
-      .attr('stroke-width', 2)
-      .attr('d', diastolicLine);
-
-    g.selectAll('.diastolic-point')
-      .data(processedData)
-      .enter()
-      .append('circle')
-      .attr('class', 'data-point diastolic')
-      .attr('cx', d => x(d.date))
-      .attr('cy', d => y(d.diastolic))
-      .attr('r', 4)
-      .attr('fill', '#f6ad55')
-      .attr('opacity', 0.7);
+    // Add text labels to the arcs
+    arcs.append("text")
+      .attr("transform", d => `translate(${arc.centroid(d)})`)
+      .attr("dy", "0.35em")
+      .style("text-anchor", "middle")
+      .style("font-size", "0.8em")
+      .style("fill", "#ffffff")
+      .style("pointer-events", "none")
+      .style("text-shadow", "1px 1px 2px rgba(0,0,0,0.6)") // Adding text shadow
+      .text(d => {
+        const percentage = (d.data.value / d3.sum(config.data, p => p.value)) * 100;
+        return percentage > 5 ? `${d.data.label} (${percentage.toFixed(1)}%)` : '';
+      });
 
     // Add legend
-    const legend = g.append('g')
-      .attr('class', 'd3-legend')
-      .attr('transform', `translate(${width - 140}, 30)`);
+    const legend = svg.append("g")
+      .attr("class", "legend")
+      .attr("transform", `translate(${width - 120}, 20)`);
 
-    // Add legend background
-    legend.append('rect')
-      .attr('x', -15)
-      .attr('y', -15)
-      .attr('width', 130)
-      .attr('height', 70)
-      .attr('fill', 'var(--glass-bg)')
-      .attr('rx', 8)
-      .attr('ry', 8)
-      .attr('stroke', 'var(--glass-border)')
-      .attr('stroke-width', 1);
+    const legendRectSize = 10;
+    const legendSpacing = 4;
 
-    // Add legend items
-    const systolicGroup = legend.append('g')
-      .attr('class', 'systolic')
-      .attr('transform', 'translate(0, 0)');
+    const legendItems = legend.selectAll(".legend-item")
+      .data(color.domain())
+      .enter().append("g")
+      .attr("class", "legend-item")
+      .attr("transform", (d, i) => `translate(0, ${i * (legendRectSize + legendSpacing)})`);
 
-    systolicGroup.append('line')
-      .attr('x1', 0)
-      .attr('y1', 6)
-      .attr('x2', 20)
-      .attr('y2', 6)
-      .attr('stroke', config.color || '#4299e1')
-      .attr('stroke-width', 2);
+    legendItems.append("rect")
+      .attr("width", legendRectSize)
+      .attr("height", legendRectSize)
+      .attr("fill", color);
 
-    systolicGroup.append('text')
-      .attr('x', 30)
-      .attr('y', 10)
-      .attr('fill', 'var(--text-primary)')
-      .attr('font-size', '0.9rem')
-      .text('Systolic');
-
-    const diastolicGroup = legend.append('g')
-      .attr('class', 'diastolic')
-      .attr('transform', 'translate(0, 25)');
-
-    diastolicGroup.append('line')
-      .attr('x1', 0)
-      .attr('y1', 6)
-      .attr('x2', 20)
-      .attr('y2', 6)
-      .attr('stroke', '#f6ad55')
-      .attr('stroke-width', 2);
-
-    diastolicGroup.append('text')
-      .attr('x', 30)
-      .attr('y', 10)
-      .attr('fill', 'var(--text-primary)')
-      .attr('font-size', '0.9rem')
-      .text('Diastolic');
+    legendItems.append("text")
+      .attr("x", legendRectSize + legendSpacing)
+      .attr("y", legendRectSize / 2)
+      .attr("dy", "0.35em")
+      .style("font-size", "0.8em")
+      .style("fill", "#ffffff")
+      .text(d => d);
   }
-
-  // Add chart title
-  g.append('text')
-    .attr('class', 'chart-title')
-    .attr('x', width / 2)
-    .attr('y', -margin.top / 2)
-    .style('text-anchor', 'middle')
-    .style('font-size', '1.2rem')
-    .style('font-weight', '600')
-    .style('fill', 'var(--text-primary)')
-    .text(config.title || '');
-
-  // Add hover effects and tooltip
-
-
-  const handleMouseOver = (event, d) => {
-    d3.select(event.target)
-      .transition()
-      .duration(200)
-      .attr('r', 6)
-      .attr('opacity', 1);
-
-    tooltip
-      .style('opacity', 1)
-      .html(`
-        <div class="tooltip-title">${d3.timeFormat('%b %d, %Y')(d.date)}</div>
-        ${isBloodPressure 
-          ? `<div class="tooltip-value">Systolic: ${d.systolic} mmHg</div>
-             <div class="tooltip-value">Diastolic: ${d.diastolic} mmHg</div>`
-          : `<div class="tooltip-value">${d.value.toFixed(1)} ${config.yTitle || ''}</div>`
-        }
-      `)
-      .style('left', `${event.pageX + 10}px`)
-      .style('top', `${event.pageY - 28}px`);
-  };
-
-  const handleMouseOut = (event) => {
-    d3.select(event.target)
-      .transition()
-      .duration(200)
-      .attr('r', 4)
-      .attr('opacity', 0.7);
-
-    tooltip.style('opacity', 0);
-  };
-
-  points.on('mouseover', handleMouseOver)
-    .on('mouseout', handleMouseOut);
-
-  if (isBloodPressure) {
-    g.selectAll('.diastolic-point')
-      .on('mouseover', handleMouseOver)
-      .on('mouseout', handleMouseOut);
-  }
-
-  // Add responsive behavior
-  const resizeObserver = new ResizeObserver(entries => {
-    for (const entry of entries) {
-      const newWidth = entry.contentRect.width;
-      const newHeight = Math.min(newWidth * aspectRatio, entry.contentRect.height);
-      
-      svg
-        .attr('viewBox', `0 0 ${newWidth} ${newHeight}`)
-        .attr('width', '100%')
-        .attr('height', '100%');
-
-      const newInnerWidth = newWidth - margin.left - margin.right;
-      const newInnerHeight = newHeight - margin.top - margin.bottom;
-
-      // Update scales
-      x.range([0, newInnerWidth]);
-      y.range([newInnerHeight, 0]);
-
-      // Update axes
-      g.select('.x-axis')
-        .attr('transform', `translate(0,${newInnerHeight})`)
-        .call(d3.axisBottom(x)
-          .ticks(5)
-          .tickFormat(d3.timeFormat('%b %d')));
-
-      g.select('.y-axis')
-        .call(d3.axisLeft(y)
-          .ticks(5));
-
-      // Update line
-      g.select('.d3-line')
-        .attr('d', line);
-
-      // Update points
-      g.selectAll('.data-point')
-        .attr('cx', d => x(d.date))
-        .attr('cy', d => y(isBloodPressure ? d.systolic : d.value));
-
-      // Update legend position
-      if (isBloodPressure) {
-        g.select('.d3-legend')
-          .attr('transform', `translate(${newInnerWidth - 140}, 30)`);
-      }
-
-      // Update y-axis label position
-      g.select('.d3-axis-label[transform*="rotate(-90)"]')
-        .attr('transform', `rotate(-90) translate(${-newInnerHeight/2}, ${-margin.left + 25})`);
-    }
-  });
-
-  resizeObserver.observe(container);
-
-  // Add zoom behavior
-  const zoom = d3.zoom()
-    .scaleExtent([0.5, 10])
-    .translateExtent([[0, 0], [width, height]])
-    .on('zoom', (event) => {
-      const newX = event.transform.rescaleX(x);
-      const newY = event.transform.rescaleY(y);
-
-      // Update axes
-      g.select('.x-axis').call(d3.axisBottom(newX));
-      g.select('.y-axis').call(d3.axisLeft(newY));
-
-      // Update line
-      const newLine = d3.line()
-        .x(d => newX(d.date))
-        .y(d => newY(isBloodPressure ? d.systolic : d.value))
-        .curve(d3.curveMonotoneX);
-
-      g.select('.d3-line')
-        .attr('d', newLine);
-
-      // Update points
-      g.selectAll('.data-point')
-        .attr('cx', d => newX(d.date))
-        .attr('cy', d => newY(isBloodPressure ? d.systolic : d.value));
-
-      if (isBloodPressure) {
-        const newDiastolicLine = d3.line()
-          .x(d => newX(d.date))
-          .y(d => newY(d.diastolic))
-          .curve(d3.curveMonotoneX);
-
-        g.selectAll('.d3-line.diastolic')
-          .attr('d', newDiastolicLine);
-
-        g.selectAll('.diastolic-point')
-          .attr('cx', d => newX(d.date))
-          .attr('cy', d => newY(d.diastolic));
-      }
-    });
-
-  svg.call(zoom);
-
-  // Add brush for selection
-  const brush = d3.brushX()
-    .extent([[0, 0], [width, height]])
-    .on('end', (event) => {
-      if (!event.selection) return;
-
-      const [x0, x1] = event.selection;
-      const newDomain = [x.invert(x0), x.invert(x1)];
-      
-      // Update x scale domain
-      x.domain(newDomain);
-      
-      // Update axes and lines
-      g.select('.x-axis').call(d3.axisBottom(x));
-      g.select('.d3-line').attr('d', line);
-      g.selectAll('.data-point')
-        .attr('cx', d => x(d.date))
-        .attr('cy', d => y(isBloodPressure ? d.systolic : d.value));
-
-      if (isBloodPressure) {
-        g.selectAll('.d3-line.diastolic')
-          .attr('d', diastolicLine);
-        g.selectAll('.diastolic-point')
-          .attr('cx', d => x(d.date))
-          .attr('cy', d => y(d.diastolic));
-      }
-    });
-
-  // Add brush group
-  const brushGroup = g.append('g')
-    .attr('class', 'brush')
-    .call(brush);
-
-  // Enhanced tooltip with more information
-  const tooltip = d3.select(container)
-    .append('div')
-    .attr('class', 'd3-tooltip')
-    .style('opacity', 0);
-
-  // Add vertical line for hover
-  const hoverLine = g.append('line')
-    .attr('class', 'hover-line')
-    .attr('stroke', 'var(--text-secondary)')
-    .attr('stroke-width', 1)
-    .attr('stroke-dasharray', '4,4')
-    .style('opacity', 0);
-
-  // Enhanced mouse move handler
-  const handleMouseMove = (event) => {
-    const [mouseX, mouseY] = d3.pointer(event);
-    const x0 = x.invert(mouseX);
-    
-    // Find closest data point
-    const bisect = d3.bisector(d => d.date).left;
-    const i = bisect(processedData, x0, 1);
-    const d0 = processedData[i - 1];
-    const d1 = processedData[i];
-    const d = x0 - d0.date > d1.date - x0 ? d1 : d0;
-
-    // Update hover line
-    hoverLine
-      .attr('x1', x(d.date))
-      .attr('x2', x(d.date))
-      .attr('y1', 0)
-      .attr('y2', height)
-      .style('opacity', 1);
-
-    // Update tooltip using the existing tooltip instance
-    tooltip
-      .style('opacity', 1)
-      .html(`
-        <div class="tooltip-title">
-          <i class="fas fa-calendar"></i>
-          ${d3.timeFormat('%B %d, %Y')(d.date)}
-        </div>
-        ${isBloodPressure 
-          ? `<div class="tooltip-value">
-               <i class="fas fa-heartbeat"></i>
-               Systolic: ${d.systolic} mmHg
-             </div>
-             <div class="tooltip-value">
-               <i class="fas fa-heartbeat"></i>
-               Diastolic: ${d.diastolic} mmHg
-             </div>
-             <div class="tooltip-value">
-               <i class="fas fa-calculator"></i>
-               Pulse Pressure: ${d.systolic - d.diastolic} mmHg
-             </div>`
-          : `<div class="tooltip-value">
-               <i class="fas fa-chart-line"></i>
-               ${d.value.toFixed(1)} ${config.yTitle || ''}
-             </div>
-             <div class="tooltip-value">
-               <i class="fas fa-clock"></i>
-               Time: ${d3.timeFormat('%I:%M %p')(d.date)}
-             </div>`
-        }
-        <div class="tooltip-actions">
-          <button class="tooltip-action-btn" onclick="zoomToPoint(${d.date.getTime()})">
-            <i class="fas fa-search-plus"></i> Zoom
-          </button>
-          <button class="tooltip-action-btn" onclick="resetZoom()">
-            <i class="fas fa-undo"></i> Reset
-          </button>
-        </div>
-      `)
-      .style('left', `${event.pageX + 10}px`)
-      .style('top', `${event.pageY - 28}px`);
-  };
-
-  // Add mouse move handler to chart area
-  svg.on('mousemove', handleMouseMove)
-    .on('mouseleave', () => {
-      hoverLine.style('opacity', 0);
-      tooltip.style('opacity', 0);
-    });
-
-  // Add zoom to point function
-  window.zoomToPoint = (timestamp) => {
-    const point = new Date(timestamp);
-    const scale = 2;
-    const x0 = x(point);
-    const y0 = y(isBloodPressure ? processedData.find(d => d.date.getTime() === timestamp).systolic : processedData.find(d => d.date.getTime() === timestamp).value);
-    
-    svg.transition()
-      .duration(750)
-      .call(zoom.transform, d3.zoomIdentity
-        .translate(width/2, height/2)
-        .scale(scale)
-        .translate(-x0, -y0));
-  };
-
-  // Add reset zoom function
-  window.resetZoom = () => {
-    svg.transition()
-      .duration(750)
-      .call(zoom.transform, d3.zoomIdentity);
-  };
-
-  // Add keyboard shortcuts
-  document.addEventListener('keydown', (event) => {
-    if (event.key === 'r' || event.key === 'R') {
-      resetZoom();
-    }
-  });
-
-  // Add legend interactivity
-  if (isBloodPressure) {
-    const legend = g.select('.d3-legend');
-    
-    legend.selectAll('g')
-      .on('click', function(event, d) {
-        const lineClass = this.classList.contains('systolic') ? '.d3-line.systolic' : '.d3-line.diastolic';
-        const pointsClass = this.classList.contains('systolic') ? '.data-point.systolic' : '.data-point.diastolic';
-        
-        const isVisible = d3.select(lineClass).style('opacity') !== '0';
-        d3.select(lineClass).style('opacity', isVisible ? 0 : 1);
-        d3.selectAll(pointsClass).style('opacity', isVisible ? 0 : 0.7);
-        d3.select(this).style('opacity', isVisible ? 0.5 : 1);
-      });
-  }
-
-  // ... rest of the existing code (resize observer, etc.) ...
 }
 
 // ... existing code ...
