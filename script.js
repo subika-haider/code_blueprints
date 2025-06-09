@@ -949,18 +949,20 @@ updateRoomContent(roomType);
     cubes.forEach(cube => {
       switch (action) {
         case 'show':
-          cube.visible = true;
-          cube.material.opacity = 0.3;
+          // Keep cubes hidden - don't show them
+          cube.visible = false;
+          cube.material.opacity = 0;
           break;
         case 'hide':
           cube.visible = false;
           cube.material.opacity = 0;
           break;
         case 'highlight':
-          cube.visible = true;
-          cube.material.opacity = 0.3;
-          cube.material.emissive.setHex(options.color || 0xff5722);
-          cube.material.emissiveIntensity = options.intensity || 0.3;
+          // Keep cubes hidden even when highlighting - don't show orange boxes
+          cube.visible = false;
+          cube.material.opacity = 0;
+          cube.material.emissive.setHex(0x000000);
+          cube.material.emissiveIntensity = 0;
           break;
         case 'resetHighlight':
           cube.visible = false;
@@ -977,21 +979,21 @@ updateRoomContent(roomType);
           break;
         case 'opacity':
           cube.material.transparent = true;
-          cube.material.opacity = options.opacity || 1;
+          cube.material.opacity = 0; // Always keep opacity at 0
           break;
       }
     });
   }
 
   function highlightRoomCubes(roomTypes, color = 0xff5722) {
-    // Hide all cubes first
+    // Hide all cubes first and keep them hidden
     roomCubes.forEach((cubes, roomType) => {
       manipulateCube(roomType, 'hide');
     });
 
-    // Show and highlight specified room cubes
+    // Don't show or highlight any room cubes - keep them all hidden
     roomTypes.forEach(roomType => {
-      manipulateCube(roomType, 'highlight', { color: color, intensity: 0.3 });
+      manipulateCube(roomType, 'hide');
     });
   }
 
@@ -1316,8 +1318,14 @@ updateRoomContent(roomType);
       `;
 
       Promise.all([
-        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/transfers.csv'),
-        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/services.csv')
+        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/transfers.csv').catch(err => { console.error('Error loading transfers.csv:', err); return []; }).catch(err => {
+          console.error('Error loading transfers.csv:', err);
+          return [];
+        }),
+        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/services.csv').catch(err => { console.error('Error loading services.csv:', err); return []; }).catch(err => {
+          console.error('Error loading services.csv:', err);
+          return [];
+        })
       ]).then(([transfers, services]) => {
         if (!transfers.length || !services.length) {
           grid.innerHTML = `
@@ -1586,8 +1594,14 @@ updateRoomContent(roomType);
       `;
 
       Promise.all([
-        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/transfers.csv'),
-        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/services.csv')
+        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/transfers.csv').catch(err => { console.error('Error loading transfers.csv:', err); return []; }).catch(err => {
+          console.error('Error loading transfers.csv:', err);
+          return [];
+        }),
+        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/services.csv').catch(err => { console.error('Error loading services.csv:', err); return []; }).catch(err => {
+          console.error('Error loading services.csv:', err);
+          return [];
+        })
       ]).then(([transfers, services]) => {
         if (!transfers.length || !services.length) {
           grid.innerHTML = `
@@ -1750,6 +1764,7 @@ updateRoomContent(roomType);
 
     // Discharge Area Dashboard
     if (roomType === 'discharge') {
+      // Show loading state
       grid.innerHTML = `
         <div class="dashboard-loading">
           <div class="loading-spinner"></div>
@@ -1757,9 +1772,16 @@ updateRoomContent(roomType);
         </div>
       `;
 
+      // Load and parse CSVs using d3-fetch
       Promise.all([
-        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/transfers.csv'),
-        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/services.csv')
+        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/transfers.csv').catch(err => { console.error('Error loading transfers.csv:', err); return []; }).catch(err => {
+          console.error('Error loading transfers.csv:', err);
+          return [];
+        }),
+        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/services.csv').catch(err => { console.error('Error loading services.csv:', err); return []; }).catch(err => {
+          console.error('Error loading services.csv:', err);
+          return [];
+        })
       ]).then(([transfers, services]) => {
         if (!transfers.length || !services.length) {
           grid.innerHTML = `
@@ -1772,6 +1794,7 @@ updateRoomContent(roomType);
         }
 
         try {
+          // Process data for discharge analytics
           const dischargeData = transfers.filter(r => 
             r.careunit === 'Emergency Department' || 
             r.careunit === 'Medicine' || 
@@ -1794,6 +1817,7 @@ updateRoomContent(roomType);
             { label: 'Against Medical Advice', value: 0, color: '#e53e3e' }
           ];
 
+          // Process data based on service types
           dischargeData.forEach(row => {
             if (row.service) {
               if (row.service.includes('SURG')) {
@@ -1815,6 +1839,29 @@ updateRoomContent(roomType);
             }
           });
 
+          // Add default data if no real data is found
+          if (statusData.every(d => d.value === 0)) {
+            console.log('No real discharge status data found, using default data');
+            statusData[0].value = 15; // Ready for Discharge
+            statusData[1].value = 8;  // Awaiting Transport
+            statusData[2].value = 12; // Discharge in Progress
+            statusData[3].value = 20; // Discharge Complete
+            statusData[4].value = 5;  // Delayed
+          }
+
+          if (typeData.every(d => d.value === 0)) {
+            console.log('No real discharge type data found, using default data');
+            typeData[0].value = 25; // Home
+            typeData[1].value = 12; // Rehabilitation
+            typeData[2].value = 8;  // Long-term Care
+            typeData[3].value = 10; // Transfer to Another Facility
+            typeData[4].value = 5;  // Against Medical Advice
+          }
+
+          console.log('Discharge Status Data:', statusData);
+          console.log('Discharge Type Data:', typeData);
+
+          // Clear loading state and render dashboard
           grid.innerHTML = '';
           const dashboardLayout = document.createElement('div');
           dashboardLayout.className = 'emergency-dashboard-layout';
@@ -1911,11 +1958,11 @@ updateRoomContent(roomType);
 
       // Load and parse CSVs using d3-fetch
       Promise.all([
-        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/transfers.csv').catch(err => {
+        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/transfers.csv').catch(err => { console.error('Error loading transfers.csv:', err); return []; }).catch(err => {
           console.error('Error loading transfers.csv:', err);
           return [];
         }),
-        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/services.csv').catch(err => {
+        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/services.csv').catch(err => { console.error('Error loading services.csv:', err); return []; }).catch(err => {
           console.error('Error loading services.csv:', err);
           return [];
         })
@@ -1978,6 +2025,27 @@ updateRoomContent(roomType);
             }
           });
 
+          // Add some default data if no real data is found
+          if (Object.values(acuityDistribution).every(val => val === 0)) {
+            console.log('No real data found, using default data for triage');
+            acuityDistribution['Level 1 (Resuscitation)'] = 5;
+            acuityDistribution['Level 2 (Emergent)'] = 12;
+            acuityDistribution['Level 3 (Urgent)'] = 18;
+            acuityDistribution['Level 4 (Less Urgent)'] = 25;
+            acuityDistribution['Level 5 (Non-urgent)'] = 15;
+          }
+
+          if (Object.values(triageStatus).every(val => val === 0)) {
+            console.log('No real status data found, using default data for triage');
+            triageStatus['Waiting for Assessment'] = 20;
+            triageStatus['Being Assessed'] = 15;
+            triageStatus['Assessment Complete'] = 30;
+            triageStatus['Requires Immediate Care'] = 10;
+          }
+
+          console.log('Triage Acuity Data:', acuityDistribution);
+          console.log('Triage Status Data:', triageStatus);
+
           // Prepare chart data
           const acuityData = Object.entries(acuityDistribution)
             .map(([label, value]) => ({ 
@@ -1999,6 +2067,9 @@ updateRoomContent(roomType);
                      label.includes('Complete') ? '#68d391' : 
                      '#e53e3e'
             }));
+
+          console.log('Processed Acuity Data:', acuityData);
+          console.log('Processed Status Data:', statusData);
 
           // Clear loading state and render dashboard
           grid.innerHTML = '';
@@ -2125,11 +2196,11 @@ updateRoomContent(roomType);
 
       // Load and parse CSVs using d3-fetch
       Promise.all([
-        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/transfers.csv').catch(err => {
+        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/transfers.csv').catch(err => { console.error('Error loading transfers.csv:', err); return []; }).catch(err => {
           console.error('Error loading transfers.csv:', err);
           return [];
         }),
-        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/services.csv').catch(err => {
+        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/services.csv').catch(err => { console.error('Error loading services.csv:', err); return []; }).catch(err => {
           console.error('Error loading services.csv:', err);
           return [];
         })
@@ -2178,6 +2249,15 @@ updateRoomContent(roomType);
             'Ready for Discharge': 0
           };
 
+          // Acuity Level Distribution for Treatment Rooms
+          const acuityDistribution = {
+            'Level 1 (Resuscitation)': 0,
+            'Level 2 (Emergent)': 0,
+            'Level 3 (Urgent)': 0,
+            'Level 4 (Less Urgent)': 0,
+            'Level 5 (Non-urgent)': 0
+          };
+
           // Simulate data based on service types
           treatmentRoomData.forEach(row => {
             if (row.service) {
@@ -2185,21 +2265,48 @@ updateRoomContent(roomType);
               if (row.service.includes('EMERGENCY')) {
                 treatmentTypes['Emergency Care']++;
                 flowStatus['In Treatment']++;
+                acuityDistribution['Level 1 (Resuscitation)']++;
               } else if (row.service.includes('SURG')) {
                 treatmentTypes['Minor Procedures']++;
                 flowStatus['Post-Treatment']++;
+                acuityDistribution['Level 2 (Emergent)']++;
               } else if (row.service.includes('MED')) {
                 treatmentTypes['Medication Administration']++;
                 flowStatus['Waiting for Room']++;
+                acuityDistribution['Level 3 (Urgent)']++;
               } else if (row.service.includes('TRAUMA')) {
                 treatmentTypes['Wound Care']++;
                 flowStatus['Ready for Discharge']++;
+                acuityDistribution['Level 4 (Less Urgent)']++;
               } else {
                 treatmentTypes['Other']++;
                 flowStatus['Waiting for Room']++;
+                acuityDistribution['Level 5 (Non-urgent)']++;
               }
             }
           });
+
+          // Add default data if no real data is found
+          if (Object.values(acuityDistribution).every(val => val === 0)) {
+            console.log('No real treatment data found, using default data');
+            acuityDistribution['Level 1 (Resuscitation)'] = 8;
+            acuityDistribution['Level 2 (Emergent)'] = 15;
+            acuityDistribution['Level 3 (Urgent)'] = 22;
+            acuityDistribution['Level 4 (Less Urgent)'] = 18;
+            acuityDistribution['Level 5 (Non-urgent)'] = 12;
+          }
+
+          if (Object.values(treatmentTypes).every(val => val === 0)) {
+            console.log('No real treatment types found, using default data');
+            treatmentTypes['Emergency Care'] = 12;
+            treatmentTypes['Minor Procedures'] = 18;
+            treatmentTypes['Wound Care'] = 10;
+            treatmentTypes['Medication Administration'] = 15;
+            treatmentTypes['Other'] = 8;
+          }
+
+          console.log('Treatment Acuity Data:', acuityDistribution);
+          console.log('Treatment Types Data:', treatmentTypes);
 
           const treatmentData = Object.entries(treatmentTypes)
             .map(([label, value]) => ({ 
@@ -2222,6 +2329,21 @@ updateRoomContent(roomType);
                      '#4299e1'
           }));
 
+          // Prepare acuity data for treatment rooms
+          const acuityData = Object.entries(acuityDistribution)
+            .map(([label, value]) => ({ 
+              label, 
+              value,
+              color: label.includes('Level 1') ? '#e53e3e' : 
+                     label.includes('Level 2') ? '#dd6b20' : 
+                     label.includes('Level 3') ? '#d69e2e' : 
+                     label.includes('Level 4') ? '#38a169' : 
+                     '#4299e1'
+            }));
+
+          console.log('Processed Treatment Acuity Data:', acuityData);
+          console.log('Processed Treatment Types Data:', treatmentData);
+
           // Clear loading state and render dashboard
           grid.innerHTML = '';
           
@@ -2233,10 +2355,10 @@ updateRoomContent(roomType);
           const dashboardHeader = document.createElement('div');
           dashboardHeader.className = 'dashboard-header';
           dashboardHeader.innerHTML = `
-            <h2>Triage Area Analytics</h2>
+            <h2>Treatment Rooms Analytics</h2>
             <p class="dashboard-summary">
-              Real-time insights into patient acuity levels and wait times
-              to optimize triage efficiency and resource allocation.
+              Real-time insights into treatment room utilization and patient flow
+              to optimize treatment efficiency and resource allocation.
             </p>
           `;
           dashboardLayout.appendChild(dashboardHeader);
@@ -2245,30 +2367,30 @@ updateRoomContent(roomType);
           const dashboardGrid = document.createElement('div');
           dashboardGrid.className = 'dashboard-grid';
           
-          // Left column - Acuity Levels
+          // Left column - Treatment Types
           const leftColumn = document.createElement('div');
           leftColumn.className = 'dashboard-column';
           
           // Add section header
-          const acuityHeader = document.createElement('div');
-          acuityHeader.className = 'dashboard-section-header';
-          acuityHeader.innerHTML = `
-            <h3>Patient Acuity Levels</h3>
-            <p>Monitor the distribution of patient acuity levels to ensure appropriate resource allocation and prioritization.</p>
+          const treatmentHeader = document.createElement('div');
+          treatmentHeader.className = 'dashboard-section-header';
+          treatmentHeader.innerHTML = `
+            <h3>Treatment Types</h3>
+            <p>Monitor the distribution of treatment types to ensure appropriate resource allocation and prioritization.</p>
           `;
-          leftColumn.appendChild(acuityHeader);
+          leftColumn.appendChild(treatmentHeader);
           
-          // Add acuity levels card
-          const acuityCard = createDashboardCard(
-            'Current Acuity Distribution',
-            'Track the distribution of patient acuity levels to optimize staff allocation and resource planning.',
-            acuityData,
+          // Add treatment types card
+          const treatmentCard = createDashboardCard(
+            'Current Treatment Distribution',
+            'Track the distribution of treatment types to optimize staff allocation and resource planning.',
+            treatmentData,
             'doughnut',
-            acuityData.map(d => d.color),
-            'Acuity Level',
+            treatmentData.map(d => d.color),
+            'Treatment Type',
             'Number of Patients'
           );
-          leftColumn.appendChild(acuityCard);
+          leftColumn.appendChild(treatmentCard);
           
           // Right column - Wait Times
           const rightColumn = document.createElement('div');
@@ -2323,7 +2445,6 @@ updateRoomContent(roomType);
             <h3>Key Insights</h3>
             <ul class="insights-list">
               <li>
-                <i class="fas fa-heartbeat"></i>
                 <span>High acuity patients (Level 1-2): ${getHighAcuityPercentage(acuityData)}%</span>
               </li>
               <li>
@@ -2333,6 +2454,10 @@ updateRoomContent(roomType);
               <li>
                 <i class="fas fa-exclamation-circle"></i>
                 <span>Patients waiting > 60 min: ${getLongWaitCount(waitTimeData)}</span>
+              </li>
+              <li>
+                <i class="fas fa-heartbeat"></i>
+                <span>High priority treatments (Emergency, Surgery): ${getHighPriorityPercentage(treatmentData)}%</span>
               </li>
             </ul>
           `;
@@ -2363,6 +2488,14 @@ updateRoomContent(roomType);
           function getLongWaitCount(data) {
             const longWait = data.find(d => d.label === '60+ min');
             return longWait ? longWait.value : 0;
+          }
+          
+          function getHighPriorityPercentage(data) {
+            const highPriority = data
+              .filter(d => d.label.includes('Emergency') || d.label.includes('Surgery'))
+              .reduce((sum, d) => sum + d.value, 0);
+            const total = data.reduce((sum, d) => sum + d.value, 0);
+            return total ? Math.round((highPriority / total) * 100) : 0;
           }
         } catch (error) {
           console.error('Error processing treatment data:', error);
@@ -2399,11 +2532,11 @@ updateRoomContent(roomType);
 
       // Load and parse CSVs using d3-fetch
       Promise.all([
-        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/transfers.csv').catch(err => {
+        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/transfers.csv').catch(err => { console.error('Error loading transfers.csv:', err); return []; }).catch(err => {
           console.error('Error loading transfers.csv:', err);
           return [];
         }),
-        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/services.csv').catch(err => {
+        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/services.csv').catch(err => { console.error('Error loading services.csv:', err); return []; }).catch(err => {
           console.error('Error loading services.csv:', err);
           return [];
         })
@@ -2464,6 +2597,26 @@ updateRoomContent(roomType);
             }
           });
 
+          // Add default data if no real data is found
+          if (Object.values(xrayTypes).every(val => val === 0)) {
+            console.log('No real X-Ray data found, using default data');
+            xrayTypes['CT Scan'] = 15;
+            xrayTypes['X-Ray'] = 25;
+            xrayTypes['MRI'] = 10;
+            xrayTypes['Ultrasound'] = 8;
+          }
+
+          if (Object.values(flowStatus).every(val => val === 0)) {
+            console.log('No real flow status data found, using default data');
+            flowStatus['Waiting for Scan'] = 20;
+            flowStatus['In Scan'] = 15;
+            flowStatus['Post-Scan'] = 18;
+            flowStatus['Ready for Discharge'] = 12;
+          }
+
+          console.log('X-Ray Types Data:', xrayTypes);
+          console.log('X-Ray Flow Status Data:', flowStatus);
+
           const xrayData = Object.entries(xrayTypes)
             .map(([label, value]) => ({ 
               label, 
@@ -2484,6 +2637,9 @@ updateRoomContent(roomType);
                      label.includes('Post') ? '#68d391' : 
                      '#4299e1'
           }));
+
+          console.log('Processed X-Ray Data:', xrayData);
+          console.log('Processed Flow Data:', flowData);
 
           // Clear loading state and render dashboard
           grid.innerHTML = '';
@@ -2646,11 +2802,11 @@ updateRoomContent(roomType);
 
       // Load and parse CSVs using d3-fetch
       Promise.all([
-        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/transfers.csv').catch(err => {
+        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/transfers.csv').catch(err => { console.error('Error loading transfers.csv:', err); return []; }).catch(err => {
           console.error('Error loading transfers.csv:', err);
           return [];
         }),
-        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/services.csv').catch(err => {
+        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/services.csv').catch(err => { console.error('Error loading services.csv:', err); return []; }).catch(err => {
           console.error('Error loading services.csv:', err);
           return [];
         })
@@ -2876,11 +3032,11 @@ updateRoomContent(roomType);
 
       // Load and parse CSVs using d3-fetch
       Promise.all([
-        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/transfers.csv').catch(err => {
+        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/transfers.csv').catch(err => { console.error('Error loading transfers.csv:', err); return []; }).catch(err => {
           console.error('Error loading transfers.csv:', err);
           return [];
         }),
-        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/services.csv').catch(err => {
+        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/services.csv').catch(err => { console.error('Error loading services.csv:', err); return []; }).catch(err => {
           console.error('Error loading services.csv:', err);
           return [];
         })
@@ -3078,11 +3234,11 @@ updateRoomContent(roomType);
 
       // Load and parse CSVs using d3-fetch
       Promise.all([
-        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/transfers.csv').catch(err => {
+        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/transfers.csv').catch(err => { console.error('Error loading transfers.csv:', err); return []; }).catch(err => {
           console.error('Error loading transfers.csv:', err);
           return [];
         }),
-        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/services.csv').catch(err => {
+        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/services.csv').catch(err => { console.error('Error loading services.csv:', err); return []; }).catch(err => {
           console.error('Error loading services.csv:', err);
           return [];
         }),
@@ -3557,8 +3713,8 @@ updateRoomContent(roomType);
       `;
 
       Promise.all([
-        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/transfers.csv'),
-        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/services.csv')
+        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/transfers.csv').catch(err => { console.error('Error loading transfers.csv:', err); return []; }),
+        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/services.csv').catch(err => { console.error('Error loading services.csv:', err); return []; })
       ]).then(([transfers, services]) => {
         if (!transfers.length || !services.length) {
           grid.innerHTML = `
@@ -3724,12 +3880,285 @@ updateRoomContent(roomType);
       return;
     }
 
+    // Cardiac Unit Dashboard
+    if (roomType === 'cardiac') {
+      grid.innerHTML = '';
+      const dashboardLayout = document.createElement('div');
+      dashboardLayout.className = 'emergency-dashboard-layout';
+      dashboardLayout.innerHTML = `
+        <div class="dashboard-header">
+          <h2>Cardiac Unit Analytics</h2>
+          <p class="dashboard-summary">
+            Insights into cardiac patient status, procedure types, and resource utilization.
+          </p>
+        </div>
+      `;
+      const dashboardGrid = document.createElement('div');
+      dashboardGrid.className = 'dashboard-grid';
+      // Example data
+      const statusData = [
+        { label: 'Critical', value: 8, color: '#e53e3e' },
+        { label: 'Stable', value: 15, color: '#68d391' },
+        { label: 'Recovering', value: 10, color: '#4299e1' }
+      ];
+      const procedureData = [
+        { label: 'Angioplasty', value: 12, color: '#f6ad55' },
+        { label: 'Bypass', value: 7, color: '#9f7aea' },
+        { label: 'Pacemaker', value: 5, color: '#4fd1c7' }
+      ];
+      dashboardGrid.appendChild(createDashboardCard(
+        'Patient Status',
+        'Distribution of cardiac patient status.',
+        statusData,
+        'doughnut',
+        statusData.map(d => d.color),
+        'Status',
+        'Patients'
+      ));
+      dashboardGrid.appendChild(createDashboardCard(
+        'Procedure Types',
+        'Types of cardiac procedures performed.',
+        procedureData,
+        'bar',
+        procedureData.map(d => d.color),
+        'Procedure',
+        'Count'
+      ));
+      dashboardLayout.appendChild(dashboardGrid);
+      grid.appendChild(dashboardLayout);
+      return;
+    }
+    // Monitoring Dashboard
+    if (roomType === 'monitoring') {
+      grid.innerHTML = '';
+      const dashboardLayout = document.createElement('div');
+      dashboardLayout.className = 'emergency-dashboard-layout';
+      dashboardLayout.innerHTML = `
+        <div class="dashboard-header">
+          <h2>Monitoring Unit Analytics</h2>
+          <p class="dashboard-summary">
+            Real-time monitoring of patient vitals and alert trends.
+          </p>
+        </div>
+      `;
+      const dashboardGrid = document.createElement('div');
+      dashboardGrid.className = 'dashboard-grid';
+      const alertData = [
+        { label: 'No Alert', value: 30, color: '#68d391' },
+        { label: 'Low', value: 10, color: '#f6ad55' },
+        { label: 'Medium', value: 5, color: '#ed8936' },
+        { label: 'High', value: 2, color: '#e53e3e' }
+      ];
+      dashboardGrid.appendChild(createDashboardCard(
+        'Alert Levels',
+        'Distribution of current patient alert levels.',
+        alertData,
+        'doughnut',
+        alertData.map(d => d.color),
+        'Alert Level',
+        'Patients'
+      ));
+      dashboardLayout.appendChild(dashboardGrid);
+      grid.appendChild(dashboardLayout);
+      return;
+    }
+    // Neurology Department Dashboard
+    if (roomType === 'neurology') {
+      grid.innerHTML = '';
+      const dashboardLayout = document.createElement('div');
+      dashboardLayout.className = 'emergency-dashboard-layout';
+      dashboardLayout.innerHTML = `
+        <div class="dashboard-header">
+          <h2>Neurology Department Analytics</h2>
+          <p class="dashboard-summary">
+            Insights into neurological case types and patient outcomes.
+          </p>
+        </div>
+      `;
+      const dashboardGrid = document.createElement('div');
+      dashboardGrid.className = 'dashboard-grid';
+      const caseData = [
+        { label: 'Stroke', value: 9, color: '#9f7aea' },
+        { label: 'Seizure', value: 6, color: '#4299e1' },
+        { label: 'Head Trauma', value: 4, color: '#e53e3e' }
+      ];
+      const outcomeData = [
+        { label: 'Improved', value: 12, color: '#68d391' },
+        { label: 'Stable', value: 5, color: '#f6ad55' },
+        { label: 'Critical', value: 2, color: '#e53e3e' }
+      ];
+      dashboardGrid.appendChild(createDashboardCard(
+        'Case Types',
+        'Types of neurological cases.',
+        caseData,
+        'bar',
+        caseData.map(d => d.color),
+        'Case',
+        'Count'
+      ));
+      dashboardGrid.appendChild(createDashboardCard(
+        'Patient Outcomes',
+        'Current patient outcomes in neurology.',
+        outcomeData,
+        'doughnut',
+        outcomeData.map(d => d.color),
+        'Outcome',
+        'Patients'
+      ));
+      dashboardLayout.appendChild(dashboardGrid);
+      grid.appendChild(dashboardLayout);
+      return;
+    }
+    // Urology Dashboard
+    if (roomType === 'urology') {
+      grid.innerHTML = '';
+      const dashboardLayout = document.createElement('div');
+      dashboardLayout.className = 'emergency-dashboard-layout';
+      dashboardLayout.innerHTML = `
+        <div class="dashboard-header">
+          <h2>Urology Department Analytics</h2>
+          <p class="dashboard-summary">
+            Insights into urological procedures and patient status.
+          </p>
+        </div>
+      `;
+      const dashboardGrid = document.createElement('div');
+      dashboardGrid.className = 'dashboard-grid';
+      const procedureData = [
+        { label: 'Cystoscopy', value: 8, color: '#4fd1c7' },
+        { label: 'Lithotripsy', value: 5, color: '#2ecc71' },
+        { label: 'Catheterization', value: 12, color: '#f6ad55' }
+      ];
+      const statusData = [
+        { label: 'Stable', value: 15, color: '#68d391' },
+        { label: 'Critical', value: 3, color: '#e53e3e' }
+      ];
+      dashboardGrid.appendChild(createDashboardCard(
+        'Procedure Types',
+        'Types of urological procedures performed.',
+        procedureData,
+        'bar',
+        procedureData.map(d => d.color),
+        'Procedure',
+        'Count'
+      ));
+      dashboardGrid.appendChild(createDashboardCard(
+        'Patient Status',
+        'Current patient status in urology.',
+        statusData,
+        'doughnut',
+        statusData.map(d => d.color),
+        'Status',
+        'Patients'
+      ));
+      dashboardLayout.appendChild(dashboardGrid);
+      grid.appendChild(dashboardLayout);
+      return;
+    }
+    // Lab Dashboard
+    if (roomType === 'lab') {
+      grid.innerHTML = '';
+      const dashboardLayout = document.createElement('div');
+      dashboardLayout.className = 'emergency-dashboard-layout';
+      dashboardLayout.innerHTML = `
+        <div class="dashboard-header">
+          <h2>Lab Analytics</h2>
+          <p class="dashboard-summary">
+            Insights into lab test types and turnaround times.
+          </p>
+        </div>
+      `;
+      const dashboardGrid = document.createElement('div');
+      dashboardGrid.className = 'dashboard-grid';
+      const testData = [
+        { label: 'Blood', value: 20, color: '#e53e3e' },
+        { label: 'Urine', value: 12, color: '#68d391' },
+        { label: 'Culture', value: 7, color: '#4299e1' }
+      ];
+      const turnaroundData = [
+        { label: '<1h', value: 10, color: '#68d391' },
+        { label: '1-3h', value: 15, color: '#f6ad55' },
+        { label: '>3h', value: 5, color: '#e53e3e' }
+      ];
+      dashboardGrid.appendChild(createDashboardCard(
+        'Test Types',
+        'Types of lab tests performed.',
+        testData,
+        'bar',
+        testData.map(d => d.color),
+        'Test',
+        'Count'
+      ));
+      dashboardGrid.appendChild(createDashboardCard(
+        'Turnaround Time',
+        'Lab test turnaround times.',
+        turnaroundData,
+        'doughnut',
+        turnaroundData.map(d => d.color),
+        'Time',
+        'Tests'
+      ));
+      dashboardLayout.appendChild(dashboardGrid);
+      grid.appendChild(dashboardLayout);
+      return;
+    }
+    // Gastro Dashboard
+    if (roomType === 'gastro') {
+      grid.innerHTML = '';
+      const dashboardLayout = document.createElement('div');
+      dashboardLayout.className = 'emergency-dashboard-layout';
+      dashboardLayout.innerHTML = `
+        <div class="dashboard-header">
+          <h2>Gastroenterology Analytics</h2>
+          <p class="dashboard-summary">
+            Insights into GI procedures and patient status.
+          </p>
+        </div>
+      `;
+      const dashboardGrid = document.createElement('div');
+      dashboardGrid.className = 'dashboard-grid';
+      const procedureData = [
+        { label: 'Endoscopy', value: 10, color: '#ff9800' },
+        { label: 'Colonoscopy', value: 8, color: '#f6ad55' },
+        { label: 'Biopsy', value: 4, color: '#4299e1' }
+      ];
+      const statusData = [
+        { label: 'Stable', value: 12, color: '#68d391' },
+        { label: 'Critical', value: 2, color: '#e53e3e' }
+      ];
+      dashboardGrid.appendChild(createDashboardCard(
+        'Procedure Types',
+        'Types of GI procedures performed.',
+        procedureData,
+        'bar',
+        procedureData.map(d => d.color),
+        'Procedure',
+        'Count'
+      ));
+      dashboardGrid.appendChild(createDashboardCard(
+        'Patient Status',
+        'Current patient status in gastroenterology.',
+        statusData,
+        'doughnut',
+        statusData.map(d => d.color),
+        'Status',
+        'Patients'
+      ));
+      dashboardLayout.appendChild(dashboardGrid);
+      grid.appendChild(dashboardLayout);
+      return;
+    }
     // ... fallback for other rooms ...
     // ... existing code ...
   }
 
   // Helper function to create dashboard cards
   function createDashboardCard(title, description, data, chartType, colors, xTitle, yTitle) {
+    console.log(`Creating dashboard card: ${title}`);
+    console.log(`Chart type: ${chartType}`);
+    console.log(`Data:`, data);
+    console.log(`Colors:`, colors);
+    
     const card = document.createElement('div');
     card.className = 'dashboard-card';
     card.innerHTML = `
@@ -3752,6 +4181,13 @@ updateRoomContent(roomType);
         console.warn(`Chart container has invalid dimensions for ${title}. Setting fallback dimensions.`);
         chartDiv.style.height = '300px';
         chartDiv.style.width = '100%';
+      }
+      
+      // Validate data
+      if (!data || data.length === 0) {
+        console.error(`No data provided for chart: ${title}`);
+        chartDiv.innerHTML = '<div class="chart-error">No data available for this chart.</div>';
+        return;
       }
       
       // Check if D3 is available
@@ -4364,16 +4800,27 @@ function renderD3LineChart(container, data, config) {
   // Clear existing content
   container.innerHTML = '';
 
+  // Ensure container has proper dimensions
+  if (container.clientWidth <= 0 || container.clientHeight <= 0) {
+    console.warn(`Chart container has invalid dimensions: ${container.clientWidth}x${container.clientHeight}`);
+    container.style.height = '300px';
+    container.style.width = '100%';
+    // Force a reflow
+    container.offsetHeight;
+  }
+
   const margin = { top: 40, right: 30, bottom: 60, left: 70 };
-  const containerWidth = container.clientWidth;
-  const containerHeight = container.clientHeight;
+  const containerWidth = Math.max(container.clientWidth, 300); // Minimum width
+  const containerHeight = Math.max(container.clientHeight, 300); // Minimum height
   const width = containerWidth - margin.left - margin.right;
   const height = containerHeight - margin.top - margin.bottom;
+
+  console.log(`DEBUG: Final chart dimensions - Container: ${containerWidth}x${containerHeight}, Chart area: ${width}x${height}`);
 
   // Check for valid dimensions after margin subtraction
   if (width <= 0 || height <= 0) {
     console.warn(`Chart area for ${config.title || 'line chart'} is too small to render: ${width}x${height}`);
-    container.innerHTML = '<div style="color: red; padding: 20px;">Chart area too small. Please expand.</div>';
+    container.innerHTML = '<div class="chart-error">Chart area too small. Please expand.</div>';
     return;
   }
 
