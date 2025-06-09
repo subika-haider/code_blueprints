@@ -13,9 +13,21 @@
  */
 
 const roomContent = {
+  entry: {
+    title: "Hospital Entry",
+    description: "This is the main entrance to the hospital where patients and visitors first arrive. It's designed to be welcoming and provide clear direction to different departments.",
+    features: ["Information desk", "Security checkpoint", "Wheelchair access", "Visitor registration"],
+    staff: ["Security personnel", "Information desk staff", "Volunteers"],
+    additionalHtml: `
+      <div class="room-statistics">
+        <p><strong>Helpful for:</strong> All patients and visitors entering the hospital</p>
+        <p><strong>Visualization:</strong> Daily visitor counts, peak entry times, security screening efficiency</p>
+      </div>
+    `
+  },
   waiting_area: {
     title: "Waiting Area",
-    description: "This is the first stop when you enter the hospital — you’ll wait here before being called to the reception or triage.",
+    description: "This is the first stop when you enter the hospital — you'll wait here before being called to the reception or triage.",
     features: ["Digital wait time display", "Patient check-in", "Seating area", "Information screens"],
     staff: ["Reception assistants", "Volunteers"],
     additionalHtml: `
@@ -39,7 +51,7 @@ const roomContent = {
   },
   triage: {
     title: "Triage Station",
-    description: "You’ll go here early in your visit if your condition needs medical attention. Nurses check how serious your case is and decide what happens next.",
+    description: "You'll go here early in your visit if your condition needs medical attention. Nurses check how serious your case is and decide what happens next.",
     features: ["Vital sign monitors", "Assessment area", "Triage charting system"],
     staff: ["Triage nurses"],
     additionalHtml: `
@@ -49,9 +61,21 @@ const roomContent = {
       </div>
     `
   },
+  xray: {
+    title: "X-Ray Department",
+    description: "This specialized imaging area uses X-ray technology to examine bones, chest, and other body parts for fractures, infections, or other conditions.",
+    features: ["X-ray machines", "Lead shielding", "Image processing equipment", "Patient positioning aids"],
+    staff: ["Radiologic technologists", "Radiologists"],
+    additionalHtml: `
+      <div class="room-statistics">
+        <p><strong>Helpful for:</strong> Broken bones, chest pain, lung conditions, dental issues</p>
+        <p><strong>Visualization:</strong> X-ray volume by type, average procedure time, result turnaround</p>
+      </div>
+    `
+  },
   emergency: {
     title: "Emergency Department (ED)",
-    description: "If your condition is urgent or life-threatening, you’ll be treated here right after triage.",
+    description: "If your condition is urgent or life-threatening, you'll be treated here right after triage.",
     features: ["Emergency bays", "IV and oxygen support", "Crash carts"],
     staff: ["ER doctors", "ER nurses"],
     additionalHtml: `
@@ -61,9 +85,105 @@ const roomContent = {
       </div>
     `
   },
+  treatment: {
+    title: "Treatment Room",
+    description: "This is where you receive active medical treatment, procedures, or interventions based on your diagnosis.",
+    features: ["Treatment beds", "Medical equipment", "Procedure supplies", "Monitoring devices"],
+    staff: ["Nurses", "Physicians", "Medical technicians"],
+    additionalHtml: `
+      <div class="room-statistics">
+        <p><strong>Helpful for:</strong> Wound care, minor procedures, medication administration</p>
+        <p><strong>Visualization:</strong> Treatment types, procedure duration, patient outcomes</p>
+      </div>
+    `
+  },
+  cardiac: {
+    title: "Cardiac Unit",
+    description: "Specialized care for heart-related conditions, including monitoring, testing, and treatment for cardiac patients.",
+    features: ["ECG machines", "Cardiac monitors", "Stress test equipment", "Defibrillators"],
+    staff: ["Cardiologists", "Cardiac nurses", "Cardiac technicians"],
+    additionalHtml: `
+      <div class="room-statistics">
+        <p><strong>Helpful for:</strong> Chest pain, heart attacks, arrhythmias, cardiac monitoring</p>
+        <p><strong>Visualization:</strong> Cardiac case volume, procedure success rates, monitoring duration</p>
+      </div>
+    `
+  },
+  neurology: {
+    title: "Neurology Department",
+    description: "Specialized care for brain and nervous system conditions, including stroke care, seizures, and neurological disorders.",
+    features: ["Neurological exam equipment", "EEG machines", "Brain imaging access", "Neurological monitoring"],
+    staff: ["Neurologists", "Neurology nurses", "Neurodiagnostic technicians"],
+    additionalHtml: `
+      <div class="room-statistics">
+        <p><strong>Helpful for:</strong> Head injuries, strokes, seizures, neurological symptoms</p>
+        <p><strong>Visualization:</strong> Neurological case types, diagnostic accuracy, treatment outcomes</p>
+      </div>
+    `
+  },
+  lab: {
+    title: "Laboratory (Lab)",
+    description: "To get your blood, urine, or other samples tested to help doctors figure out what's going on in your body.",
+    features: ["Sample analysis machines", "Blood draw chairs"],
+    staff: ["Phlebotomists", "Lab techs"],
+    additionalHtml: `
+      <div class="room-statistics">
+        <p><strong>Helpful for:</strong> Chest pain, infection, abdominal issues, medication levels</p>
+        <p><strong>Visualization:</strong> Test volume by type, average result turnaround time</p>
+      </div>
+    `
+  },
+  urology: {
+    title: "Urology Department",
+    description: "Specialized care for urinary system and male reproductive health, including kidney stones, infections, and urological procedures.",
+    features: ["Urological exam equipment", "Cystoscopy equipment", "Kidney stone treatment devices"],
+    staff: ["Urologists", "Urology nurses", "Urological technicians"],
+    additionalHtml: `
+      <div class="room-statistics">
+        <p><strong>Helpful for:</strong> Kidney infections, urinary problems, kidney stones, urological pain</p>
+        <p><strong>Visualization:</strong> Urological case types, procedure success rates, treatment outcomes</p>
+      </div>
+    `
+  },
+  gastro: {
+    title: "Gastroenterology Department",
+    description: "Specialized care for digestive system conditions, including stomach, intestines, liver, and pancreas problems.",
+    features: ["Endoscopy equipment", "Gastrointestinal monitors", "Digestive system imaging"],
+    staff: ["Gastroenterologists", "GI nurses", "Endoscopy technicians"],
+    additionalHtml: `
+      <div class="room-statistics">
+        <p><strong>Helpful for:</strong> Abdominal pain, digestive issues, nausea, vomiting, GI bleeding</p>
+        <p><strong>Visualization:</strong> GI procedure volume, diagnostic accuracy, treatment effectiveness</p>
+      </div>
+    `
+  },
+  monitoring: {
+    title: "Patient Monitoring Unit",
+    description: "Specialized area for continuous patient monitoring, often used for patients who need close observation but not intensive care.",
+    features: ["Continuous monitoring equipment", "Vital sign displays", "Alert systems", "Observation beds"],
+    staff: ["Monitoring nurses", "Patient care technicians"],
+    additionalHtml: `
+      <div class="room-statistics">
+        <p><strong>Helpful for:</strong> Patients requiring close observation, post-procedure monitoring</p>
+        <p><strong>Visualization:</strong> Monitoring duration, alert frequency, patient outcomes</p>
+      </div>
+    `
+  },
+  icu: {
+    title: "Intensive Care Unit (ICU)",
+    description: "Critical care area for patients with severe, life-threatening conditions requiring constant monitoring and specialized medical attention.",
+    features: ["Ventilators", "Advanced monitoring systems", "Life support equipment", "Critical care beds"],
+    staff: ["Intensivists", "ICU nurses", "Respiratory therapists"],
+    additionalHtml: `
+      <div class="room-statistics">
+        <p><strong>Helpful for:</strong> Critical patients, severe injuries, post-surgery complications</p>
+        <p><strong>Visualization:</strong> ICU occupancy, length of stay, survival rates, ventilator usage</p>
+      </div>
+    `
+  },
   staff_room: {
     title: "Staff Room",
-    description: "You won’t go here yourself, but it’s where nurses, doctors, and other staff take breaks or prep between shifts.",
+    description: "You won't go here yourself, but it's where nurses, doctors, and other staff take breaks or prep between shifts.",
     features: ["Rest area", "Kitchenette", "Staff lockers"],
     staff: ["Nurses", "Doctors"],
     additionalHtml: `
@@ -75,7 +195,7 @@ const roomContent = {
   },
   medicine_ward_a: {
     title: "Medicine Ward A",
-    description: "After you’ve been stabilized in the ER or assessed by doctors, you may be moved to a ward if you need to stay in the hospital for further treatment, observation, or recovery.",
+    description: "After you've been stabilized in the ER or assessed by doctors, you may be moved to a ward if you need to stay in the hospital for further treatment, observation, or recovery.",
     features: ["Patient beds", "Vitals monitors", "Nursing station"],
     staff: ["Hospitalists", "Ward nurses"],
     additionalHtml: `
@@ -87,25 +207,13 @@ const roomContent = {
   },
   medicine_ward_b: {
     title: "Medicine Ward B",
-    description: "After you’ve been stabilized in the ER or assessed by doctors, you may be moved to a ward if you need to stay in the hospital for further treatment, observation, or recovery.",
-    features: ["Patient beds", "Vitals monitors", "Nursing station"],
-    staff: ["Hospitalists", "Ward nurses"],
+    description: "A second general medical ward providing inpatient care for patients requiring hospital admission for medical conditions.",
+    features: ["Patient beds", "Vitals monitors", "Nursing station", "Medical equipment"],
+    staff: ["Hospitalists", "Ward nurses", "Medical technicians"],
     additionalHtml: `
       <div class="room-statistics">
-        <p><strong>Helpful for:</strong> Kidney infections, abdominal pain, chronic conditions</p>
-        <p><strong>Visualization:</strong> Bed occupancy, average length of stay, daily rounding times</p>
-      </div>
-    `
-  },
-  lab: {
-    title: "Laboratory (Lab)",
-    description: "To get your blood, urine, or other samples tested to help doctors figure out what’s going on in your body.",
-    features: ["Sample analysis machines", "Blood draw chairs"],
-    staff: ["Phlebotomists", "Lab techs"],
-    additionalHtml: `
-      <div class="room-statistics">
-        <p><strong>Helpful for:</strong> Chest pain, infection, abdominal issues, medication levels</p>
-        <p><strong>Visualization:</strong> Test volume by type, average result turnaround time</p>
+        <p><strong>Helpful for:</strong> Medical conditions requiring hospitalization, post-treatment recovery</p>
+        <p><strong>Visualization:</strong> Bed utilization, patient turnover, length of stay metrics</p>
       </div>
     `
   },
@@ -147,7 +255,7 @@ const roomContent = {
   },
   discharge: {
     title: "Discharge Area",
-    description: "When you’re ready to leave, this area makes sure you go home with everything you need.",
+    description: "When you're ready to leave, this area makes sure you go home with everything you need.",
     features: ["Discharge paperwork", "Pharmacy pickup", "Exit desk"],
     staff: ["Discharge coordinators"],
     additionalHtml: `
@@ -183,7 +291,7 @@ const roomContent = {
   },
   nurses_station: {
     title: "Nurses Station",
-    description: "You won’t stay here, but nurses use this as their hub to monitor patients — including you.",
+    description: "You won't stay here, but nurses use this as their hub to monitor patients — including you.",
     features: ["Computer terminals", "Charts", "Alert systems"],
     staff: ["Nurses"],
     additionalHtml: `
