@@ -2,7 +2,7 @@ import * as THREE from 'https://esm.sh/three@0.150.1';
 import { OrbitControls } from 'https://esm.sh/three@0.150.1/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'https://esm.sh/three@0.150.1/examples/jsm/loaders/GLTFLoader.js';
 import * as TWEEN from 'https://cdn.jsdelivr.net/npm/@tweenjs/tween.js@18.6.4/dist/tween.esm.js';
-import roomContent from './room-content.js';
+// import roomContent from './room-content.js';
 import * as d3 from 'https://cdn.jsdelivr.net/npm/d3@7.4.4/+esm';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -631,12 +631,12 @@ new TWEEN.Tween(controls.target)
 
   // Room highlighting function
   function highlightPatientRooms(condition) {
-    const roomSelectionPanel = document.getElementById('roomSelectionPanel');
+    // const roomSelectionPanel = document.getElementById('roomSelectionPanel');
     
     if (!condition || condition === 'default') {
-      if (roomSelectionPanel) roomSelectionPanel.classList.remove('visible');
+      // if (roomSelectionPanel) roomSelectionPanel.classList.remove('visible');
       resetToDefaultView();
-      updateConditionInfo('default');
+      // updateConditionInfo('default');
       resetToProjectOverview();
       // Hide all cubes
       roomCubes.forEach((cubes, roomType) => {
@@ -647,12 +647,83 @@ new TWEEN.Tween(controls.target)
     }
 
     const roomSequences = {
-      broken_bone:     ['waiting_area', 'reception', 'triage', 'emergency', 'staff_room', 'discharge'],
-      chest_pain:      ['waiting_area', 'reception', 'triage', 'emergency', 'icu', 'discharge'],
-      head_injury:     ['waiting_area', 'reception', 'triage', 'icu', 'staff_room', 'discharge'],
-      kidney_infection:['waiting_area', 'reception', 'triage', 'emergency', 'staff_room', 'discharge'],
-      abdominal_pain:  ['waiting_area', 'reception', 'triage', 'emergency', 'icu', 'discharge']
-    };    
+      broken_bone: [
+        'main_entrance',
+        'reception',
+        'waiting_area',
+        'emergency',
+        'imaging',
+        'diagnostic_unit',
+        'pharmacy',
+        'medication_station',
+        'department_med',
+        'medicine_ward_a_b',
+        'nurses_station',
+        'discharge'
+      ],
+      chest_pain: [
+        'main_entrance',
+        'reception',
+        'emergency',
+        'lab',
+        'icu',
+        'imaging',
+        'diagnostic_unit',
+        'pharmacy',
+        'medication_station',
+        'department_med',
+        'medicine_ward_a_b',
+        'nurses_station',
+        'discharge'
+      ],
+      head_injury: [
+        'main_entrance',
+        'reception',
+        'emergency',
+        'lab',
+        'icu',
+        'imaging',
+        'pharmacy',
+        'medication_station',
+        'department_med',
+        'medicine_ward_a_b',
+        'nurses_station',
+        'discharge'
+      ],
+      kidney_infection: [
+        'main_entrance',
+        'reception',
+        'waiting_area',
+        'emergency',
+        'lab',
+        'icu',
+        'imaging',
+        'diagnostic_unit',
+        'pharmacy',
+        'medication_station',
+        'department_med',
+        'medicine_ward_a_b',
+        'nurses_station',
+        'discharge'
+      ],
+      abdominal_pain: [
+        'main_entrance',
+        'reception',
+        'waiting_area',
+        'emergency',
+        'lab',
+        'icu',
+        'imaging',
+        'diagnostic_unit',
+        'pharmacy',
+        'medication_station',
+        'department_med',
+        'medicine_ward_a_b',
+        'nurses_station',
+        'discharge'
+      ]
+    };
+    
 
     const sequence = roomSequences[condition];
     if (!sequence) return;
@@ -691,8 +762,9 @@ new TWEEN.Tween(controls.target)
     // Show and highlight cubes for rooms in the sequence
     highlightRoomCubes(sequence, 0xff5722);
 
-    populateRoomSelectionPanel(sequence);
-    updateConditionInfo(condition);
+    // populateRoomSelectionPanel(sequence);
+    // roomSelectionPanel.classList.add('visible');
+        // updateConditionInfo(condition);
   }
 
   function resetToDefaultView() {
@@ -974,47 +1046,47 @@ new TWEEN.Tween(controls.target)
   }
 
   // Room panel population
-  function populateRoomSelectionPanel(sequence) {
-    const roomSelectionPanel = document.getElementById('roomSelectionPanel');
-    const roomButtons = document.getElementById('roomButtons');
+  // function populateRoomSelectionPanel(sequence) {
+  //   const roomSelectionPanel = document.getElementById('roomSelectionPanel');
+  //   const roomButtons = document.getElementById('roomButtons');
     
-    if (!roomSelectionPanel || !roomButtons) return;
+  //   if (!roomSelectionPanel || !roomButtons) return;
 
-    roomButtons.innerHTML = '';
+  //   roomButtons.innerHTML = '';
     
-    const panelSubtitle = roomSelectionPanel.querySelector('.panel-subtitle');
-    if (panelSubtitle) panelSubtitle.textContent = `${sequence.length} locations`;
+  //   const panelSubtitle = roomSelectionPanel.querySelector('.panel-subtitle');
+  //   if (panelSubtitle) panelSubtitle.textContent = `${sequence.length} locations`;
 
-    sequence.forEach((roomType, index) => {
-      const roomBtn = document.createElement('button');
-      roomBtn.className = 'room-btn';
-      roomBtn.dataset.roomType = roomType;
+  //   sequence.forEach((roomType, index) => {
+  //     const roomBtn = document.createElement('button');
+  //     roomBtn.className = 'room-btn';
+  //     roomBtn.dataset.roomType = roomType;
       
-      const displayName = roomType.charAt(0).toUpperCase() + roomType.slice(1).replace(/_/g, ' ');
+  //     const displayName = roomType.charAt(0).toUpperCase() + roomType.slice(1).replace(/_/g, ' ');
       
-      roomBtn.innerHTML = `
-        <div class="room-btn-content">
-          <div class="room-number">${index + 1}</div>
-          <div class="room-name">${displayName}</div>
-        </div>
-      `;
+  //     roomBtn.innerHTML = `
+  //       <div class="room-btn-content">
+  //         <div class="room-number">${index + 1}</div>
+  //         <div class="room-name">${displayName}</div>
+  //       </div>
+  //     `;
       
 
 
-      roomBtn.addEventListener('click', () => {
-        document.querySelectorAll('.room-btn').forEach(btn => btn.classList.remove('active'));
-        roomBtn.classList.add('active');
-        moveCameraToRoom(roomType);
-        updateRoomContent(roomType);
-      });
+  //     roomBtn.addEventListener('click', () => {
+  //       document.querySelectorAll('.room-btn').forEach(btn => btn.classList.remove('active'));
+  //       roomBtn.classList.add('active');
+  //       moveCameraToRoom(roomType);
+  //       updateRoomContent(roomType);
+  //     });
 
 
       
-      roomButtons.appendChild(roomBtn);
-    });
+  //     roomButtons.appendChild(roomBtn);
+  //   });
 
-    roomSelectionPanel.classList.add('visible');
-  }
+  //   roomSelectionPanel.classList.add('visible');
+  // }
 
   // Manual camera placement function
   function setRoomCamera(roomType, x, y, z, targetX, targetY, targetZ) {
@@ -1085,460 +1157,460 @@ new TWEEN.Tween(controls.target)
   window.getRoomInfo = getRoomInfo;
   window.moveCameraToRoom = moveCameraToRoom;
 
-  // Content updates
-  function updateRoomContent(roomType) {
-    const content = roomContent[roomType];
-    if (!content) return;
+  // // Content updates
+  // function updateRoomContent(roomType) {
+  //   const content = roomContent[roomType];
+  //   if (!content) return;
 
-    const projectOverview = document.querySelector('.content-section');
-    if (!projectOverview) return;
+  //   const projectOverview = document.querySelector('.content-section');
+  //   if (!projectOverview) return;
 
-    // --- Full Dashboard Layout ---
-    let dashboardHtml = `
-      <div class="room-dashboard">
-        <div class="dashboard-hero-card dashboard-card">
-          <div class="dashboard-card-title">${content.title}</div>
-          <div class="dashboard-card-desc">
-              <p class="room-description">${content.description}</p>
-            <div class="dashboard-hero-stats">
-              <div><strong>Key Features:</strong> ${content.features.join(', ')}</div>
-              <div><strong>Staff:</strong> ${content.staff.join(', ')}</div>
-            </div>
-              ${content.additionalHtml || ''}
-            </div>
-                  </div>
-        <div class="dashboard-grid" id="roomDashboardGrid-${roomType}"></div>
-      </div>
-    `;
+  //   // --- Full Dashboard Layout ---
+  //   let dashboardHtml = `
+  //     <div class="room-dashboard">
+  //       <div class="dashboard-hero-card dashboard-card">
+  //         <div class="dashboard-card-title">${content.title}</div>
+  //         <div class="dashboard-card-desc">
+  //             <p class="room-description">${content.description}</p>
+  //           <div class="dashboard-hero-stats">
+  //             <div><strong>Key Features:</strong> ${content.features.join(', ')}</div>
+  //             <div><strong>Staff:</strong> ${content.staff.join(', ')}</div>
+  //           </div>
+  //             ${content.additionalHtml || ''}
+  //           </div>
+  //                 </div>
+  //       <div class="dashboard-grid" id="roomDashboardGrid-${roomType}"></div>
+  //     </div>
+  //   `;
 
-    projectOverview.innerHTML = dashboardHtml;
+  //   projectOverview.innerHTML = dashboardHtml;
 
-    // Fade-in animation
-    const dashboard = projectOverview.querySelector('.room-dashboard');
-    if (dashboard) {
-      dashboard.style.opacity = '0';
-      dashboard.style.transform = 'translateY(20px)';
-      setTimeout(() => {
-        dashboard.style.transition = 'opacity 0.4s, transform 0.4s';
-        dashboard.style.opacity = '1';
-        dashboard.style.transform = 'translateY(0)';
-      }, 50);
-    }
+  //   // Fade-in animation
+  //   const dashboard = projectOverview.querySelector('.room-dashboard');
+  //   if (dashboard) {
+  //     dashboard.style.opacity = '0';
+  //     dashboard.style.transform = 'translateY(20px)';
+  //     setTimeout(() => {
+  //       dashboard.style.transition = 'opacity 0.4s, transform 0.4s';
+  //       dashboard.style.opacity = '1';
+  //       dashboard.style.transform = 'translateY(0)';
+  //     }, 50);
+  //   }
     
-    // Render dashboard visualizations and cards
-    setTimeout(() => createRoomDashboard(roomType, true), 100);
-  }
+  //   // Render dashboard visualizations and cards
+  //   setTimeout(() => createRoomDashboard(roomType, true), 100);
+  // }
 
-  // Room-specific visualization functions
+  // // Room-specific visualization functions
 
-  function createRoomDashboard(roomType, fullSection = false) {
-    const grid = fullSection
-      ? document.getElementById(`roomDashboardGrid-${roomType}`)
-      : (() => {
-          const container = document.getElementById(`roomVisualization-${roomType}`);
-          if (!container) return null;
-          container.innerHTML = '';
-          const grid = document.createElement('div');
-          grid.className = 'dashboard-grid';
-          container.appendChild(grid);
-          return grid;
-        })();
-    if (!grid) return;
+  // function createRoomDashboard(roomType, fullSection = false) {
+  //   const grid = fullSection
+  //     ? document.getElementById(`roomDashboardGrid-${roomType}`)
+  //     : (() => {
+  //         const container = document.getElementById(`roomVisualization-${roomType}`);
+  //         if (!container) return null;
+  //         container.innerHTML = '';
+  //         const grid = document.createElement('div');
+  //         grid.className = 'dashboard-grid';
+  //         container.appendChild(grid);
+  //         return grid;
+  //       })();
+  //   if (!grid) return;
 
-    // Cardiac Unit Dashboard
-    if (roomType === 'cardiac') {
-      // Show loading state
-      grid.innerHTML = `
-        <div class="dashboard-loading">
-          <div class="loading-spinner"></div>
-          <p>Loading cardiac unit analytics...</p>
-        </div>
-      `;
+  //   // Cardiac Unit Dashboard
+  //   if (roomType === 'cardiac') {
+  //     // Show loading state
+  //     grid.innerHTML = `
+  //       <div class="dashboard-loading">
+  //         <div class="loading-spinner"></div>
+  //         <p>Loading cardiac unit analytics...</p>
+  //       </div>
+  //     `;
 
-      // Load and parse CSVs using d3-fetch
-      Promise.all([
-        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/transfers.csv').catch(err => {
-          console.error('Error loading transfers.csv:', err);
-          return [];
-        }),
-        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/services.csv').catch(err => {
-          console.error('Error loading services.csv:', err);
-          return [];
-        }),
-        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/omr.csv').catch(err => {
-          console.error('Error loading omr.csv:', err);
-          return [];
-        })
-      ]).then(([transfers, services, omr]) => {
-        if (!transfers.length || !services.length || !omr.length) {
-          grid.innerHTML = `
-            <div class="dashboard-error">
-              <i class="fas fa-exclamation-triangle"></i>
-              <p>Unable to load cardiac unit data. Please try again later.</p>
-            </div>
-          `;
-          return;
-        }
+  //     // Load and parse CSVs using d3-fetch
+  //     Promise.all([
+  //       d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/transfers.csv').catch(err => {
+  //         console.error('Error loading transfers.csv:', err);
+  //         return [];
+  //       }),
+  //       d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/services.csv').catch(err => {
+  //         console.error('Error loading services.csv:', err);
+  //         return [];
+  //       }),
+  //       d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/omr.csv').catch(err => {
+  //         console.error('Error loading omr.csv:', err);
+  //         return [];
+  //       })
+  //     ]).then(([transfers, services, omr]) => {
+  //       if (!transfers.length || !services.length || !omr.length) {
+  //         grid.innerHTML = `
+  //           <div class="dashboard-error">
+  //             <i class="fas fa-exclamation-triangle"></i>
+  //             <p>Unable to load cardiac unit data. Please try again later.</p>
+  //           </div>
+  //         `;
+  //         return;
+  //       }
 
-        try {
-          // Process data for cardiac unit analytics
-          const cardiacData = transfers.filter(r => 
-            r.careunit === 'Coronary Care Unit' || 
-            r.careunit === 'Cardiac Intensive Care Unit' ||
-            r.careunit === 'Cardiac Stepdown'
-          );
+  //       try {
+  //         // Process data for cardiac unit analytics
+  //         const cardiacData = transfers.filter(r => 
+  //           r.careunit === 'Coronary Care Unit' || 
+  //           r.careunit === 'Cardiac Intensive Care Unit' ||
+  //           r.careunit === 'Cardiac Stepdown'
+  //         );
 
-          // Simulate cardiac unit status
-          const roomStatus = {
-            'CCU-101': { 
-              status: 'Occupied', 
-              patient: 'Robert Johnson', 
-              condition: 'Acute MI',
-              vitals: {
-                heartRate: 78,
-                bloodPressure: '120/80',
-                oxygenSat: 98,
-                rhythm: 'Normal Sinus'
-              },
-              timeRemaining: 120,
-              acuity: 'Level 2'
-            },
-            'CCU-102': { 
-              status: 'Occupied', 
-              patient: 'Mary Williams', 
-              condition: 'Heart Failure',
-              vitals: {
-                heartRate: 92,
-                bloodPressure: '135/85',
-                oxygenSat: 95,
-                rhythm: 'Atrial Fibrillation'
-              },
-              timeRemaining: 180,
-              acuity: 'Level 1'
-            },
-            'CCU-103': { 
-              status: 'Cleaning', 
-              patient: null, 
-              condition: null,
-              vitals: null,
-              timeRemaining: 30,
-              acuity: null
-            },
-            'CCU-104': { 
-              status: 'Available', 
-              patient: null, 
-              condition: null,
-              vitals: null,
-              timeRemaining: 0,
-              acuity: null
-            }
-          };
+  //         // Simulate cardiac unit status
+  //         const roomStatus = {
+  //           'CCU-101': { 
+  //             status: 'Occupied', 
+  //             patient: 'Robert Johnson', 
+  //             condition: 'Acute MI',
+  //             vitals: {
+  //               heartRate: 78,
+  //               bloodPressure: '120/80',
+  //               oxygenSat: 98,
+  //               rhythm: 'Normal Sinus'
+  //             },
+  //             timeRemaining: 120,
+  //             acuity: 'Level 2'
+  //           },
+  //           'CCU-102': { 
+  //             status: 'Occupied', 
+  //             patient: 'Mary Williams', 
+  //             condition: 'Heart Failure',
+  //             vitals: {
+  //               heartRate: 92,
+  //               bloodPressure: '135/85',
+  //               oxygenSat: 95,
+  //               rhythm: 'Atrial Fibrillation'
+  //             },
+  //             timeRemaining: 180,
+  //             acuity: 'Level 1'
+  //           },
+  //           'CCU-103': { 
+  //             status: 'Cleaning', 
+  //             patient: null, 
+  //             condition: null,
+  //             vitals: null,
+  //             timeRemaining: 30,
+  //             acuity: null
+  //           },
+  //           'CCU-104': { 
+  //             status: 'Available', 
+  //             patient: null, 
+  //             condition: null,
+  //             vitals: null,
+  //             timeRemaining: 0,
+  //             acuity: null
+  //           }
+  //         };
 
-          // Cardiac Conditions Distribution
-          const conditionTypes = {
-            'Acute MI': 0,
-            'Heart Failure': 0,
-            'Arrhythmia': 0,
-            'Chest Pain': 0,
-            'Other': 0
-          };
+  //         // Cardiac Conditions Distribution
+  //         const conditionTypes = {
+  //           'Acute MI': 0,
+  //           'Heart Failure': 0,
+  //           'Arrhythmia': 0,
+  //           'Chest Pain': 0,
+  //           'Other': 0
+  //         };
 
-          // Vital Signs Trends
-          const vitalSigns = {
-            heartRate: [],
-            bloodPressure: [],
-            oxygenSat: []
-          };
+  //         // Vital Signs Trends
+  //         const vitalSigns = {
+  //           heartRate: [],
+  //           bloodPressure: [],
+  //           oxygenSat: []
+  //         };
 
-          // Process cardiac data
-          cardiacData.forEach(row => {
-            if (row.service) {
-              if (row.service.includes('CARDIAC')) {
-                conditionTypes['Acute MI']++;
-              } else if (row.service.includes('MED')) {
-                conditionTypes['Heart Failure']++;
-              } else if (row.service.includes('SURG')) {
-                conditionTypes['Arrhythmia']++;
-              } else if (row.service.includes('TRAUMA')) {
-                conditionTypes['Chest Pain']++;
-              } else {
-                conditionTypes['Other']++;
-              }
-            }
-          });
+  //         // Process cardiac data
+  //         cardiacData.forEach(row => {
+  //           if (row.service) {
+  //             if (row.service.includes('CARDIAC')) {
+  //               conditionTypes['Acute MI']++;
+  //             } else if (row.service.includes('MED')) {
+  //               conditionTypes['Heart Failure']++;
+  //             } else if (row.service.includes('SURG')) {
+  //               conditionTypes['Arrhythmia']++;
+  //             } else if (row.service.includes('TRAUMA')) {
+  //               conditionTypes['Chest Pain']++;
+  //             } else {
+  //               conditionTypes['Other']++;
+  //             }
+  //           }
+  //         });
 
-          // Process vital signs from OMR data
-          const cardiacSubjectIds = new Set(cardiacData.map(r => r.subject_id));
-          omr.forEach(row => {
-            if (!cardiacSubjectIds.has(row.subject_id)) return;
+  //         // Process vital signs from OMR data
+  //         const cardiacSubjectIds = new Set(cardiacData.map(r => r.subject_id));
+  //         omr.forEach(row => {
+  //           if (!cardiacSubjectIds.has(row.subject_id)) return;
             
-            if (row.result_name === 'Heart Rate') {
-              vitalSigns.heartRate.push({
-                date: row.chartdate,
-                value: parseFloat(row.result_value)
-              });
-            } else if (row.result_name === 'Blood Pressure') {
-              vitalSigns.bloodPressure.push({
-                date: row.chartdate,
-                value: row.result_value
-              });
-            } else if (row.result_name === 'Oxygen Saturation') {
-              vitalSigns.oxygenSat.push({
-                date: row.chartdate,
-                value: parseFloat(row.result_value)
-              });
-            }
-          });
+  //           if (row.result_name === 'Heart Rate') {
+  //             vitalSigns.heartRate.push({
+  //               date: row.chartdate,
+  //               value: parseFloat(row.result_value)
+  //             });
+  //           } else if (row.result_name === 'Blood Pressure') {
+  //             vitalSigns.bloodPressure.push({
+  //               date: row.chartdate,
+  //               value: row.result_value
+  //             });
+  //           } else if (row.result_name === 'Oxygen Saturation') {
+  //             vitalSigns.oxygenSat.push({
+  //               date: row.chartdate,
+  //               value: parseFloat(row.result_value)
+  //             });
+  //           }
+  //         });
 
-          // Sort vital signs by date
-          const sortByDate = arr => arr
-            .sort((a, b) => new Date(b.date) - new Date(a.date))
-            .slice(0, 20)
-            .reverse();
+  //         // Sort vital signs by date
+  //         const sortByDate = arr => arr
+  //           .sort((a, b) => new Date(b.date) - new Date(a.date))
+  //           .slice(0, 20)
+  //           .reverse();
 
-          const heartRateTrend = sortByDate(vitalSigns.heartRate)
-            .map(d => ({ label: d.date, value: d.value }));
-          const bpTrend = sortByDate(vitalSigns.bloodPressure)
-            .map(d => {
-              const [sys, dia] = (d.value || '').split('/').map(Number);
-              return { label: d.date, systolic: sys, diastolic: dia };
-            });
-          const oxygenTrend = sortByDate(vitalSigns.oxygenSat)
-            .map(d => ({ label: d.date, value: d.value }));
+  //         const heartRateTrend = sortByDate(vitalSigns.heartRate)
+  //           .map(d => ({ label: d.date, value: d.value }));
+  //         const bpTrend = sortByDate(vitalSigns.bloodPressure)
+  //           .map(d => {
+  //             const [sys, dia] = (d.value || '').split('/').map(Number);
+  //             return { label: d.date, systolic: sys, diastolic: dia };
+  //           });
+  //         const oxygenTrend = sortByDate(vitalSigns.oxygenSat)
+  //           .map(d => ({ label: d.date, value: d.value }));
 
-          const conditionData = Object.entries(conditionTypes)
-            .map(([label, value]) => ({ 
-              label, 
-              value,
-              color: label.includes('MI') ? '#e53e3e' : 
-                     label.includes('Failure') ? '#dd6b20' : 
-                     label.includes('Arrhythmia') ? '#d69e2e' : 
-                     label.includes('Pain') ? '#38a169' : 
-                     '#4299e1'
-            }));
+  //         const conditionData = Object.entries(conditionTypes)
+  //           .map(([label, value]) => ({ 
+  //             label, 
+  //             value,
+  //             color: label.includes('MI') ? '#e53e3e' : 
+  //                    label.includes('Failure') ? '#dd6b20' : 
+  //                    label.includes('Arrhythmia') ? '#d69e2e' : 
+  //                    label.includes('Pain') ? '#38a169' : 
+  //                    '#4299e1'
+  //           }));
 
-          // Clear loading state and render dashboard
-          grid.innerHTML = '';
+  //         // Clear loading state and render dashboard
+  //         grid.innerHTML = '';
           
-          // Create dashboard layout
-          const dashboardLayout = document.createElement('div');
-          dashboardLayout.className = 'emergency-dashboard-layout';
+  //         // Create dashboard layout
+  //         const dashboardLayout = document.createElement('div');
+  //         dashboardLayout.className = 'emergency-dashboard-layout';
           
-          // Add dashboard header with summary
-          const dashboardHeader = document.createElement('div');
-          dashboardHeader.className = 'dashboard-header';
-          dashboardHeader.innerHTML = `
-            <h2>Cardiac Unit Analytics</h2>
-            <p class="dashboard-summary">
-              Real-time insights into cardiac patient monitoring, vital signs,
-              and treatment status to optimize cardiac care delivery.
-            </p>
-          `;
-          dashboardLayout.appendChild(dashboardHeader);
+  //         // Add dashboard header with summary
+  //         const dashboardHeader = document.createElement('div');
+  //         dashboardHeader.className = 'dashboard-header';
+  //         dashboardHeader.innerHTML = `
+  //           <h2>Cardiac Unit Analytics</h2>
+  //           <p class="dashboard-summary">
+  //             Real-time insights into cardiac patient monitoring, vital signs,
+  //             and treatment status to optimize cardiac care delivery.
+  //           </p>
+  //         `;
+  //         dashboardLayout.appendChild(dashboardHeader);
           
-          // Create main content grid
-          const dashboardGrid = document.createElement('div');
-          dashboardGrid.className = 'dashboard-grid';
+  //         // Create main content grid
+  //         const dashboardGrid = document.createElement('div');
+  //         dashboardGrid.className = 'dashboard-grid';
           
-          // Left column - Patient Status and Conditions
-          const leftColumn = document.createElement('div');
-          leftColumn.className = 'dashboard-column';
+  //         // Left column - Patient Status and Conditions
+  //         const leftColumn = document.createElement('div');
+  //         leftColumn.className = 'dashboard-column';
           
-          // Add section header
-          const statusHeader = document.createElement('div');
-          statusHeader.className = 'dashboard-section-header';
-          statusHeader.innerHTML = `
-            <h3>Patient Status</h3>
-            <p>Monitor current patient conditions and vital signs in the cardiac unit.</p>
-          `;
-          leftColumn.appendChild(statusHeader);
+  //         // Add section header
+  //         const statusHeader = document.createElement('div');
+  //         statusHeader.className = 'dashboard-section-header';
+  //         statusHeader.innerHTML = `
+  //           <h3>Patient Status</h3>
+  //           <p>Monitor current patient conditions and vital signs in the cardiac unit.</p>
+  //         `;
+  //         leftColumn.appendChild(statusHeader);
           
-          // Add room status cards
-          Object.entries(roomStatus).forEach(([room, status]) => {
-            const roomCard = document.createElement('div');
-            roomCard.className = 'room-status-card cardiac';
-            roomCard.innerHTML = `
-              <div class="room-header">
-                <h4>${room}</h4>
-                <span class="status-badge ${status.status.toLowerCase()}">${status.status}</span>
-              </div>
-              ${status.patient ? `
-                <div class="room-details">
-                  <p><strong>Patient:</strong> ${status.patient}</p>
-                  <p><strong>Condition:</strong> ${status.condition}</p>
-                  <p><strong>Time Remaining:</strong> ${status.timeRemaining} minutes</p>
-                  <p><strong>Acuity Level:</strong> ${status.acuity}</p>
-                  <div class="vitals-grid">
-                    <div class="vital-item">
-                      <span class="vital-label">HR</span>
-                      <span class="vital-value ${getVitalStatus(status.vitals.heartRate, 'hr')}">${status.vitals.heartRate}</span>
-                    </div>
-                    <div class="vital-item">
-                      <span class="vital-label">BP</span>
-                      <span class="vital-value ${getVitalStatus(status.vitals.bloodPressure, 'bp')}">${status.vitals.bloodPressure}</span>
-                    </div>
-                    <div class="vital-item">
-                      <span class="vital-label">O₂</span>
-                      <span class="vital-value ${getVitalStatus(status.vitals.oxygenSat, 'o2')}">${status.vitals.oxygenSat}%</span>
-                    </div>
-                    <div class="vital-item">
-                      <span class="vital-label">Rhythm</span>
-                      <span class="vital-value ${getVitalStatus(status.vitals.rhythm, 'rhythm')}">${status.vitals.rhythm}</span>
-                    </div>
-                  </div>
-                </div>
-              ` : status.status === 'Cleaning' ? `
-                <div class="room-details">
-                  <p><strong>Status:</strong> Under Cleaning</p>
-                  <p><strong>Time Remaining:</strong> ${status.timeRemaining} minutes</p>
-                </div>
-              ` : `
-                <div class="room-details">
-                  <p><strong>Status:</strong> Available</p>
-                  <p><strong>Ready for next patient</strong></p>
-                </div>
-              `}
-            `;
-            leftColumn.appendChild(roomCard);
-          });
+  //         // Add room status cards
+  //         Object.entries(roomStatus).forEach(([room, status]) => {
+  //           const roomCard = document.createElement('div');
+  //           roomCard.className = 'room-status-card cardiac';
+  //           roomCard.innerHTML = `
+  //             <div class="room-header">
+  //               <h4>${room}</h4>
+  //               <span class="status-badge ${status.status.toLowerCase()}">${status.status}</span>
+  //             </div>
+  //             ${status.patient ? `
+  //               <div class="room-details">
+  //                 <p><strong>Patient:</strong> ${status.patient}</p>
+  //                 <p><strong>Condition:</strong> ${status.condition}</p>
+  //                 <p><strong>Time Remaining:</strong> ${status.timeRemaining} minutes</p>
+  //                 <p><strong>Acuity Level:</strong> ${status.acuity}</p>
+  //                 <div class="vitals-grid">
+  //                   <div class="vital-item">
+  //                     <span class="vital-label">HR</span>
+  //                     <span class="vital-value ${getVitalStatus(status.vitals.heartRate, 'hr')}">${status.vitals.heartRate}</span>
+  //                   </div>
+  //                   <div class="vital-item">
+  //                     <span class="vital-label">BP</span>
+  //                     <span class="vital-value ${getVitalStatus(status.vitals.bloodPressure, 'bp')}">${status.vitals.bloodPressure}</span>
+  //                   </div>
+  //                   <div class="vital-item">
+  //                     <span class="vital-label">O₂</span>
+  //                     <span class="vital-value ${getVitalStatus(status.vitals.oxygenSat, 'o2')}">${status.vitals.oxygenSat}%</span>
+  //                   </div>
+  //                   <div class="vital-item">
+  //                     <span class="vital-label">Rhythm</span>
+  //                     <span class="vital-value ${getVitalStatus(status.vitals.rhythm, 'rhythm')}">${status.vitals.rhythm}</span>
+  //                   </div>
+  //                 </div>
+  //               </div>
+  //             ` : status.status === 'Cleaning' ? `
+  //               <div class="room-details">
+  //                 <p><strong>Status:</strong> Under Cleaning</p>
+  //                 <p><strong>Time Remaining:</strong> ${status.timeRemaining} minutes</p>
+  //               </div>
+  //             ` : `
+  //               <div class="room-details">
+  //                 <p><strong>Status:</strong> Available</p>
+  //                 <p><strong>Ready for next patient</strong></p>
+  //               </div>
+  //             `}
+  //           `;
+  //           leftColumn.appendChild(roomCard);
+  //         });
           
-          // Add columns to grid
-          dashboardGrid.appendChild(leftColumn);
-          dashboardGrid.appendChild(rightColumn);
-          dashboardLayout.appendChild(dashboardGrid);
+  //         // Add columns to grid
+  //         dashboardGrid.appendChild(leftColumn);
+  //         dashboardGrid.appendChild(rightColumn);
+  //         dashboardLayout.appendChild(dashboardGrid);
           
-          // Add dashboard footer with insights
-          const dashboardFooter = document.createElement('div');
-          dashboardFooter.className = 'dashboard-footer';
-          dashboardFooter.innerHTML = `
-            <h3>Key Insights</h3>
-            <ul class="insights-list">
-              <li>
-                <i class="fas fa-x-ray"></i>
-                <span>Most common exam: ${getMostCommonExam(imagingData)}</span>
-              </li>
-              <li>
-                <i class="fas fa-clock"></i>
-                <span>Average wait time: ${getAverageWaitTime(queueData)} minutes</span>
-              </li>
-              <li>
-                <i class="fas fa-cogs"></i>
-                <span>Machine utilization: ${getMachineUtilization(machineStatus)}%</span>
-              </li>
-            </ul>
-          `;
-          dashboardLayout.appendChild(dashboardFooter);
+  //         // Add dashboard footer with insights
+  //         const dashboardFooter = document.createElement('div');
+  //         dashboardFooter.className = 'dashboard-footer';
+  //         dashboardFooter.innerHTML = `
+  //           <h3>Key Insights</h3>
+  //           <ul class="insights-list">
+  //             <li>
+  //               <i class="fas fa-x-ray"></i>
+  //               <span>Most common exam: ${getMostCommonExam(imagingData)}</span>
+  //             </li>
+  //             <li>
+  //               <i class="fas fa-clock"></i>
+  //               <span>Average wait time: ${getAverageWaitTime(queueData)} minutes</span>
+  //             </li>
+  //             <li>
+  //               <i class="fas fa-cogs"></i>
+  //               <span>Machine utilization: ${getMachineUtilization(machineStatus)}%</span>
+  //             </li>
+  //           </ul>
+  //         `;
+  //         dashboardLayout.appendChild(dashboardFooter);
           
-          grid.appendChild(dashboardLayout);
+  //         grid.appendChild(dashboardLayout);
           
-          // Helper functions for insights
-          function getMostCommonExam(data) {
-            const maxExam = data.reduce((max, curr) => 
-              curr.value > max.value ? curr : max
-            );
-            return `${maxExam.label} (${maxExam.value} exams)`;
-          }
+  //         // Helper functions for insights
+  //         function getMostCommonExam(data) {
+  //           const maxExam = data.reduce((max, curr) => 
+  //             curr.value > max.value ? curr : max
+  //           );
+  //           return `${maxExam.label} (${maxExam.value} exams)`;
+  //         }
           
-          function getAverageWaitTime(data) {
-            const waiting = data.find(d => d.label === 'Waiting')?.value || 0;
-            const inProgress = data.find(d => d.label === 'In Progress')?.value || 0;
-            const total = waiting + inProgress;
-            return total ? Math.round((waiting * 30 + inProgress * 15) / total) : 0;
-          }
+  //         function getAverageWaitTime(data) {
+  //           const waiting = data.find(d => d.label === 'Waiting')?.value || 0;
+  //           const inProgress = data.find(d => d.label === 'In Progress')?.value || 0;
+  //           const total = waiting + inProgress;
+  //           return total ? Math.round((waiting * 30 + inProgress * 15) / total) : 0;
+  //         }
           
-          function getMachineUtilization(status) {
-            const activeMachines = Object.values(status).filter(m => m.status === 'Active').length;
-            const totalMachines = Object.keys(status).length;
-            return Math.round((activeMachines / totalMachines) * 100);
-          }
-        } catch (error) {
-          console.error('Error processing X-Ray department data:', error);
-          grid.innerHTML = `
-            <div class="dashboard-error">
-              <i class="fas fa-exclamation-triangle"></i>
-              <p>Error processing X-Ray department data. Please try again later.</p>
-              <p class="error-details">${error.message}</p>
-            </div>
-          `;
-        }
-      }).catch(error => {
-        console.error('Error loading X-Ray department data:', error);
-        grid.innerHTML = `
-          <div class="dashboard-error">
-            <i class="fas fa-exclamation-triangle"></i>
-            <p>Error loading X-Ray department data. Please try again later.</p>
-            <p>Error loading emergency department data. Please try again later.</p>
-            <p class="error-details">${error.message}</p>
-          </div>
-        `;
-      });
-      return;
-    }
+  //         function getMachineUtilization(status) {
+  //           const activeMachines = Object.values(status).filter(m => m.status === 'Active').length;
+  //           const totalMachines = Object.keys(status).length;
+  //           return Math.round((activeMachines / totalMachines) * 100);
+  //         }
+  //       } catch (error) {
+  //         console.error('Error processing X-Ray department data:', error);
+  //         grid.innerHTML = `
+  //           <div class="dashboard-error">
+  //             <i class="fas fa-exclamation-triangle"></i>
+  //             <p>Error processing X-Ray department data. Please try again later.</p>
+  //             <p class="error-details">${error.message}</p>
+  //           </div>
+  //         `;
+  //       }
+  //     }).catch(error => {
+  //       console.error('Error loading X-Ray department data:', error);
+  //       grid.innerHTML = `
+  //         <div class="dashboard-error">
+  //           <i class="fas fa-exclamation-triangle"></i>
+  //           <p>Error loading X-Ray department data. Please try again later.</p>
+  //           <p>Error loading emergency department data. Please try again later.</p>
+  //           <p class="error-details">${error.message}</p>
+  //         </div>
+  //       `;
+  //     });
+  //     return;
+  //   }
     
     // ... fallback for other rooms ...
     // ... existing code ...
-  }
+
 
   // Helper function to create dashboard cards
-  function createDashboardCard(title, description, data, chartType, colors, xTitle, yTitle) {
-    const card = document.createElement('div');
-    card.className = 'dashboard-card';
-    card.innerHTML = `
-      <div class="dashboard-card-title">${title}</div>
-      <div class="dashboard-card-desc">${description}</div>
-      <div class="dashboard-chart"></div>
-    `;
+  // function createDashboardCard(title, description, data, chartType, colors, xTitle, yTitle) {
+  //   const card = document.createElement('div');
+  //   card.className = 'dashboard-card';
+  //   card.innerHTML = `
+  //     <div class="dashboard-card-title">${title}</div>
+  //     <div class="dashboard-card-desc">${description}</div>
+  //     <div class="dashboard-chart"></div>
+  //   `;
     
-    const chartDiv = card.querySelector('.dashboard-chart');
-    renderD3Chart(chartDiv, {
-      type: chartType,
-      data: data,
-      color: colors,
-      xTitle: xTitle,
-      yTitle: yTitle,
-      legend: [{ label: yTitle, color: colors[0] }]
-    });
+  //   const chartDiv = card.querySelector('.dashboard-chart');
+  //   renderD3Chart(chartDiv, {
+  //     type: chartType,
+  //     data: data,
+  //     color: colors,
+  //     xTitle: xTitle,
+  //     yTitle: yTitle,
+  //     legend: [{ label: yTitle, color: colors[0] }]
+  //   });
     
-    return card;
-  }
+  //   return card;
+  // }
 
-  function updateConditionInfo(condition) {
-    const conditionInfo = document.getElementById('conditionInfo');
-    if (!conditionInfo) return;
+  // function updateConditionInfo(condition) {
+  //   const conditionInfo = document.getElementById('conditionInfo');
+  //   if (!conditionInfo) return;
 
-    if (condition === 'default') {
-      conditionInfo.innerHTML = `
-        <div class="info-content">
-          <div class="info-icon"><i class="fas fa-info-circle"></i></div>
-          <div class="info-text">
-            <p class="info-title">Get Started</p>
-            <p class="info-description">Choose a condition above to see the patient journey</p>
-          </div>
-        </div>
-      `;
-      return;
-    }
+  //   if (condition === 'default') {
+  //     conditionInfo.innerHTML = `
+  //       <div class="info-content">
+  //         <div class="info-icon"><i class="fas fa-info-circle"></i></div>
+  //         <div class="info-text">
+  //           <p class="info-title">Get Started</p>
+  //           <p class="info-description">Choose a condition above to see the patient journey</p>
+  //         </div>
+  //       </div>
+  //     `;
+  //     return;
+  //   }
 
-    const conditionNames = {
-      broken_bone: 'Broken Bone Treatment',
-      chest_pain: 'Chest Pain Evaluation',
-      head_injury: 'Head Injury Assessment',
-      kidney_infection: 'Kidney Infection Care',
-      abdominal_pain: 'Abdominal Pain Diagnosis'
-    };
+  //   const conditionNames = {
+  //     broken_bone: 'Broken Bone Treatment',
+  //     chest_pain: 'Chest Pain Evaluation',
+  //     head_injury: 'Head Injury Assessment',
+  //     kidney_infection: 'Kidney Infection Care',
+  //     abdominal_pain: 'Abdominal Pain Diagnosis'
+  //   };
 
-    const conditionName = conditionNames[condition] || condition;
+  //   const conditionName = conditionNames[condition] || condition;
     
-    conditionInfo.innerHTML = `
-      <div class="info-content">
-        <div class="info-icon"><i class="fas fa-route"></i></div>
-        <div class="info-text">
-          <p class="info-title">${conditionName}</p>
-          <p class="info-description">Patient journey path is highlighted. Use room navigation to explore.</p>
-        </div>
-      </div>
-    `;
-  }
+  //   conditionInfo.innerHTML = `
+  //     <div class="info-content">
+  //       <div class="info-icon"><i class="fas fa-route"></i></div>
+  //       <div class="info-text">
+  //         <p class="info-title">${conditionName}</p>
+  //         <p class="info-description">Patient journey path is highlighted. Use room navigation to explore.</p>
+  //       </div>
+  //     </div>
+  //   `;
+  // }
 
   // Theme toggle
   function initializeThemeToggle() {
@@ -1609,13 +1681,13 @@ new TWEEN.Tween(controls.target)
     }
   }
 
-  function selectCondition(value) {
-    const conditionSelect = document.getElementById('conditionSelect');
-    if (conditionSelect) {
-      conditionSelect.value = value;
-      conditionSelect.dispatchEvent(new Event('change'));
-    }
-  }
+  // function selectCondition(value) {
+  //   const conditionSelect = document.getElementById('conditionSelect');
+  //   if (conditionSelect) {
+  //     conditionSelect.value = value;
+  //     conditionSelect.dispatchEvent(new Event('change'));
+  //   }
+  // }
 
   // Keyboard event handling
   document.addEventListener('keydown', (event) => {
