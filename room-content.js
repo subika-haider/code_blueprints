@@ -13,210 +13,183 @@
  */
 
 const roomContent = {
-  entry: {
-    title: "Hospital Entry",
-    description: "The main entrance where patients first arrive. This area includes registration desks, waiting areas, and initial triage assessment for urgent cases.",
-    features: ["Wheelchair access", "Information desk", "Digital check-in kiosks", "Visitor badges"],
-    staff: ["Reception staff", "Security personnel", "Volunteer guides"],
+  waiting_area: {
+    title: "Waiting Area",
+    description: "This is the first stop when you enter the hospital — you’ll wait here before being called to the reception or triage.",
+    features: ["Digital wait time display", "Patient check-in", "Seating area", "Information screens"],
+    staff: ["Reception assistants", "Volunteers"],
     additionalHtml: `
       <div class="room-statistics">
-        <p><strong>Average wait time:</strong> 5-10 minutes</p>
-        <p><strong>Daily visitors:</strong> 250-300</p>
-        <p><strong>Visualization:</strong> Real-time patient arrival patterns throughout the day</p>
+        <p><strong>Helpful for:</strong> Everyone coming in for non-emergency care</p>
+        <p><strong>Visualization:</strong> Real-time waitlist size, average waiting time by hour</p>
       </div>
     `
   },
   reception: {
     title: "Reception Area",
-    description: "Administrative hub where patients register, provide insurance information, and receive initial directions for their care pathway.",
-    features: ["Patient registration system", "Electronic health record access", "Queue management displays", "Multilingual services"],
-    staff: ["Administrative staff", "Patient coordinators", "Financial counselors"],
+    description: "This is where you officially start your hospital visit by sharing your information and getting checked in.",
+    features: ["Patient intake forms", "Insurance verification", "Appointment scheduler"],
+    staff: ["Receptionists", "Administrative coordinators"],
     additionalHtml: `
       <div class="room-statistics">
-        <p><strong>Key functions:</strong> Patient registration, insurance verification, appointment scheduling</p>
-        <p><strong>Visualization:</strong> Registration status breakdown and completion rates</p>
-      </div>
-    `
-  },
-  waiting_area: {
-    title: "Waiting Area",
-    description: "A comfortable space where patients wait for their appointments, procedures, or test results. Designed to provide a calm environment while maintaining efficient patient flow.",
-    features: [
-      "Comfortable seating",
-      "Digital wait time displays",
-      "Patient call system",
-      "Refreshment area",
-      "Reading materials"
-    ],
-    staff: [
-      "Waiting area coordinator",
-      "Patient care assistants",
-      "Volunteer guides"
-    ],
-    additionalHtml: `
-      <div class="room-statistics">
-        <p><strong>Seating capacity:</strong> 50 seats</p>
-        <p><strong>Average wait time:</strong> 15-30 minutes</p>
-        <p><strong>Visualization:</strong> Real-time wait time distribution and seat availability</p>
+        <p><strong>Helpful for:</strong> All patients entering the system</p>
+        <p><strong>Visualization:</strong> Registration completion rate and active queue stats</p>
       </div>
     `
   },
   triage: {
     title: "Triage Station",
-    description: "Where patients are assessed to determine the urgency of their condition and prioritize treatment accordingly.",
-    features: ["Vital signs monitoring", "Priority coding system", "Rapid assessment protocols", "Isolation capability"],
-    staff: ["Triage nurses", "Physician assistants", "Emergency medical technicians"],
+    description: "You’ll go here early in your visit if your condition needs medical attention. Nurses check how serious your case is and decide what happens next.",
+    features: ["Vital sign monitors", "Assessment area", "Triage charting system"],
+    staff: ["Triage nurses"],
     additionalHtml: `
       <div class="room-statistics">
-        <p><strong>Triage categories:</strong></p>
-        <ul class="custom-list">
-          <li>Red - Immediate (0 minutes)</li>
-          <li>Orange - Very Urgent (10 minutes)</li>
-          <li>Yellow - Urgent (60 minutes)</li>
-          <li>Green - Standard (120 minutes)</li>
-          <li>Blue - Non-Urgent (240 minutes)</li>
-        </ul>
-        <p><strong>Visualization:</strong> Current distribution of patients by triage priority</p>
-      </div>
-    `
-  },
-  xray: {
-    title: "X-Ray Department",
-    description: "Diagnostic imaging area for identifying bone fractures, lung conditions, and other internal issues visible through radiography.",
-    features: ["Digital radiography systems", "PACS integration", "Lead-lined rooms", "Radiation safety protocols"],
-    staff: ["Radiologic technologists", "Radiologists", "Imaging specialists"],
-    additionalHtml: `
-      <div class="room-statistics">
-        <p><strong>Equipment:</strong> 3 X-ray machines, 1 fluoroscopy unit</p>
-        <p><strong>Average procedure time:</strong> 15-30 minutes</p>
-        <p><strong>Visualization:</strong> Real-time equipment utilization rates</p>
+        <p><strong>Helpful for:</strong> Chest pain, head injuries, abdominal pain, etc.</p>
+        <p><strong>Visualization:</strong> Patient distribution by triage priority (Red, Orange, Yellow, Green, Blue)</p>
       </div>
     `
   },
   emergency: {
-    title: "Emergency Department",
-    description: "Equipped for immediate treatment of acute and life-threatening conditions, available 24/7.",
-    features: ["Trauma bays", "Cardiac monitoring", "Resuscitation equipment", "Rapid response systems"],
-    staff: ["Emergency physicians", "ER nurses", "Trauma specialists", "Respiratory therapists"],
+    title: "Emergency Department (ED)",
+    description: "If your condition is urgent or life-threatening, you’ll be treated here right after triage.",
+    features: ["Emergency bays", "IV and oxygen support", "Crash carts"],
+    staff: ["ER doctors", "ER nurses"],
     additionalHtml: `
       <div class="room-statistics">
-        <p><strong>Capacity:</strong> 20 beds, 4 trauma bays</p>
-        <p><strong>Response time for critical cases:</strong> Under 2 minutes</p>
-        <p><strong>Visualization:</strong> Average response times by case urgency level</p>
+        <p><strong>Helpful for:</strong> Serious injuries, chest pain, fainting, severe infections</p>
+        <p><strong>Visualization:</strong> Response times by urgency, patient stay durations</p>
       </div>
     `
   },
-  treatment: {
-    title: "Treatment Room",
-    description: "Where procedures, examinations, and treatments are performed for non-critical patients.",
-    features: ["Procedure tables", "Medical supply carts", "Medication dispensing", "Sterile field setup"],
-    staff: ["Attending physicians", "Nurses", "Medical assistants", "Specialists as needed"],
+  staff_room: {
+    title: "Staff Room",
+    description: "You won’t go here yourself, but it’s where nurses, doctors, and other staff take breaks or prep between shifts.",
+    features: ["Rest area", "Kitchenette", "Staff lockers"],
+    staff: ["Nurses", "Doctors"],
     additionalHtml: `
       <div class="room-statistics">
-        <p><strong>Common procedures:</strong> Wound care, IV therapy, minor surgeries</p>
-        <p><strong>Visualization:</strong> Current room occupancy status</p>
+        <p><strong>Helpful for:</strong> Keeping the care team sharp and ready</p>
+        <p><strong>Visualization:</strong> Shift changes, staff presence by time</p>
       </div>
     `
   },
-  cardiac: {
-    title: "Cardiac Unit",
-    description: "Specialized area for diagnosis and treatment of heart conditions with continuous monitoring.",
-    features: ["ECG monitoring", "Defibrillators", "Cardiac catheterization", "Telemetry systems"],
-    staff: ["Cardiologists", "Cardiac nurses", "Cardiac technicians", "Cardiopulmonary specialists"],
+  medicine_ward_a: {
+    title: "Medicine Ward A",
+    description: "After you’ve been stabilized in the ER or assessed by doctors, you may be moved to a ward if you need to stay in the hospital for further treatment, observation, or recovery.",
+    features: ["Patient beds", "Vitals monitors", "Nursing station"],
+    staff: ["Hospitalists", "Ward nurses"],
     additionalHtml: `
       <div class="room-statistics">
-        <p><strong>Common conditions treated:</strong> Heart attack, arrhythmia, heart failure</p>
-        <p><strong>Average stay:</strong> 3-5 days</p>
-        <p><strong>Visualization:</strong> Continuous heart rate monitoring trends</p>
+        <p><strong>Helpful for:</strong> Kidney infections, abdominal pain, chronic conditions</p>
+        <p><strong>Visualization:</strong> Bed occupancy, average length of stay, daily rounding times</p>
       </div>
     `
   },
-  neurology: {
-    title: "Neurology Department",
-    description: "Focused on disorders of the nervous system, including brain and spinal cord conditions.",
-    features: ["Neuroimaging equipment", "EEG monitoring", "Reflex testing stations", "Cognitive assessment tools"],
-    staff: ["Neurologists", "Neurosurgeons", "Neuro nurses", "Neuropsychologists"],
+  medicine_ward_b: {
+    title: "Medicine Ward B",
+    description: "After you’ve been stabilized in the ER or assessed by doctors, you may be moved to a ward if you need to stay in the hospital for further treatment, observation, or recovery.",
+    features: ["Patient beds", "Vitals monitors", "Nursing station"],
+    staff: ["Hospitalists", "Ward nurses"],
     additionalHtml: `
       <div class="room-statistics">
-        <p><strong>Common conditions treated:</strong> Stroke, seizures, headache disorders, nerve damage</p>
-        <p><strong>Visualization:</strong> Neurological assessment scores by category</p>
+        <p><strong>Helpful for:</strong> Kidney infections, abdominal pain, chronic conditions</p>
+        <p><strong>Visualization:</strong> Bed occupancy, average length of stay, daily rounding times</p>
       </div>
     `
   },
   lab: {
-    title: "Laboratory",
-    description: "Where blood samples and other specimens are analyzed to aid in diagnosis and treatment planning.",
-    features: ["Automated analyzers", "Centrifuges", "Microscopy stations", "Specimen storage"],
-    staff: ["Medical laboratory scientists", "Phlebotomists", "Lab technicians", "Pathologists"],
+    title: "Laboratory (Lab)",
+    description: "To get your blood, urine, or other samples tested to help doctors figure out what’s going on in your body.",
+    features: ["Sample analysis machines", "Blood draw chairs"],
+    staff: ["Phlebotomists", "Lab techs"],
     additionalHtml: `
       <div class="room-statistics">
-        <p><strong>Tests performed daily:</strong> 500-800</p>
-        <p><strong>Turnaround time:</strong> 1-3 hours for routine tests</p>
-        <p><strong>Visualization:</strong> Daily test volume breakdown by test type</p>
+        <p><strong>Helpful for:</strong> Chest pain, infection, abdominal issues, medication levels</p>
+        <p><strong>Visualization:</strong> Test volume by type, average result turnaround time</p>
       </div>
     `
   },
-  urology: {
-    title: "Urology Department",
-    description: "Specializes in the urinary tract system and male reproductive health issues.",
-    features: ["Cystoscopy equipment", "Urodynamic testing", "Lithotripsy units", "Specialized imaging"],
-    staff: ["Urologists", "Urology nurses", "Urologic technologists"],
+  imaging: {
+    title: "Imaging (Radiology)",
+    description: "If you have pain, injury, or symptoms that need a look inside your body — like broken bones, head injuries, or chest pain.",
+    features: ["CT scanner", "MRI machine", "X-ray"],
+    staff: ["Radiologists", "Imaging techs"],
     additionalHtml: `
       <div class="room-statistics">
-        <p><strong>Common conditions treated:</strong> Kidney stones, UTIs, prostate issues</p>
-        <p><strong>Visualization:</strong> Distribution of urological procedures</p>
+        <p><strong>Helpful for:</strong> Head injury assessment, broken bones, abdominal pain</p>
+        <p><strong>Visualization:</strong> Imaging types used by condition, average wait and result times</p>
       </div>
     `
   },
-  gastro: {
-    title: "Gastroenterology",
-    description: "Focused on digestive system disorders affecting the esophagus, stomach, intestines, liver, and pancreas.",
-    features: ["Endoscopy equipment", "Manometry systems", "Breath testing units", "Specimen collection"],
-    staff: ["Gastroenterologists", "GI nurses", "Endoscopy technicians", "Nutritionists"],
+  department_med: {
+    title: "Department MED",
+    description: "This is the central department for general medical care — where your case is managed if you're not in surgery or ICU.",
+    features: ["Doctor offices", "Electronic charting stations"],
+    staff: ["Physicians", "Medical staff"],
     additionalHtml: `
       <div class="room-statistics">
-        <p><strong>Common procedures:</strong> Endoscopy, colonoscopy, ERCP</p>
-        <p><strong>Average procedure time:</strong> 30-60 minutes</p>
-        <p><strong>Visualization:</strong> Daily procedure scheduling timeline</p>
+        <p><strong>Helpful for:</strong> Chronic illnesses, infections, non-surgical recovery</p>
+        <p><strong>Visualization:</strong> Case load, time from admit to diagnosis</p>
       </div>
     `
   },
-  surgery: {
-    title: "Surgery Department",
-    description: "Operating theaters and preparation areas for scheduled and emergency surgical procedures.",
-    features: ["Operating tables", "Anesthesia equipment", "Surgical instruments", "Sterilization systems"],
-    staff: ["Surgeons", "Anesthesiologists", "Surgical nurses", "Surgical technologists"],
+  medication_station: {
+    title: "Medication Station",
+    description: "This is the place where nurses prepare and double-check the medication before giving it to you.",
+    features: ["Prep counters", "Medication drawers"],
+    staff: ["Nurses"],
     additionalHtml: `
       <div class="room-statistics">
-        <p><strong>Operating rooms:</strong> 8 standard, 2 specialized</p>
-        <p><strong>Average procedures per day:</strong> 25-30</p>
-        <p><strong>Visualization:</strong> Operating room utilization by hours</p>
-      </div>
-    `
-  },
-  monitoring: {
-    title: "Monitoring Unit",
-    description: "Where patients are observed after procedures or during recovery to ensure stability and detect complications.",
-    features: ["Continuous vital monitoring", "Nurse call systems", "Medication delivery", "Critical alert protocols"],
-    staff: ["Monitoring nurses", "Hospitalists", "Patient care technicians", "Respiratory therapists"],
-    additionalHtml: `
-      <div class="room-statistics">
-        <p><strong>Patient capacity:</strong> 15 beds</p>
-        <p><strong>Nurse-to-patient ratio:</strong> 1:3</p>
-        <p><strong>Visualization:</strong> Vital signs monitoring performance metrics</p>
+        <p><strong>Helpful for:</strong> Safe and accurate medication delivery</p>
+        <p><strong>Visualization:</strong> Prep time per dose, most common meds prepared</p>
       </div>
     `
   },
   discharge: {
     title: "Discharge Area",
-    description: "Where patients receive final instructions, prescriptions, and follow-up appointments before leaving the hospital.",
-    features: ["Discharge instruction systems", "Prescription printers", "Follow-up scheduling", "Transportation coordination"],
-    staff: ["Discharge planners", "Care coordinators", "Social workers", "Pharmacy staff"],
+    description: "When you’re ready to leave, this area makes sure you go home with everything you need.",
+    features: ["Discharge paperwork", "Pharmacy pickup", "Exit desk"],
+    staff: ["Discharge coordinators"],
     additionalHtml: `
       <div class="room-statistics">
-        <p><strong>Average discharge time:</strong> 30-45 minutes</p>
-        <p><strong>Patients discharged daily:</strong> 40-60</p>
-        <p><strong>Visualization:</strong> Discharge destination distribution analysis</p>
+        <p><strong>Helpful for:</strong> All patients finishing their hospital stay</p>
+        <p><strong>Visualization:</strong> Discharge times, readmission rates, time-to-clearance</p>
+      </div>
+    `
+  },
+  diagnostic_unit: {
+    title: "Diagnostic Unit",
+    description: "To get detailed tests (like heart monitoring, urine tests, or special evaluations) to help doctors better understand your condition.",
+    features: ["Diagnostic equipment", "Monitoring tools"],
+    staff: ["Diagnostic techs"],
+    additionalHtml: `
+      <div class="room-statistics">
+        <p><strong>Helpful for:</strong> Chest pain, infections, unexplained symptoms</p>
+        <p><strong>Visualization:</strong> Test types by case, turnaround times</p>
+      </div>
+    `
+  },
+  pharmacy: {
+    title: "Pharmacy",
+    description: "To receive the medication prescribed to treat your condition — either while you're in the hospital or before discharge.",
+    features: ["Medication storage", "Pharmacist counter"],
+    staff: ["Pharmacists", "Pharmacy techs"],
+    additionalHtml: `
+      <div class="room-statistics">
+        <p><strong>Helpful for:</strong> Pain relief, antibiotics, blood pressure meds</p>
+        <p><strong>Visualization:</strong> Most prescribed drugs, time from prescription to administration</p>
+      </div>
+    `
+  },
+  nurses_station: {
+    title: "Nurses Station",
+    description: "You won’t stay here, but nurses use this as their hub to monitor patients — including you.",
+    features: ["Computer terminals", "Charts", "Alert systems"],
+    staff: ["Nurses"],
+    additionalHtml: `
+      <div class="room-statistics">
+        <p><strong>Helpful for:</strong> Every patient — nurses make it all work</p>
+        <p><strong>Visualization:</strong> Nurse-to-patient ratios, alert volumes</p>
       </div>
     `
   }
