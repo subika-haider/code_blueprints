@@ -4101,11 +4101,9 @@ function renderD3Chart(container, config) {
     .attr("x", width / 2)
     .attr("y", -margin.top / 2)
     .attr("text-anchor", "middle")
-    .style("font-size", "1.4rem")
-    .style("font-weight", "700")
+    .style("font-size", "1.2em")
+    .style("font-weight", "bold")
     .style("fill", "#ffffff")
-    .style("text-shadow", "0 2px 4px rgba(0,0,0,0.3)")
-    .style("letter-spacing", "0.02em")
     .text(config.title);
 
   // Create tooltip div
@@ -4162,9 +4160,6 @@ function renderD3Chart(container, config) {
       .call(d3.axisBottom(x))
       .selectAll('text')
       .style('text-anchor', 'end')
-      .style('fill', '#a0aec0')
-      .style('font-size', '0.9rem')
-      .style('font-weight', '500')
       .attr('dx', '-.8em')
       .attr('dy', '.15em')
       .attr('transform', 'rotate(-45)');
@@ -4172,21 +4167,13 @@ function renderD3Chart(container, config) {
     svg.append('g')
       .attr('class', 'd3-axis y-axis')
       .call(d3.axisLeft(y)
-        .ticks(5))
-      .selectAll('text')
-      .style('fill', '#a0aec0')
-      .style('font-size', '0.9rem')
-      .style('font-weight', '500');
+        .ticks(5));
 
     svg.append('text')
       .attr('class', 'd3-axis-label')
       .attr('x', width / 2)
       .attr('y', height + margin.bottom - 10)
       .style('text-anchor', 'middle')
-      .style('fill', '#a0aec0')
-      .style('font-size', '1rem')
-      .style('font-weight', '600')
-      .style('letter-spacing', '0.02em')
       .text(config.xTitle || '');
 
     svg.append('text')
@@ -4195,10 +4182,6 @@ function renderD3Chart(container, config) {
       .attr('x', -height / 2)
       .attr('y', -margin.left + 25) // Adjusted y position to prevent cutoff
       .style('text-anchor', 'middle')
-      .style('fill', '#a0aec0')
-      .style('font-size', '1rem')
-      .style('font-weight', '600')
-      .style('letter-spacing', '0.02em')
       .text(config.yTitle || '');
 
     const bars = svg.selectAll('.d3-bar')
@@ -4212,18 +4195,7 @@ function renderD3Chart(container, config) {
         if (Array.isArray(config.colors)) {
           return config.colors[i % config.colors.length];
         }
-        // Create gradient colors if no specific colors provided
-        const colors = [
-          '#4fd1c7', // teal
-          '#63b3ed', // blue
-          '#9f7aea', // purple
-          '#f6ad55', // orange
-          '#f687b3', // pink
-          '#68d391', // green
-          '#fc8181', // red
-          '#fbd38d'  // yellow
-        ];
-        return colors[i % colors.length];
+        return config.colors || '#4299e1';
       });
 
     bars
@@ -4256,24 +4228,13 @@ function renderD3Chart(container, config) {
       });
 
   } else if (config.chartType === 'doughnut') {
-    console.log('DEBUG: Rendering Doughnut Chart. Data:', config.data);
-    console.log('DEBUG: Doughnut Chart Container Dimensions:', container.clientWidth, container.clientHeight);
     const radius = Math.min(width, height) / 2;
     const innerRadius = radius * 0.6;
     const outerRadius = radius * 0.9;
 
     const color = d3.scaleOrdinal()
       .domain(config.data.map(d => d.label))
-      .range(config.colors || [
-        '#4fd1c7', // teal
-        '#63b3ed', // blue
-        '#9f7aea', // purple
-        '#f6ad55', // orange
-        '#f687b3', // pink
-        '#68d391', // green
-        '#fc8181', // red
-        '#fbd38d'  // yellow
-      ]);
+      .range(config.colors || d3.schemeCategory10);
 
     const pie = d3.pie()
       .value(d => d.value)
@@ -4432,28 +4393,20 @@ function renderD3LineChart(container, data, config) {
     .call(d3.axisLeft(y).ticks(5));
 
   // Add X and Y axis labels
-  svg.append('text')
-    .attr('class', 'd3-axis-label')
-    .attr('x', width / 2)
-    .attr('y', height + margin.bottom - 10)
-    .style('text-anchor', 'middle')
-    .style('fill', '#a0aec0')
-    .style('font-size', '1rem')
-    .style('font-weight', '600')
-    .style('letter-spacing', '0.02em')
-    .text(config.xTitle || '');
+  svg.append("text")
+    .attr("class", "d3-axis-label")
+    .attr("x", width / 2)
+    .attr("y", height + margin.bottom - 5) // Adjusted position
+    .style("text-anchor", "middle")
+    .text(config.xTitle || "Date");
 
-  svg.append('text')
-    .attr('class', 'd3-axis-label')
-    .attr('transform', 'rotate(-90)')
-    .attr('x', -height / 2)
-    .attr('y', -margin.left + 25) // Adjusted y position to prevent cutoff
-    .style('text-anchor', 'middle')
-    .style('fill', '#a0aec0')
-    .style('font-size', '1rem')
-    .style('font-weight', '600')
-    .style('letter-spacing', '0.02em')
-    .text(config.yTitle || '');
+  svg.append("text")
+    .attr("class", "d3-axis-label")
+    .attr("transform", "rotate(-90)")
+    .attr("x", -height / 2)
+    .attr("y", -margin.left + 25) // Adjusted position to prevent cutoff
+    .style("text-anchor", "middle")
+    .text(config.yTitle || "Value");
 
   // Add grid lines
   svg.append("g")
@@ -4657,3 +4610,48 @@ function renderFallbackChart(container, config) {
     </div>
   `;
 }
+
+// Test function to verify D3.js is working
+function testD3Chart() {
+  console.log('Testing D3.js functionality...');
+  
+  // Create a test container
+  const testContainer = document.createElement('div');
+  testContainer.style.width = '300px';
+  testContainer.style.height = '200px';
+  testContainer.style.border = '1px solid red';
+  testContainer.style.position = 'fixed';
+  testContainer.style.top = '10px';
+  testContainer.style.left = '10px';
+  testContainer.style.zIndex = '10000';
+  testContainer.style.background = 'white';
+  
+  document.body.appendChild(testContainer);
+  
+  // Test data
+  const testData = [
+    { label: 'A', value: 10 },
+    { label: 'B', value: 20 },
+    { label: 'C', value: 15 }
+  ];
+  
+  // Try to render a simple bar chart
+  try {
+    renderD3Chart(testContainer, {
+      title: 'D3 Test Chart',
+      chartType: 'bar',
+      data: testData,
+      colors: ['#ff0000', '#00ff00', '#0000ff'],
+      xTitle: 'Category',
+      yTitle: 'Value'
+    });
+    console.log('D3 test chart rendered successfully');
+  } catch (error) {
+    console.error('D3 test chart failed:', error);
+  }
+}
+
+// Call test function after page loads
+window.addEventListener('load', () => {
+  setTimeout(testD3Chart, 2000);
+});

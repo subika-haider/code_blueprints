@@ -61,15 +61,17 @@
     top: 0;
     left: 0;
     width: 100%;
-    height: 3px;
-    background: var(--accent-bg);
+    height: 8px; /* Further increased height */
+    background: rgba(0, 0, 0, 0.4); /* Darker, semi-transparent background */
     z-index: 1000;
     opacity: 0;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
 
 .progress-indicator.visible {
     opacity: 1;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
 }
 
 .progress-bar {
@@ -77,6 +79,13 @@
     background: linear-gradient(90deg, var(--accent-teal), var(--accent-blue));
     width: 0%;
     transition: width 0.3s ease;
+    border-radius: 4px; /* Slightly more rounded ends */
+    animation: progress-glow 2s infinite alternate; /* Add a subtle glow animation */
+}
+
+@keyframes progress-glow {
+    0% { filter: brightness(1); }
+    100% { filter: brightness(1.2); }
 }
 
 /* Navigation */
@@ -2909,874 +2918,415 @@ select option {
   stroke: var(--glass-border, #ffffff22);
   stroke-width: 1.2px;
   shape-rendering: crispEdges;
+  opacity: 0.3;
 }
 
 .d3-bar {
-  transition: fill 0.2s, opacity 0.2s;
+  transition: fill 0.3s ease, opacity 0.3s ease, transform 0.2s ease;
   cursor: pointer;
-  opacity: 0.92;
-  rx: 7px;
-  filter: drop-shadow(0 2px 8px rgba(79,209,199,0.08));
+  opacity: 0.9;
+  rx: 8px;
+  ry: 8px;
+  filter: drop-shadow(0 4px 12px rgba(79,209,199,0.15));
 }
+
 .d3-bar:hover {
   opacity: 1;
-  filter: brightness(1.18) drop-shadow(0 4px 16px rgba(79,209,199,0.18));
+  filter: brightness(1.2) drop-shadow(0 6px 20px rgba(79,209,199,0.25));
+  transform: translateY(-2px);
 }
 
 .d3-line {
   stroke-width: 3.5px;
   fill: none;
-  filter: drop-shadow(0 2px 8px rgba(99,179,237,0.12));
+  filter: drop-shadow(0 4px 12px rgba(99,179,237,0.2));
   stroke-linecap: round;
   stroke-linejoin: round;
+  transition: stroke-width 0.3s ease;
+}
+
+.d3-line:hover {
+  stroke-width: 4.5px;
+  filter: drop-shadow(0 6px 16px rgba(99,179,237,0.3));
 }
 
 .d3-pie-slice {
   cursor: pointer;
-  opacity: 0.93;
-  transition: opacity 0.2s, filter 0.2s;
+  opacity: 0.9;
+  transition: opacity 0.3s ease, filter 0.3s ease, transform 0.2s ease;
   stroke: var(--glass-border, #ffffff22);
   stroke-width: 2.5px;
-  filter: drop-shadow(0 2px 8px rgba(99,179,237,0.10));
+  filter: drop-shadow(0 4px 12px rgba(99,179,237,0.15));
 }
+
 .d3-pie-slice:hover {
   opacity: 1;
-  filter: brightness(1.18) drop-shadow(0 4px 16px rgba(99,179,237,0.18));
+  filter: brightness(1.15) drop-shadow(0 6px 20px rgba(99,179,237,0.25));
+  transform: scale(1.02);
 }
 
 .d3-radar-area {
-  fill-opacity: 0.55;
+  fill-opacity: 0.6;
   stroke-width: 2.5px;
-  transition: fill-opacity 0.2s;
-  filter: drop-shadow(0 2px 8px rgba(159,122,234,0.10));
+  transition: fill-opacity 0.3s ease;
+  filter: drop-shadow(0 4px 12px rgba(159,122,234,0.15));
 }
 
 .d3-legend {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem 2rem;
-  margin-top: 1.2rem;
+  gap: 1rem 2rem;
+  margin-top: 1.5rem;
   font-size: 1.05rem;
   font-weight: 500;
   color: var(--text-primary, #fff);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  backdrop-filter: blur(10px);
 }
+
 .d3-legend-item {
   display: flex;
   align-items: center;
-  gap: 0.7rem;
-  margin-bottom: 0.2rem;
+  gap: 0.8rem;
+  margin-bottom: 0.5rem;
+  transition: transform 0.2s ease;
 }
+
+.d3-legend-item:hover {
+  transform: translateX(5px);
+}
+
 .d3-legend-color {
-  width: 18px;
-  height: 18px;
-  border-radius: 4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
   display: inline-block;
   margin-right: 0.5rem;
   border: 2px solid var(--glass-border, #ffffff22);
-  box-shadow: 0 2px 8px rgba(79,209,199,0.10);
+  box-shadow: 0 4px 12px rgba(79,209,199,0.15);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.d3-legend-color:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(79,209,199,0.25);
 }
 
 .d3-tooltip {
   position: absolute;
   pointer-events: none;
-  background: rgba(30, 41, 59, 0.98);
+  background: rgba(15, 20, 25, 0.95);
   color: #fff;
-  border-radius: 8px;
-  padding: 0.7rem 1.1rem;
-  font-size: 1.08rem;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  font-size: 1rem;
   font-weight: 600;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.3);
   z-index: 1000;
   border: 2px solid var(--accent-teal, #4fd1c7);
   opacity: 0;
-  transition: opacity 0.18s, transform 0.18s;
-  transform: translateY(-14px);
-  min-width: 120px;
-  max-width: 260px;
-  text-align: center;
-}
-.d3-tooltip.active {
-  opacity: 1;
-  transform: translateY(0);
-}
-.d3-tooltip::after {
-  content: '';
-  position: absolute;
-  left: 20px;
-  bottom: -10px;
-  width: 0;
-  height: 0;
-  border-left: 10px solid transparent;
-  border-right: 10px solid transparent;
-  border-top: 10px solid var(--accent-teal, #4fd1c7);
-  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.12));
 }
 
-/* Responsive for D3 SVG */
-@media (max-width: 600px) {
-  .visualization-container svg {
-    height: 220px !important;
-  }
-  .d3-tooltip {
-    font-size: 0.95rem;
-    min-width: 80px;
-    padding: 0.5rem 0.7rem;
-  }
+/* Dashboard Grid Improvements */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+  padding: 1rem;
+  background: var(--glass-bg);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--glass-border);
 }
-
-
 
 .dashboard-card {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: var(--radius-xl);
-  padding: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  box-shadow: var(--card-shadow);
-  transition: var(--transition-normal);
-  min-height: 350px; /* Ensure a minimum height for cards */
-  height: 100%; /* Allow cards to fill available height in grid */
-  position: relative;
-  overflow: hidden; /* Hide overflowing content */
-}
-
-.dashboard-card:hover {
-  transform: translateY(-5px);
-  box-shadow: var(--card-shadow-hover);
-}
-
-.dashboard-card-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 0.5rem;
-  text-align: center; /* Center align titles */
-}
-
-.dashboard-card-desc {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  margin-bottom: 1rem;
-  text-align: center; /* Center align descriptions */
-  flex-grow: 0; /* Prevent description from taking too much space */
-}
-
-.dashboard-chart {
-  flex-grow: 1; /* Allow the chart to take up available space */
-  display: flex; /* Use flex to center chart content if needed */
-  justify-content: center;
-  align-items: center;
-  min-height: 200px; /* Minimum height for charts */
-  height: 100%; /* Ensure chart fills its container */
-  width: 100%;
-}
-
-.chart-svg {
-  overflow: visible; /* Allow SVG elements to draw outside their bounding box if needed */
-}
-
-/* Vitals Section */
-.vitals-section {
-  width: 100%;
-  max-width: 1400px;
-  margin: 2rem auto 0;
-  background: var(--card-bg);
+  background: linear-gradient(135deg, var(--accent-bg), var(--secondary-bg));
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   padding: 2rem;
-  box-shadow: var(--card-shadow);
-}
-
-.vitals-section .dashboard-section-header {
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-.vitals-section .dashboard-section-header h3 {
-  font-size: 1.5rem;
-  color: var(--text-primary);
-  margin-bottom: 0.5rem;
-}
-
-.vitals-section .dashboard-section-header p {
-  color: var(--text-secondary);
-  font-size: 1rem;
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-.vitals-charts {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: 2rem;
-  margin-top: 1.5rem;
-  padding: 1rem;
-}
-
-.vitals-chart {
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-lg);
-  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
   min-height: 400px;
   position: relative;
-  transition: var(--transition-normal);
+  overflow: hidden;
 }
 
-.vitals-chart .chart-container {
-  width: 100%;
-  height: 100%;
-  min-height: 350px;
-  position: relative;
-  padding: 1rem;
-}
-
-.vitals-chart .chart-title {
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  text-align: center;
-  margin-bottom: 1.5rem;
-  padding: 0 1rem;
-}
-
-.vitals-chart .d3-axis-label {
-  font-size: 0.9rem;
-  font-weight: 500;
-  fill: var(--text-primary);
-  text-anchor: middle;
-}
-
-.vitals-chart .d3-legend {
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-md);
-  padding: 0.5rem;
-}
-
-.vitals-chart .d3-legend text {
-  font-size: 0.85rem;
-  fill: var(--text-primary);
-}
-
-.vitals-chart:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
-}
-
-/* Chart Container Styles */
-.vitals-chart .chart-container {
-  width: 100%;
-  height: 100%;
-  min-height: 250px;
-  position: relative;
-}
-
-/* SVG Chart Styles */
-.vitals-chart svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-/* Chart Title */
-.vitals-chart .chart-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 1rem;
-  text-align: center;
-}
-
-/* Axis Styles */
-.vitals-chart .axis path,
-.vitals-chart .axis line {
-  stroke: var(--border-color);
-  stroke-width: 1;
-}
-
-.vitals-chart .axis text {
-  fill: var(--text-secondary);
-  font-size: 0.8rem;
-}
-
-.vitals-chart .axis-label {
-  fill: var(--text-secondary);
-  font-size: 0.9rem;
-  font-weight: 500;
-}
-
-/* Grid Lines */
-.vitals-chart .grid line {
-  stroke: var(--border-color);
-  stroke-opacity: 0.2;
-  stroke-dasharray: 2,2;
-}
-
-/* Line Styles */
-.vitals-chart .line {
-  fill: none;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.vitals-chart .line.systolic {
-  stroke: #fc8181;
-}
-
-.vitals-chart .line.diastolic {
-  stroke: #f6ad55;
-}
-
-/* Data Points */
-.vitals-chart .data-point {
-  fill: currentColor;
-  stroke: var(--card-bg);
-  stroke-width: 2;
-  transition: r 0.2s;
-}
-
-.vitals-chart .data-point:hover {
-  r: 6;
-  cursor: pointer;
-}
-
-/* Tooltip */
-.vitals-chart .tooltip {
-  position: absolute;
-  background: var(--card-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-md);
-  padding: 0.75rem;
-  font-size: 0.9rem;
-  color: var(--text-primary);
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.2s;
-  box-shadow: var(--shadow-md);
-  z-index: 10;
-}
-
-.vitals-chart .tooltip.visible {
-  opacity: 1;
-}
-
-.vitals-chart .tooltip-title {
-  font-weight: 600;
-  margin-bottom: 0.25rem;
-  color: var(--text-primary);
-}
-
-.vitals-chart .tooltip-value {
-  color: var(--text-secondary);
-}
-
-/* Legend */
-.vitals-chart .legend {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-  margin-top: 1rem;
-  font-size: 0.9rem;
-}
-
-.vitals-chart .legend-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--text-secondary);
-}
-
-.vitals-chart .legend-color {
-  width: 12px;
-  height: 12px;
-  border-radius: 2px;
-}
-
-/* Loading State */
-.vitals-chart .chart-loading {
+.dashboard-card::before {
+  content: '';
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  bottom: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--accent-teal), var(--accent-blue));
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.dashboard-card:hover::before {
+  transform: scaleX(1);
+}
+
+.dashboard-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+}
+
+.dashboard-card-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+  text-align: center;
+  background: linear-gradient(135deg, var(--accent-teal), var(--accent-blue));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.dashboard-card-desc {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+  text-align: center;
+  flex-grow: 0;
+  line-height: 1.6;
+}
+
+.dashboard-chart {
+  flex-grow: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+  height: 300px;
+  width: 100%;
+  background: var(--glass-bg);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--glass-border);
+  padding: 1rem;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.dashboard-chart svg {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.dashboard-chart .chart-error {
+  color: var(--text-secondary);
+  text-align: center;
+  padding: 2rem;
+  font-size: 0.9rem;
+}
+
+/* Loading and Error States */
+.dashboard-loading,
+.dashboard-error {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: var(--glass-bg);
-  border-radius: var(--radius-lg);
-  z-index: 1;
+  min-height: 300px;
+  text-align: center;
+  padding: 2rem;
 }
 
-.vitals-chart .loading-spinner {
+.dashboard-loading .loading-spinner {
   width: 40px;
   height: 40px;
-  border: 3px solid var(--border-color);
-  border-top-color: var(--accent-teal);
+  border: 4px solid var(--glass-border);
+  border-top: 4px solid var(--accent-teal);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 1rem;
 }
 
-.vitals-chart .chart-loading p {
+.dashboard-error {
+  color: var(--text-secondary);
+}
+
+.dashboard-error i {
+  font-size: 2rem;
+  color: #fc8181;
+  margin-bottom: 1rem;
+}
+
+/* Room Statistics Styling */
+.room-statistics {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.room-statistics p {
+  margin-bottom: 0.75rem;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.room-statistics strong {
+  color: var(--accent-teal);
+  font-weight: 600;
+}
+
+.custom-list {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+}
+
+.custom-list li {
+  padding: 0.5rem 0;
   color: var(--text-secondary);
   font-size: 0.9rem;
-  margin: 0;
-  animation: pulse 1.5s ease-in-out infinite;
+  position: relative;
+  padding-left: 1.5rem;
+}
+
+.custom-list li::before {
+  content: '•';
+  color: var(--accent-teal);
+  font-weight: bold;
+  position: absolute;
+  left: 0;
 }
 
 /* Responsive Design */
 @media (max-width: 1200px) {
-  .vitals-charts {
-    grid-template-columns: 1fr;
+  .dashboard-grid {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 1.5rem;
   }
   
-  .vitals-chart {
+  .dashboard-card {
     min-height: 350px;
   }
 }
 
 @media (max-width: 768px) {
-  .vitals-charts {
-    padding: 0.5rem;
-  gap: 1rem;
-}
-  
-  .vitals-chart {
+  .room-dashboard {
     padding: 1rem;
-    min-height: 300px;
+    margin: 1rem;
   }
   
-  .vitals-chart .chart-title {
-    font-size: 1.1rem;
-    margin-bottom: 1rem;
+  .dashboard-hero-card {
+    padding: 1.5rem;
   }
   
-  .vitals-chart .d3-axis-label {
-    font-size: 0.8rem;
+  .dashboard-card-title {
+    font-size: 1.75rem;
   }
   
-  .vitals-chart .d3-legend text {
-    font-size: 0.75rem;
-  }
-}
-
-/* Dashboard Layout */
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1.5rem;
-  padding: 1rem;
-  align-items: stretch; /* Stretch items to fill height */
-  min-height: 500px; /* Ensure grid has a minimum height */
-  height: 100%; /* Allow grid to fill available height */
-}
-
-.dashboard-grid::before {
-  content: '';
-  position: absolute;
-  top: -20px;
-  left: -20px;
-  right: -20px;
-  bottom: -20px;
-  background: var(--gradient-overlay);
-  backdrop-filter: blur(var(--blur-amount));
-  -webkit-backdrop-filter: blur(var(--blur-amount));
-  border-radius: var(--border-radius-xl);
-  z-index: -1;
-}
-
-.dashboard-column {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  /* min-height: 100%; This might cause issues if content is smaller */
-  /* Remove explicit min-height here, let flex items determine it */
-}
-
-.dashboard-section-header {
-  text-align: center;
-  margin-bottom: 1rem;
-  padding: 0 1rem;
-}
-
-.dashboard-section-header h3 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 0.5rem;
-}
-
-.dashboard-section-header p {
-  font-size: 0.9em;
-  color: var(--text-secondary);
-  line-height: 1.4;
-}
-
-/* Responsive adjustments for dashboard */
-@media (max-width: 1200px) {
-  .dashboard-grid {
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  }
-  .dashboard-card {
-    min-height: 320px;
-  }
-}
-
-@media (max-width: 768px) {
   .dashboard-grid {
     grid-template-columns: 1fr;
-    padding: 0.5rem;
     gap: 1rem;
-    min-height: auto; /* Allow height to be determined by content on smaller screens */
   }
+  
+  .dashboard-hero-stats {
+    grid-template-columns: 1fr;
+  }
+  
   .dashboard-card {
-    padding: 1rem;
     min-height: 300px;
-  }
-  .dashboard-card-content,
-  .dashboard-card-title,
-  .dashboard-card-desc {
-    text-align: left; /* Align text left on small screens */
-  }
-  .insights-list {
-    padding-left: 0;
-  }
-}
-
-/* Animation for data updates */
-@keyframes fadeIn {
-  from { 
-    opacity: 0;
-    transform: translateY(20px) scale(0.98);
-  }
-  to { 
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.dashboard-card-content {
-  animation: fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Emergency Dashboard Layout */
-.emergency-dashboard-layout {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  height: auto; /* Change from min-height: 0 */
-  margin-bottom: 0; /* Remove bottom margin */
-  overflow: hidden; /* Prevent content from causing extra space */
-}
-
-.dashboard-grid {
-  margin-bottom: 0.5rem; /* Reduce margin */
-  flex: 1; /* Allow grid to take available space */
-  min-height: 0; /* Prevent minimum height forcing extra space */
-}
-
-.dashboard-footer {
-  margin-top: 1rem; /* Reduce top margin */
-  margin-bottom: 0; /* Remove bottom margin */
-  padding-bottom: 0; /* Remove padding */
-}
-
-/* Ensure content fills available space without stretching */
-.emergency-dashboard-layout .dashboard-card {
-  height: auto;
-  min-height: 0;
-  margin-bottom: 0.5rem; /* Add small margin between cards */
-}
-
-.emergency-dashboard-layout .chart-container {
-  min-height: 200px; /* Slightly reduce minimum height */
-  height: auto; /* Allow container to size naturally */
-}
-
-/* Adjust grid layout for emergency dashboard */
-.emergency-dashboard-layout .dashboard-grid {
-  margin: 0.25rem 0; /* Reduce vertical margins */
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1rem;
-}
-
-/* Ensure footer stays at bottom without extra space */
-.emergency-dashboard-layout .dashboard-footer {
-  position: relative;
-  width: 100%;
-  background: var(--glass-bg);
-  border-top: 1px solid var(--glass-border);
-  padding: 1rem;
-  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
-}
-
-/* Responsive adjustments for emergency dashboard */
-@media (max-width: 768px) {
-  .emergency-dashboard-layout {
-    gap: 0.75rem;
-    margin-bottom: 0;
-  }
-
-  .emergency-dashboard-layout .dashboard-grid {
-    margin: 0.25rem 0;
-    grid-template-columns: 1fr; /* Stack cards on mobile */
-  }
-
-  .emergency-dashboard-layout .dashboard-footer {
-    margin-top: 0.75rem;
-    padding: 0.75rem;
-  }
-
-  .emergency-dashboard-layout .chart-container {
-    min-height: 180px; /* Further reduce height on mobile */
-  }
-}
-
-/* Modal Base Styles */
-.modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.3s ease;
-  pointer-events: none;
-  padding: 1rem;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.modal.active {
-  opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
-}
-
-.modal-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(15, 20, 25, 0.8);
-  backdrop-filter: blur(8px);
-  z-index: -1;
-}
-
-.modal-content {
-  background: linear-gradient(145deg,
-    rgba(26, 31, 46, 0.95),
-    rgba(15, 20, 25, 0.98)
-  );
-  border-radius: var(--border-radius-lg);
-  padding: 2rem;
-  width: 100%;
-  max-width: 600px;
-  max-height: 90vh;
-  overflow-y: auto;
-  position: relative;
-  box-shadow: 
-    0 20px 40px rgba(0, 0, 0, 0.2),
-    0 0 0 1px rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(var(--blur-amount));
-  transform: translateY(20px);
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.modal.active .modal-content {
-  transform: translateY(0);
-}
-
-/* Emergency Dashboard Modal Specific */
-.emergency-dashboard-layout .modal {
-  position: absolute; /* Change from fixed to absolute */
-  height: auto; /* Allow height to be determined by content */
-  min-height: 0; /* Remove minimum height */
-  max-height: none; /* Remove maximum height constraint */
-}
-
-.emergency-dashboard-layout .modal-content {
-  max-height: none; /* Remove maximum height constraint */
-  height: auto; /* Allow content to determine height */
-}
-
-/* Responsive Modal Adjustments */
-@media (max-width: 768px) {
-  .modal {
-    padding: 0.5rem;
-  }
-
-  .modal-content {
     padding: 1.5rem;
-    max-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .room-dashboard {
+    padding: 0.75rem;
     margin: 0.5rem;
   }
-
-  .emergency-dashboard-layout .modal {
-    position: relative; /* Change to relative for mobile */
-    height: auto;
+  
+  .dashboard-hero-card {
+    padding: 1rem;
+  }
+  
+  .dashboard-card-title {
+    font-size: 1.5rem;
+  }
+  
+  .dashboard-card {
+    padding: 1rem;
   }
 }
 
-/* Ensure modal doesn't affect emergency dashboard layout */
-.emergency-dashboard-layout {
-  position: relative; /* Establish positioning context */
-  overflow: visible; /* Allow modal to overflow */
-}
-
-.emergency-dashboard-layout .modal-backdrop {
-  position: absolute; /* Change from fixed to absolute */
-}
-
-/* Chart Interactive Elements */
-.chart-container {
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Data Points and Lines */
-.d3-line {
-  stroke-width: 2.5;
-  fill: none;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  cursor: pointer;
-}
-
-.d3-line:hover {
-  stroke-width: 3.5;
-  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.3));
-  opacity: 0.9;
-}
-
-.data-point {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
-  cursor: pointer;
-  opacity: 0.7;
-}
-
-.data-point:hover {
-  r: 8;
-  opacity: 1;
-  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3));
-  transform: scale(1.2);
-}
-
-/* Interactive Tooltip */
-.d3-tooltip {
-  position: absolute;
-  background: rgba(15, 20, 25, 0.95);
-  border: none;
-  border-radius: 16px;
-  padding: 1.25rem;
-  font-size: 0.9rem;
-  pointer-events: none;
-  z-index: 100;
-  box-shadow: 
-    0 10px 30px rgba(0, 0, 0, 0.2),
-    0 0 0 1px rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(12px);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  transform-origin: center;
-  animation: tooltipFade 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-@keyframes tooltipFade {
-  from {
-    opacity: 0;
-    transform: scale(0.95) translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-
-/* Legend - Organic Design */
-.d3-legend {
-  font-size: 0.9rem;
-  font-weight: 500;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
-}
-
-.d3-legend rect {
-  fill: rgba(15, 20, 25, 0.95);
-  stroke: none;
-  rx: 12;
-  ry: 12;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
-  backdrop-filter: blur(8px);
-}
-
-.d3-legend text {
-  fill: var(--text-primary);
-  font-weight: 500;
-  letter-spacing: 0.3px;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
-}
-
-/* Dashboard Footer - Fluid Design */
-.dashboard-footer {
-  background: linear-gradient(145deg,
-    rgba(26, 31, 46, 0.8),
-    rgba(15, 20, 25, 0.9)
-  );
-  border: none;
-  border-radius: var(--border-radius-lg);
+.dashboard-header {
+  text-align: center;
+  margin-bottom: 2rem;
   padding: 2rem;
+  background: linear-gradient(135deg, var(--accent-bg), var(--secondary-bg));
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--glass-border);
+}
+
+.dashboard-header h2 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+  background: linear-gradient(135deg, var(--accent-teal), var(--accent-blue));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.dashboard-summary {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.dashboard-footer {
   margin-top: 2rem;
-  box-shadow: 
-    0 10px 30px rgba(0, 0, 0, 0.15),
-    0 0 0 1px rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(var(--blur-amount));
-  position: relative;
-  overflow: hidden;
+  padding: 2rem;
+  background: var(--glass-bg);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--glass-border);
+  text-align: center;
 }
 
 .dashboard-footer::before {
   content: '';
-  position: absolute;
-  inset: 0;
-  background: var(--gradient-overlay);
-  opacity: 0.5;
-  pointer-events: none;
+  display: block;
+  width: 60px;
+  height: 4px;
+  background: linear-gradient(90deg, var(--accent-teal), var(--accent-blue));
+  border-radius: 2px;
+  margin: 0 auto 1.5rem;
 }
 
-/* Insights List - Dynamic Layout */
 .insights-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
+  list-style: none;
   padding: 0;
   margin: 0;
-  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
 }
 
 .insights-list li {
-  display: flex;
-  align-items: center;
-  gap: 1.25rem;
-  color: var(--text-secondary);
-  font-size: 0.95rem;
   padding: 1.5rem;
-  background: rgba(15, 20, 25, 0.3);
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  backdrop-filter: blur(8px);
+  background: var(--secondary-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  text-align: left;
+  transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
 }
@@ -3784,106 +3334,252 @@ select option {
 .insights-list li::before {
   content: '';
   position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg,
-    rgba(79, 209, 199, 0.1),
-    rgba(99, 179, 237, 0.1)
-  );
-  opacity: 0;
-  transition: opacity 0.4s ease;
-}
-
-.insights-list li:hover {
-  transform: translateY(-4px) scale(1.02);
-  background: rgba(15, 20, 25, 0.4);
-  box-shadow: 
-    0 10px 30px rgba(0, 0, 0, 0.2),
-    0 0 0 1px rgba(255, 255, 255, 0.1);
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent-teal), var(--accent-blue));
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
 }
 
 .insights-list li:hover::before {
-  opacity: 1;
+  transform: scaleX(1);
+}
+
+.insights-list li:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
 }
 
 .insights-list li i {
   color: var(--accent-teal);
-  font-size: 1.4rem;
-  background: rgba(79, 209, 199, 0.1);
-  padding: 1rem;
-  border-radius: 14px;
-  transition: all 0.4s ease;
+  font-size: 1.2rem;
+  margin-right: 0.75rem;
+  transition: transform 0.3s ease;
 }
 
 .insights-list li:hover i {
-  transform: scale(1.1);
-  background: rgba(79, 209, 199, 0.15);
+  transform: scale(1.2);
 }
 
-/* Loading States - Organic Animation */
-.loading-spinner {
-  width: 56px;
-  height: 56px;
-  border: 3px solid rgba(79, 209, 199, 0.1);
-  border-top-color: var(--accent-teal);
-  border-radius: 50%;
-  animation: spin 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-  margin-bottom: 1.5rem;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+/* Room Navigation */
+.room-navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius-lg); /* Using consistent variable */
+  padding: 1.5rem 2rem; /* Slightly more horizontal padding */
+  margin: 1.5rem auto; /* Center the navigation */
+  max-width: 1200px; /* Constrain width for larger screens */
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); /* Stronger initial shadow */
+  transition: all 0.3s ease;
+  overflow: hidden; /* Ensure no overflow from children */
+  position: relative; /* For potential pseudo-elements */
 }
 
-@keyframes spin {
-  to { 
-    transform: rotate(360deg) scale(1.1);
-  }
+.room-navigation::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, var(--accent-teal), var(--accent-blue));
+  border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
 }
 
-/* Responsive Design - Fluid Layout */
-@media (max-width: 1200px) {
-  .dashboard-grid {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-    padding: 1.5rem;
-    border-radius: var(--border-radius-lg);
-  }
-
-  .dashboard-card {
-    padding: 1.75rem;
-  }
+.room-navigation:hover {
+  box-shadow: 0 15px 45px rgba(0, 0, 0, 0.25); /* More pronounced hover shadow */
+  transform: translateY(-4px);
 }
 
+.nav-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem; /* Increased gap */
+  text-align: left;
+}
+
+.room-counter {
+  font-size: 1.4rem; /* Larger font size */
+  font-weight: 700; /* Bolder font */
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: linear-gradient(135deg, var(--accent-teal), var(--accent-blue)); /* Gradient background for counter */
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Remove the ::after and ::before from room-counter if they were intended for a progress bar here */
+.room-counter::after,
+.room-counter::before {
+    content: none; /* Remove pseudo-elements from room-counter */
+}
+
+.condition-name {
+  font-size: 1rem; /* Slightly larger */
+  color: var(--text-secondary); /* Less strong accent color */
+  font-weight: 500;
+  text-transform: capitalize; /* Capitalize for better readability */
+  letter-spacing: 0.2px;
+}
+
+.nav-buttons {
+  display: flex;
+  gap: 1.25rem; /* Increased gap between buttons */
+}
+
+.nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem; /* Increased gap for icon and text */
+  background: var(--secondary-bg); /* Use secondary background for subtle look */
+  border: 1px solid var(--glass-border);
+  color: var(--text-primary);
+  padding: 0.85rem 1.5rem; /* Increased padding */
+  border-radius: var(--radius-lg); /* More rounded buttons */
+  font-size: 1rem; /* Slightly larger font */
+  font-weight: 600; /* Bolder text */
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Smoother transition */
+  text-decoration: none;
+  min-width: 140px; /* Wider buttons */
+  justify-content: center;
+  position: relative;
+  overflow: hidden; /* For inner glow effect */
+  box-shadow: var(--shadow-sm); /* Initial subtle shadow */
+}
+
+.nav-btn:hover:not(:disabled) {
+  background: var(--accent-bg); /* Darker background on hover */
+  color: var(--accent-teal); /* Highlight text with accent color */
+  border-color: var(--accent-teal); /* Accent border on hover */
+  transform: translateY(-3px); /* More pronounced lift */
+  box-shadow: 0 8px 20px rgba(79, 209, 199, 0.2); /* Teal glow shadow */
+}
+
+.nav-btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.nav-btn:disabled {
+  opacity: 0.4; /* More pronounced disabled state */
+  cursor: not-allowed;
+  background: var(--secondary-bg); /* Keep background consistent */
+  border-color: var(--glass-border); /* Keep border consistent */
+  color: var(--text-muted); /* Muted text for disabled */
+  filter: grayscale(80%); /* Visually distinct disabled state */
+}
+
+.nav-btn i {
+  font-size: 1rem; /* Larger icon size */
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.nav-btn:hover:not(:disabled) i {
+  transform: scale(1.15); /* More pronounced icon scale */
+  color: var(--accent-blue); /* Different accent for icon on hover */
+}
+
+.prev-btn,
+.next-btn {
+  background: var(--secondary-bg); /* Default background, subtle */
+}
+
+.prev-btn:hover,
+.next-btn:hover {
+  background: var(--accent-bg); /* Darker on hover */
+}
+
+.nav-btn.home-btn {
+  /* Consider removing if not used or integrate into reset button */
+  background: linear-gradient(135deg, var(--accent-teal), var(--accent-blue));
+  color: white;
+  border-color: var(--accent-teal);
+  box-shadow: 0 4px 12px rgba(79, 209, 199, 0.3);
+}
+
+.nav-btn.home-btn:hover {
+  background: linear-gradient(135deg, var(--accent-blue), var(--accent-teal));
+  transform: translateY(-3px);
+  box-shadow: 0 6px 18px rgba(79, 209, 199, 0.4);
+}
+
+/* Light mode adjustments */
+:root[data-theme="light"] .room-navigation {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+}
+:root[data-theme="light"] .room-navigation:hover {
+  box-shadow: 0 15px 45px rgba(0, 0, 0, 0.12);
+}
+:root[data-theme="light"] .room-navigation::before {
+  background: linear-gradient(90deg, var(--primary-color), var(--accent-purple));
+}
+:root[data-theme="light"] .nav-info .room-counter {
+  background: linear-gradient(135deg, var(--primary-color), var(--accent-purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+:root[data-theme="light"] .nav-btn {
+  background: var(--secondary-bg);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+:root[data-theme="light"] .nav-btn:hover:not(:disabled) {
+  background: var(--accent-bg);
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+  box-shadow: 0 8px 20px rgba(66, 153, 225, 0.2);
+}
+:root[data-theme="light"] .nav-btn:disabled {
+  background: var(--secondary-bg);
+  border-color: var(--border-color);
+  color: var(--text-muted);
+}
+:root[data-theme="light"] .nav-btn.home-btn {
+  background: linear-gradient(135deg, var(--primary-color), var(--accent-blue));
+  border-color: var(--primary-color);
+  color: white;
+  box-shadow: 0 4px 12px rgba(66, 153, 225, 0.3);
+}
+:root[data-theme="light"] .nav-btn.home-btn:hover {
+  background: linear-gradient(135deg, var(--accent-blue), var(--primary-color));
+  box-shadow: 0 6px 18px rgba(66, 153, 225, 0.4);
+}
+
+/* Responsive adjustments for room navigation */
 @media (max-width: 768px) {
-  .dashboard-grid {
-    padding: 1.25rem;
-    border-radius: 20px;
+  .room-navigation {
+    flex-direction: column;
+    gap: 1.25rem; /* Adjusted gap */
+    padding: 1rem 1.5rem; /* Adjusted padding */
+    margin: 1rem auto; /* Adjusted margin */
   }
 
-  .dashboard-card {
-    padding: 1.5rem;
-    border-radius: 20px;
+  .nav-buttons {
+    width: 100%;
+    justify-content: space-between; /* Space out buttons on mobile */
+    gap: 0.75rem; /* Smaller gap on mobile */
   }
 
-  .dashboard-card-content,
-  .chart-container {
-    border-radius: 16px;
+  .nav-btn {
+    flex: 1;
+    min-width: unset; /* Remove min-width for flexibility */
+    padding: 0.75rem 1rem; /* Smaller padding on mobile */
+    font-size: 0.9rem; /* Smaller font on mobile */
+    gap: 0.5rem; /* Smaller gap for icon and text */
   }
-
-  .insights-list {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* Animation for data updates */
-@keyframes fadeIn {
-  from { 
-    opacity: 0;
-    transform: translateY(20px) scale(0.98);
-  }
-  to { 
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.dashboard-card-content {
-  animation: fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
