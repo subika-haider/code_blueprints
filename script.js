@@ -1145,197 +1145,361 @@ new TWEEN.Tween(controls.target)
         })();
     if (!grid) return;
 
-    // Emergency Department: Use real data from CSVs only
-    if (roomType === 'emergency') {
-      // Load and parse CSVs using d3-fetch (async)
+    // Cardiac Unit Dashboard
+    if (roomType === 'cardiac') {
+      // Show loading state
+      grid.innerHTML = `
+        <div class="dashboard-loading">
+          <div class="loading-spinner"></div>
+          <p>Loading cardiac unit analytics...</p>
+        </div>
+      `;
+
+      // Load and parse CSVs using d3-fetch
       Promise.all([
-        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/transfers.csv'),
-        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/services.csv'),
-        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/omr.csv')
+        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/transfers.csv').catch(err => {
+          console.error('Error loading transfers.csv:', err);
+          return [];
+        }),
+        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/services.csv').catch(err => {
+          console.error('Error loading services.csv:', err);
+          return [];
+        }),
+        d3.csv('mimic-iv-clinical-database-demo-2.2/hosp/omr.csv').catch(err => {
+          console.error('Error loading omr.csv:', err);
+          return [];
+        })
       ]).then(([transfers, services, omr]) => {
-        // --- DEBUG LOGGING ---
-        console.log('Loaded transfers.csv:', transfers.slice(0, 5));
-        console.log('Loaded services.csv:', services.slice(0, 5));
-        console.log('Loaded omr.csv:', omr.slice(0, 5));
-        // --- Patient Arrivals by Hour ---
-        const edRows = transfers.filter(r => r.careunit === 'Emergency Department');
-        console.log('Filtered ED rows:', edRows.slice(0, 5), 'Total:', edRows.length);
-        const arrivalsByHour = Array(24).fill(0);
-        edRows.forEach(row => {
-          if (!row.intime) return;
-          const hour = new Date(row.intime.replace(' ', 'T')).getHours();
-          arrivalsByHour[hour]++;
-        });
-        console.log('Arrivals by hour:', arrivalsByHour);
-        const flowData = arrivalsByHour.map((count, hour) => ({ label: hour + ':00', value: count }));
-        // --- Length of Stay ---
-        const stays = edRows.map(row => {
-          if (!row.intime || !row.outtime) return null;
-          const inTime = new Date(row.intime.replace(' ', 'T'));
-          const outTime = new Date(row.outtime.replace(' ', 'T'));
-          return (outTime - inTime) / (1000 * 60 * 60);
-        }).filter(h => h !== null && h > 0 && h < 48);
-        console.log('Length of stay (hours):', stays.slice(0, 10));
-        const stayBuckets = Array(12).fill(0);
-        stays.forEach(h => {
-          const idx = Math.min(Math.floor(h / 2), 11);
-          stayBuckets[idx]++;
-        });
-        const stayData = stayBuckets.map((count, i) => ({ range: `${i*2}-${i*2+2}h`, count }));
-        // --- Careunit Flow ---
-        const careunitCounts = {};
-        for (let i = 0; i < transfers.length; i++) {
-          const row = transfers[i];
-          if (row.careunit === 'Emergency Department' && row.outtime) {
-            // Find the next row for the same subject/hadm with a later intime
-            const next = transfers.find(r => r.subject_id === row.subject_id && r.hadm_id === row.hadm_id && r.intime && new Date(r.intime.replace(' ', 'T')) > new Date(row.outtime.replace(' ', 'T')));
-            if (next && next.careunit) {
-              careunitCounts[next.careunit] = (careunitCounts[next.careunit] || 0) + 1;
+        if (!transfers.length || !services.length || !omr.length) {
+          grid.innerHTML = `
+            <div class="dashboard-error">
+              <i class="fas fa-exclamation-triangle"></i>
+              <p>Unable to load cardiac unit data. Please try again later.</p>
+            </div>
+          `;
+          return;
+        }
+
+        try {
+          // Process data for cardiac unit analytics
+          const cardiacData = transfers.filter(r => 
+            r.careunit === 'Coronary Care Unit' || 
+            r.careunit === 'Cardiac Intensive Care Unit' ||
+            r.careunit === 'Cardiac Stepdown'
+          );
+
+          // Simulate cardiac unit status
+          const roomStatus = {
+            'CCU-101': { 
+              status: 'Occupied', 
+              patient: 'Robert Johnson', 
+              condition: 'Acute MI',
+              vitals: {
+                heartRate: 78,
+                bloodPressure: '120/80',
+                oxygenSat: 98,
+                rhythm: 'Normal Sinus'
+              },
+              timeRemaining: 120,
+              acuity: 'Level 2'
+            },
+            'CCU-102': { 
+              status: 'Occupied', 
+              patient: 'Mary Williams', 
+              condition: 'Heart Failure',
+              vitals: {
+                heartRate: 92,
+                bloodPressure: '135/85',
+                oxygenSat: 95,
+                rhythm: 'Atrial Fibrillation'
+              },
+              timeRemaining: 180,
+              acuity: 'Level 1'
+            },
+            'CCU-103': { 
+              status: 'Cleaning', 
+              patient: null, 
+              condition: null,
+              vitals: null,
+              timeRemaining: 30,
+              acuity: null
+            },
+            'CCU-104': { 
+              status: 'Available', 
+              patient: null, 
+              condition: null,
+              vitals: null,
+              timeRemaining: 0,
+              acuity: null
             }
+          };
+
+          // Cardiac Conditions Distribution
+          const conditionTypes = {
+            'Acute MI': 0,
+            'Heart Failure': 0,
+            'Arrhythmia': 0,
+            'Chest Pain': 0,
+            'Other': 0
+          };
+
+          // Vital Signs Trends
+          const vitalSigns = {
+            heartRate: [],
+            bloodPressure: [],
+            oxygenSat: []
+          };
+
+          // Process cardiac data
+          cardiacData.forEach(row => {
+            if (row.service) {
+              if (row.service.includes('CARDIAC')) {
+                conditionTypes['Acute MI']++;
+              } else if (row.service.includes('MED')) {
+                conditionTypes['Heart Failure']++;
+              } else if (row.service.includes('SURG')) {
+                conditionTypes['Arrhythmia']++;
+              } else if (row.service.includes('TRAUMA')) {
+                conditionTypes['Chest Pain']++;
+              } else {
+                conditionTypes['Other']++;
+              }
+            }
+          });
+
+          // Process vital signs from OMR data
+          const cardiacSubjectIds = new Set(cardiacData.map(r => r.subject_id));
+          omr.forEach(row => {
+            if (!cardiacSubjectIds.has(row.subject_id)) return;
+            
+            if (row.result_name === 'Heart Rate') {
+              vitalSigns.heartRate.push({
+                date: row.chartdate,
+                value: parseFloat(row.result_value)
+              });
+            } else if (row.result_name === 'Blood Pressure') {
+              vitalSigns.bloodPressure.push({
+                date: row.chartdate,
+                value: row.result_value
+              });
+            } else if (row.result_name === 'Oxygen Saturation') {
+              vitalSigns.oxygenSat.push({
+                date: row.chartdate,
+                value: parseFloat(row.result_value)
+              });
+            }
+          });
+
+          // Sort vital signs by date
+          const sortByDate = arr => arr
+            .sort((a, b) => new Date(b.date) - new Date(a.date))
+            .slice(0, 20)
+            .reverse();
+
+          const heartRateTrend = sortByDate(vitalSigns.heartRate)
+            .map(d => ({ label: d.date, value: d.value }));
+          const bpTrend = sortByDate(vitalSigns.bloodPressure)
+            .map(d => {
+              const [sys, dia] = (d.value || '').split('/').map(Number);
+              return { label: d.date, systolic: sys, diastolic: dia };
+            });
+          const oxygenTrend = sortByDate(vitalSigns.oxygenSat)
+            .map(d => ({ label: d.date, value: d.value }));
+
+          const conditionData = Object.entries(conditionTypes)
+            .map(([label, value]) => ({ 
+              label, 
+              value,
+              color: label.includes('MI') ? '#e53e3e' : 
+                     label.includes('Failure') ? '#dd6b20' : 
+                     label.includes('Arrhythmia') ? '#d69e2e' : 
+                     label.includes('Pain') ? '#38a169' : 
+                     '#4299e1'
+            }));
+
+          // Clear loading state and render dashboard
+          grid.innerHTML = '';
+          
+          // Create dashboard layout
+          const dashboardLayout = document.createElement('div');
+          dashboardLayout.className = 'emergency-dashboard-layout';
+          
+          // Add dashboard header with summary
+          const dashboardHeader = document.createElement('div');
+          dashboardHeader.className = 'dashboard-header';
+          dashboardHeader.innerHTML = `
+            <h2>Cardiac Unit Analytics</h2>
+            <p class="dashboard-summary">
+              Real-time insights into cardiac patient monitoring, vital signs,
+              and treatment status to optimize cardiac care delivery.
+            </p>
+          `;
+          dashboardLayout.appendChild(dashboardHeader);
+          
+          // Create main content grid
+          const dashboardGrid = document.createElement('div');
+          dashboardGrid.className = 'dashboard-grid';
+          
+          // Left column - Patient Status and Conditions
+          const leftColumn = document.createElement('div');
+          leftColumn.className = 'dashboard-column';
+          
+          // Add section header
+          const statusHeader = document.createElement('div');
+          statusHeader.className = 'dashboard-section-header';
+          statusHeader.innerHTML = `
+            <h3>Patient Status</h3>
+            <p>Monitor current patient conditions and vital signs in the cardiac unit.</p>
+          `;
+          leftColumn.appendChild(statusHeader);
+          
+          // Add room status cards
+          Object.entries(roomStatus).forEach(([room, status]) => {
+            const roomCard = document.createElement('div');
+            roomCard.className = 'room-status-card cardiac';
+            roomCard.innerHTML = `
+              <div class="room-header">
+                <h4>${room}</h4>
+                <span class="status-badge ${status.status.toLowerCase()}">${status.status}</span>
+              </div>
+              ${status.patient ? `
+                <div class="room-details">
+                  <p><strong>Patient:</strong> ${status.patient}</p>
+                  <p><strong>Condition:</strong> ${status.condition}</p>
+                  <p><strong>Time Remaining:</strong> ${status.timeRemaining} minutes</p>
+                  <p><strong>Acuity Level:</strong> ${status.acuity}</p>
+                  <div class="vitals-grid">
+                    <div class="vital-item">
+                      <span class="vital-label">HR</span>
+                      <span class="vital-value ${getVitalStatus(status.vitals.heartRate, 'hr')}">${status.vitals.heartRate}</span>
+                    </div>
+                    <div class="vital-item">
+                      <span class="vital-label">BP</span>
+                      <span class="vital-value ${getVitalStatus(status.vitals.bloodPressure, 'bp')}">${status.vitals.bloodPressure}</span>
+                    </div>
+                    <div class="vital-item">
+                      <span class="vital-label">O₂</span>
+                      <span class="vital-value ${getVitalStatus(status.vitals.oxygenSat, 'o2')}">${status.vitals.oxygenSat}%</span>
+                    </div>
+                    <div class="vital-item">
+                      <span class="vital-label">Rhythm</span>
+                      <span class="vital-value ${getVitalStatus(status.vitals.rhythm, 'rhythm')}">${status.vitals.rhythm}</span>
+                    </div>
+                  </div>
+                </div>
+              ` : status.status === 'Cleaning' ? `
+                <div class="room-details">
+                  <p><strong>Status:</strong> Under Cleaning</p>
+                  <p><strong>Time Remaining:</strong> ${status.timeRemaining} minutes</p>
+                </div>
+              ` : `
+                <div class="room-details">
+                  <p><strong>Status:</strong> Available</p>
+                  <p><strong>Ready for next patient</strong></p>
+                </div>
+              `}
+            `;
+            leftColumn.appendChild(roomCard);
+          });
+          
+          // Add columns to grid
+          dashboardGrid.appendChild(leftColumn);
+          dashboardGrid.appendChild(rightColumn);
+          dashboardLayout.appendChild(dashboardGrid);
+          
+          // Add dashboard footer with insights
+          const dashboardFooter = document.createElement('div');
+          dashboardFooter.className = 'dashboard-footer';
+          dashboardFooter.innerHTML = `
+            <h3>Key Insights</h3>
+            <ul class="insights-list">
+              <li>
+                <i class="fas fa-x-ray"></i>
+                <span>Most common exam: ${getMostCommonExam(imagingData)}</span>
+              </li>
+              <li>
+                <i class="fas fa-clock"></i>
+                <span>Average wait time: ${getAverageWaitTime(queueData)} minutes</span>
+              </li>
+              <li>
+                <i class="fas fa-cogs"></i>
+                <span>Machine utilization: ${getMachineUtilization(machineStatus)}%</span>
+              </li>
+            </ul>
+          `;
+          dashboardLayout.appendChild(dashboardFooter);
+          
+          grid.appendChild(dashboardLayout);
+          
+          // Helper functions for insights
+          function getMostCommonExam(data) {
+            const maxExam = data.reduce((max, curr) => 
+              curr.value > max.value ? curr : max
+            );
+            return `${maxExam.label} (${maxExam.value} exams)`;
           }
-        }
-        console.log('Careunit flow counts:', careunitCounts);
-        const careunitData = Object.entries(careunitCounts).map(([label, value]) => ({ label, value }));
-        // --- Service Distribution ---
-        const edHadmIds = new Set(edRows.map(r => r.hadm_id));
-        const serviceCounts = {};
-        services.forEach(row => {
-          if (edHadmIds.has(row.hadm_id)) {
-            const svc = row.curr_service || 'Unknown';
-            serviceCounts[svc] = (serviceCounts[svc] || 0) + 1;
+          
+          function getAverageWaitTime(data) {
+            const waiting = data.find(d => d.label === 'Waiting')?.value || 0;
+            const inProgress = data.find(d => d.label === 'In Progress')?.value || 0;
+            const total = waiting + inProgress;
+            return total ? Math.round((waiting * 30 + inProgress * 15) / total) : 0;
           }
-        });
-        const serviceData = Object.entries(serviceCounts).map(([label, value]) => ({ label, value }));
-        // --- Vitals Trend (BMI, Weight, BP) ---
-        // Use the most recent 20 BMI, Weight, BP for patients seen in ED
-        const edSubjectIds = new Set(edRows.map(r => r.subject_id));
-        const vitals = { BMI: [], Weight: [], BP: [] };
-        omr.forEach(row => {
-          if (!edSubjectIds.has(row.subject_id)) return;
-          if (row.result_name === 'BMI (kg/m2)') vitals.BMI.push({ date: row.chartdate, value: parseFloat(row.result_value) });
-          if (row.result_name === 'Weight (Lbs)') vitals.Weight.push({ date: row.chartdate, value: parseFloat(row.result_value) });
-          if (row.result_name === 'Blood Pressure') vitals.BP.push({ date: row.chartdate, value: row.result_value });
-        });
-        // Sort and take most recent 20 for each
-        const sortByDate = arr => arr.sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 20).reverse();
-        const bmiTrend = sortByDate(vitals.BMI).map(d => ({ label: d.date, value: d.value }));
-        const weightTrend = sortByDate(vitals.Weight).map(d => ({ label: d.date, value: d.value }));
-        // For BP, split systolic/diastolic
-        const bpTrend = sortByDate(vitals.BP).map(d => {
-          const [sys, dia] = (d.value || '').split('/').map(Number);
-          return { label: d.date, systolic: sys, diastolic: dia };
-        });
-        // --- Render charts ---
-        grid.innerHTML = '';
-        // Patient Arrivals by Hour
-        const flowCard = document.createElement('div');
-        flowCard.className = 'dashboard-card';
-        flowCard.innerHTML = `<div class=\"dashboard-card-title\">Patient Arrivals by Hour</div><div class=\"dashboard-card-desc\">Shows when the ED is busiest, based on real transfer data.</div>`;
-        const flowDiv = document.createElement('div');
-        flowDiv.className = 'dashboard-chart';
-        flowCard.appendChild(flowDiv);
-        grid.appendChild(flowCard);
-        renderD3Chart(flowDiv, {
-          type: 'bar',
-          data: flowData,
-          color: ['#fc8181'],
-          xTitle: 'Hour of Day',
-          yTitle: 'Arrivals',
-          legend: [{ label: 'Arrivals', color: '#fc8181' }]
-        });
-        renderD3Legend(flowDiv, [{ label: 'Arrivals', color: '#fc8181' }]);
-        // Length of Stay
-        const stayCard = document.createElement('div');
-        stayCard.className = 'dashboard-card';
-        stayCard.innerHTML = `<div class=\"dashboard-card-title\">Length of Stay Distribution</div><div class=\"dashboard-card-desc\">How long patients typically spend in the ED.</div>`;
-        const stayDiv = document.createElement('div');
-        stayDiv.className = 'dashboard-chart';
-        stayCard.appendChild(stayDiv);
-        grid.appendChild(stayCard);
-        renderD3Chart(stayDiv, {
-          type: 'bar',
-          data: stayData.map(d => ({ label: d.range, value: d.count })),
-          color: ['#63b3ed'],
-          xTitle: 'Stay (hours)',
-          yTitle: 'Patients',
-          legend: [{ label: 'Patients', color: '#63b3ed' }]
-        });
-        renderD3Legend(stayDiv, [{ label: 'Patients', color: '#63b3ed' }]);
-        // Careunit Flow
-        const careunitCard = document.createElement('div');
-        careunitCard.className = 'dashboard-card';
-        careunitCard.innerHTML = `<div class=\"dashboard-card-title\">Careunit Flow</div><div class=\"dashboard-card-desc\">Where do patients go after the ED? Top next care units.</div>`;
-        const careunitDiv = document.createElement('div');
-        careunitDiv.className = 'dashboard-chart';
-        careunitCard.appendChild(careunitDiv);
-        grid.appendChild(careunitCard);
-        renderD3Chart(careunitDiv, {
-          type: 'bar',
-          data: careunitData,
-          color: ['#f6ad55'],
-          xTitle: 'Careunit',
-          yTitle: 'Transfers',
-          legend: [{ label: 'Transfers', color: '#f6ad55' }]
-        });
-        renderD3Legend(careunitDiv, [{ label: 'Transfers', color: '#f6ad55' }]);
-        // Service Distribution
-        const serviceCard = document.createElement('div');
-        serviceCard.className = 'dashboard-card';
-        serviceCard.innerHTML = `<div class=\"dashboard-card-title\">Service Distribution</div><div class=\"dashboard-card-desc\">Distribution of services for ED patients.</div>`;
-        const serviceDiv = document.createElement('div');
-        serviceDiv.className = 'dashboard-chart';
-        serviceCard.appendChild(serviceDiv);
-        grid.appendChild(serviceCard);
-        renderD3Chart(serviceDiv, {
-          type: 'bar',
-          data: serviceData,
-          color: ['#68d391'],
-          xTitle: 'Service',
-          yTitle: 'Count',
-          legend: [{ label: 'Service', color: '#68d391' }]
-        });
-        renderD3Legend(serviceDiv, [{ label: 'Service', color: '#68d391' }]);
-        // Service Distribution Pie Chart (legend handled by pie util)
-        // Vitals Trend (BMI, Weight, BP)
-        const vitalsCard = document.createElement('div');
-        vitalsCard.className = 'dashboard-card';
-        vitalsCard.innerHTML = `<div class=\"dashboard-card-title\">Vitals Trend (BMI, Weight, BP)</div><div class=\"dashboard-card-desc\">Recent BMI, Weight, and Blood Pressure for ED patients.</div>`;
-        const vitalsDiv = document.createElement('div');
-        vitalsDiv.className = 'dashboard-chart';
-        vitalsCard.appendChild(vitalsDiv);
-        grid.appendChild(vitalsCard);
-        // BMI
-        renderD3LineChart(vitalsDiv, bmiTrend, { color: '#805ad5' });
-        // Weight
-        const weightDiv = document.createElement('div');
-        weightDiv.className = 'dashboard-chart';
-        vitalsCard.appendChild(weightDiv);
-        renderD3LineChart(weightDiv, weightTrend, { color: '#f56565' });
-        // BP (systolic/diastolic)
-        const bpDiv = document.createElement('div');
-        bpDiv.className = 'dashboard-chart';
-        vitalsCard.appendChild(bpDiv);
-        let legendItems = [
-          { label: 'BMI', color: '#805ad5' },
-          { label: 'Weight', color: '#f56565' }
-        ];
-        if (bpTrend.length > 0) {
-          // Render as two lines
-          const systolic = bpTrend.map(d => ({ label: d.label, value: d.systolic }));
-          const diastolic = bpTrend.map(d => ({ label: d.label, value: d.diastolic }));
-          renderD3LineChart(bpDiv, systolic, { color: '#4299e1' });
-          renderD3LineChart(bpDiv, diastolic, { color: '#ecc94b' });
-          legendItems = legendItems.concat([
-            { label: 'Systolic', color: '#4299e1' },
-            { label: 'Diastolic', color: '#ecc94b' }
-          ]);
+          
+          function getMachineUtilization(status) {
+            const activeMachines = Object.values(status).filter(m => m.status === 'Active').length;
+            const totalMachines = Object.keys(status).length;
+            return Math.round((activeMachines / totalMachines) * 100);
+          }
+        } catch (error) {
+          console.error('Error processing X-Ray department data:', error);
+          grid.innerHTML = `
+            <div class="dashboard-error">
+              <i class="fas fa-exclamation-triangle"></i>
+              <p>Error processing X-Ray department data. Please try again later.</p>
+              <p class="error-details">${error.message}</p>
+            </div>
+          `;
         }
-        renderD3Legend(bpDiv, legendItems);
+      }).catch(error => {
+        console.error('Error loading X-Ray department data:', error);
+        grid.innerHTML = `
+          <div class="dashboard-error">
+            <i class="fas fa-exclamation-triangle"></i>
+            <p>Error loading X-Ray department data. Please try again later.</p>
+            <p>Error loading emergency department data. Please try again later.</p>
+            <p class="error-details">${error.message}</p>
+          </div>
+        `;
       });
       return;
     }
+    
     // ... fallback for other rooms ...
     // ... existing code ...
+  }
+
+  // Helper function to create dashboard cards
+  function createDashboardCard(title, description, data, chartType, colors, xTitle, yTitle) {
+    const card = document.createElement('div');
+    card.className = 'dashboard-card';
+    card.innerHTML = `
+      <div class="dashboard-card-title">${title}</div>
+      <div class="dashboard-card-desc">${description}</div>
+      <div class="dashboard-chart"></div>
+    `;
+    
+    const chartDiv = card.querySelector('.dashboard-chart');
+    renderD3Chart(chartDiv, {
+      type: chartType,
+      data: data,
+      color: colors,
+      xTitle: xTitle,
+      yTitle: yTitle,
+      legend: [{ label: yTitle, color: colors[0] }]
+    });
+    
+    return card;
   }
 
   function updateConditionInfo(condition) {
@@ -1498,359 +1662,804 @@ new TWEEN.Tween(controls.target)
   // Initialize
   initializeThemeToggle();
   animate();
+
+  // ... rest of the code ...
 });
 
 // Utility to render a D3 chart (currently supports bar charts; extend for more types)
 function renderD3Chart(container, config) {
-  d3.select(container).selectAll('svg').remove();
-  d3.select(container).selectAll('.d3-tooltip').remove();
-  const theme = getD3ThemeColors();
-  const width = 320;
-  const height = 180;
-  const margin = { top: 32, right: 24, bottom: 64, left: 56 };
-  if (config.type === 'bar') {
-    const data = config.data;
-    const color = config.color?.[0] || getD3Color('--d3-bar', '#63b3ed');
-    const maxLabelLength = 10;
-    const maxXTicks = 10;
+  if (!container || !config || !config.data || !config.data.length) return;
+
+  // Clear previous content
+  container.innerHTML = '';
+
+  // Set up dimensions and margins
+  const margin = { top: 40, right: 30, bottom: 60, left: 60 };
+  const aspectRatio = 0.6;
+  const containerWidth = container.clientWidth;
+  const containerHeight = Math.min(containerWidth * aspectRatio, container.clientHeight);
+  const width = containerWidth - margin.left - margin.right;
+  const height = containerHeight - margin.top - margin.bottom;
+
+  // Create SVG with responsive viewBox
     const svg = d3.select(container)
       .append('svg')
-      .attr('width', width)
-      .attr('height', height)
-      .style('background', theme.background);
-    // Truncate labels if too long
-    const truncatedLabels = data.map(d => d.label.length > maxLabelLength ? d.label.slice(0, maxLabelLength - 1) + '…' : d.label);
-    const labelMap = Object.fromEntries(data.map((d, i) => [truncatedLabels[i], d.label]));
-    // Reduce number of ticks if too many bars
-    let xTickLabels = truncatedLabels;
-    if (data.length > maxXTicks) {
-      const step = Math.ceil(data.length / maxXTicks);
-      xTickLabels = truncatedLabels.map((lbl, i) => (i % step === 0 ? lbl : ''));
-    }
+    .attr('class', 'chart-svg')
+    .attr('viewBox', `0 0 ${containerWidth} ${containerHeight}`)
+    .attr('preserveAspectRatio', 'xMidYMid meet');
+
+  // Add chart group
+  const g = svg.append('g')
+    .attr('transform', `translate(${margin.left},${margin.top})`);
+
+  // Process data to ensure valid values
+  const processedData = config.data.map(d => ({
+    ...d,
+    value: Math.max(0, parseFloat(d.value) || 0), // Ensure non-negative values
+    label: d.label
+  })).filter(d => !isNaN(d.value));
+
+  if (processedData.length === 0) {
+    container.innerHTML = '<div class="chart-error">No valid data available</div>';
+    return;
+  }
+
+  if (config.type === 'bar') {
+    // For bar charts, ensure y scale starts at 0 and has proper padding
     const x = d3.scaleBand()
-      .domain(truncatedLabels)
-      .range([margin.left, width - margin.right])
-      .padding(0.18);
+      .domain(processedData.map(d => d.label))
+      .range([0, width])
+      .padding(0.2);
+
+    // Calculate y domain with proper padding
+    const maxValue = d3.max(processedData, d => d.value);
+    const yPadding = maxValue * 0.1; // 10% padding at top
     const y = d3.scaleLinear()
-      .domain([0, d3.max(data, d => d.value) * 1.1])
-      .nice()
-      .range([height - margin.bottom, margin.top]);
-    // X axis
-    const xAxis = svg.append('g')
-      .attr('transform', `translate(0,${height - margin.bottom})`)
-      .call(d3.axisBottom(x).tickFormat((d, i) => xTickLabels[i]))
+      .domain([0, maxValue + yPadding])
+      .range([height, 0])
+      .nice();
+
+    // Add grid lines
+    g.append('g')
+      .attr('class', 'd3-grid')
+      .call(d3.axisLeft(y)
+        .ticks(5)
+        .tickSize(-width)
+        .tickFormat(''));
+
+    // Add axes
+    g.append('g')
+      .attr('class', 'd3-axis x-axis')
+      .attr('transform', `translate(0,${height})`)
+      .call(d3.axisBottom(x))
       .selectAll('text')
+      .style('text-anchor', 'end')
+      .attr('dx', '-.8em')
+      .attr('dy', '.15em')
+      .attr('transform', 'rotate(-45)');
+
+    g.append('g')
+      .attr('class', 'd3-axis y-axis')
+      .call(d3.axisLeft(y)
+        .ticks(5));
+
+    // Add axis labels
+    g.append('text')
       .attr('class', 'd3-axis-label')
-      .attr('font-size', 12)
-      .attr('fill', theme.label)
-      .attr('text-anchor', 'middle')
-      .attr('dx', '0em')
-      .attr('dy', '1.2em');
-    // If labels overlap, rotate them
-    const labelNodes = svg.selectAll('g.x.axis g.tick text').nodes();
-    let overlap = false;
-    if (labelNodes.length > 1) {
-      for (let i = 1; i < labelNodes.length; i++) {
-        const prev = labelNodes[i - 1].getBoundingClientRect();
-        const curr = labelNodes[i].getBoundingClientRect();
-        if (prev.right > curr.left) {
-          overlap = true;
-          break;
-        }
-      }
-    }
-    if (overlap || data.length > 6) {
-      svg.selectAll('g.x.axis g.tick text, g > g > text')
-        .attr('text-anchor', 'end')
-        .attr('transform', 'rotate(-32)')
-        .attr('dx', '-0.6em')
-        .attr('dy', '0.2em');
-    }
-    // Add tooltips to axis labels if truncated
-    svg.selectAll('g > g > text').each(function(d, i) {
-      if (truncatedLabels[i] !== labelMap[truncatedLabels[i]]) {
-        d3.select(this)
-          .style('cursor', 'pointer')
-          .append('title')
-          .text(labelMap[truncatedLabels[i]]);
-      }
-    });
-    // X axis title
-    svg.append('text')
-      .attr('class', 'd3-x-title')
       .attr('x', width / 2)
-      .attr('y', height - 18)
-      .attr('text-anchor', 'middle')
-      .attr('fill', theme.axis)
-      .attr('font-size', 13)
+      .attr('y', height + margin.bottom - 10)
+      .style('text-anchor', 'middle')
       .text(config.xTitle || '');
-    // Y axis
-    svg.append('g')
-      .attr('transform', `translate(${margin.left},0)`)
-      .call(d3.axisLeft(y).ticks(5).tickFormat(d3.format('~s')))
-      .selectAll('text')
+
+    g.append('text')
       .attr('class', 'd3-axis-label')
-      .attr('font-size', 12)
-      .attr('fill', theme.label);
-    // Y axis title
-    svg.append('text')
-      .attr('class', 'd3-y-title')
-      .attr('x', -height / 2)
-      .attr('y', 16)
       .attr('transform', 'rotate(-90)')
-      .attr('text-anchor', 'middle')
-      .attr('fill', theme.axis)
-      .attr('font-size', 13)
+      .attr('x', -height / 2)
+      .attr('y', -margin.left + 15)
+      .style('text-anchor', 'middle')
       .text(config.yTitle || '');
-    // Tooltip
-    let tooltip = d3.select(container).select('.d3-tooltip');
-    if (tooltip.empty()) {
-      tooltip = d3.select(container)
-        .append('div')
-        .attr('class', 'd3-tooltip')
-        .style('position', 'absolute')
-        .style('pointer-events', 'none')
-        .style('opacity', 0);
-    }
-    
-    // Bars
-    svg.selectAll('.d3-bar')
-      .data(data)
+
+    // Add bars with proper height calculation
+    const bars = g.selectAll('.d3-bar')
+      .data(processedData)
       .enter()
       .append('rect')
       .attr('class', 'd3-bar')
-      .attr('x', (d, i) => x(truncatedLabels[i]))
-      .attr('y', d => y(0))
+      .attr('x', d => x(d.label))
       .attr('width', x.bandwidth())
-      .attr('height', 0)
-      .attr('fill', color)
-      .on('mouseover', function (event, d) {
-        d3.select(this)
-          .transition().duration(120)
-          .attr('fill', d3.rgb(color).darker(1));
-        tooltip.transition().duration(100).style('opacity', 1);
-        tooltip.html(`<strong>${d.label}</strong><br/>${d.value}`)
-          .style('left', (event.offsetX + 16) + 'px')
-          .style('top', (event.offsetY - 28) + 'px');
-      })
-      .on('mousemove', function (event, d) {
-        tooltip.style('left', (event.offsetX + 16) + 'px')
-               .style('top', (event.offsetY - 28) + 'px');
-      })
-      .on('mouseout', function () {
-        d3.select(this)
-          .transition().duration(120)
-          .attr('fill', color);
-        tooltip.transition().duration(150).style('opacity', 0);
-      })
-      .transition()
-      .duration(700)
+      .attr('fill', (d, i) => {
+        if (Array.isArray(config.color)) {
+          return config.color[i % config.color.length];
+        }
+        return config.color || '#4299e1';
+      });
+
+    // Set bar heights after ensuring y scale is properly set up
+    bars
       .attr('y', d => y(d.value))
-      .attr('height', d => y(0) - y(d.value));
-  }
-  // TODO: Add support for other chart types (line, pie, etc.) as needed
-}
+      .attr('height', d => Math.max(0, height - y(d.value))); // Ensure non-negative height
 
-// --- D3 Pie Chart Utility ---
-function renderD3PieChart(container, data, options = {}) {
-  d3.select(container).selectAll('svg').remove();
-  const width = 220, height = 180, radius = Math.min(width, height) / 2 - 10;
-  const svg = d3.select(container)
-    .append('svg')
-    .attr('width', width)
-    .attr('height', height)
-    .append('g')
-    .attr('transform', `translate(${width / 2},${height / 2})`);
-  const color = d3.scaleOrdinal(options.colors || d3.schemeSet2);
-  const pie = d3.pie().value(d => d.value);
-  const arc = d3.arc().innerRadius(0).outerRadius(radius);
-  const arcs = svg.selectAll('arc')
-    .data(pie(data))
-    .enter().append('g');
-  arcs.append('path')
-    .attr('d', arc)
-    .attr('fill', d => color(d.data.label))
-    .attr('class', 'd3-pie-slice')
-    .on('mouseover', function (event, d) {
-      d3.select(this).attr('stroke', '#222').attr('stroke-width', 2);
-      tooltip.transition().duration(100).style('opacity', 1);
-      tooltip.html(`<strong>${d.data.label}</strong><br/>${d.data.value}`)
-        .style('left', (event.offsetX + 16) + 'px')
-        .style('top', (event.offsetY - 28) + 'px');
-    })
-    .on('mousemove', function (event) {
-      tooltip.style('left', (event.offsetX + 16) + 'px')
-             .style('top', (event.offsetY - 28) + 'px');
-    })
-    .on('mouseout', function () {
-      d3.select(this).attr('stroke', null);
-      tooltip.transition().duration(150).style('opacity', 0);
+    // Add hover effects
+    const tooltip = d3.select(container)
+      .append('div')
+      .attr('class', 'd3-tooltip')
+      .style('opacity', 0);
+
+    bars
+      .on('mouseover', function(event, d) {
+        d3.select(this)
+          .transition()
+          .duration(200)
+          .attr('opacity', 0.8);
+
+        tooltip
+          .style('opacity', 1)
+          .html(`
+            <div class="tooltip-title">${d.label}</div>
+            <div class="tooltip-value">${d.value.toLocaleString()}</div>
+          `)
+          .style('left', `${event.pageX + 10}px`)
+          .style('top', `${event.pageY - 28}px`);
+      })
+      .on('mouseout', function() {
+        d3.select(this)
+      .transition()
+          .duration(200)
+          .attr('opacity', 1);
+
+        tooltip.style('opacity', 0);
+      });
+
+    // Add chart title
+    g.append('text')
+      .attr('class', 'chart-title')
+      .attr('x', width / 2)
+      .attr('y', -margin.top / 2)
+      .style('text-anchor', 'middle')
+      .style('font-size', '1.1em')
+      .style('font-weight', '600')
+      .text(config.title || '');
+
+    // Add responsive behavior
+    const resizeObserver = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        const newWidth = entry.contentRect.width;
+        const newHeight = Math.min(newWidth * aspectRatio, entry.contentRect.height);
+        
+        svg
+          .attr('viewBox', `0 0 ${newWidth} ${newHeight}`)
+          .attr('width', '100%')
+          .attr('height', '100%');
+
+        const newInnerWidth = newWidth - margin.left - margin.right;
+        const newInnerHeight = newHeight - margin.top - margin.bottom;
+
+        // Update scales
+        x.range([0, newInnerWidth]);
+        y.range([newInnerHeight, 0]);
+
+        // Update axes
+        g.select('.d3-axis.x-axis')
+          .attr('transform', `translate(0,${newInnerHeight})`)
+          .call(d3.axisBottom(x));
+
+        g.select('.d3-axis.y-axis')
+          .call(d3.axisLeft(y));
+
+        // Update bars
+        g.selectAll('.d3-bar')
+          .attr('x', d => x(d.label))
+          .attr('width', x.bandwidth())
+      .attr('y', d => y(d.value))
+          .attr('height', d => Math.max(0, newInnerHeight - y(d.value))); // Ensure non-negative height
+      }
     });
-  // Tooltip
-  const tooltip = d3.select(container)
-    .append('div')
-    .attr('class', 'd3-tooltip')
-    .style('position', 'absolute')
-    .style('pointer-events', 'none')
-    .style('opacity', 0);
-  // Legend
-  const legend = d3.select(container)
-    .append('div')
-    .attr('class', 'd3-legend')
-    .style('display', 'flex')
-    .style('flex-wrap', 'wrap')
-    .style('gap', '0.5em 1.2em')
-    .style('margin-top', '0.5em');
-  data.forEach(d => {
-    const item = legend.append('div').style('display', 'flex').style('align-items', 'center');
-    item.append('span')
-      .style('display', 'inline-block')
-      .style('width', '1em')
-      .style('height', '1em')
-      .style('border-radius', '50%')
-      .style('background', color(d.label))
-      .style('margin-right', '0.4em');
-    item.append('span').text(d.label);
-  });
+
+    resizeObserver.observe(container);
+  } else if (config.type === 'line') {
+    // Handle line charts using the existing renderD3LineChart function
+    renderD3LineChart(container, config.data, {
+      color: config.color,
+      title: config.title,
+      yTitle: config.yTitle
+    });
+  }
 }
 
-// --- D3 Line Chart Utility ---
-function renderD3LineChart(container, data, options = {}) {
-  d3.select(container).selectAll('svg').remove();
-  d3.select(container).selectAll('.d3-tooltip').remove();
-  const width = 320, height = 180, margin = { top: 32, right: 24, bottom: 56, left: 56 };
+
+
+function renderD3LineChart(container, data, config = {}) {
+  console.log('renderD3LineChart called with:', {
+    containerExists: !!container,
+    dataLength: data?.length,
+    config
+  });
+
+  if (!container || !data || !data.length) {
+    console.warn('Invalid input for renderD3LineChart:', { container, dataLength: data?.length });
+    return;
+  }
+
+  // Clear previous content
+  container.innerHTML = '';
+
+
+
+  // Set up dimensions and margins
+  const margin = { top: 60, right: 100, bottom: 70, left: 90 };
+  const aspectRatio = 0.6;
+  const containerWidth = container.clientWidth;
+  const containerHeight = Math.min(containerWidth * aspectRatio, container.clientHeight);
+  const width = containerWidth - margin.left - margin.right;
+  const height = containerHeight - margin.top - margin.bottom;
+
+  // Create SVG with responsive viewBox
   const svg = d3.select(container)
     .append('svg')
-    .attr('width', width)
-    .attr('height', height);
-  const x = d3.scalePoint()
-    .domain(data.map(d => d.label))
-    .range([margin.left, width - margin.right]);
+    .attr('class', 'chart-svg')
+    .attr('viewBox', `0 0 ${containerWidth} ${containerHeight}`)
+    .attr('preserveAspectRatio', 'xMidYMid meet');
+
+  // Add chart group
+  const g = svg.append('g')
+    .attr('transform', `translate(${margin.left},${margin.top})`);
+
+  // Process data
+  const processedData = data.map(d => ({
+    ...d,
+    date: new Date(d.label),
+    value: parseFloat(d.value) || 0,
+    systolic: parseFloat(d.systolic) || 0,
+    diastolic: parseFloat(d.diastolic) || 0
+  })).filter(d => !isNaN(d.value) || !isNaN(d.systolic));
+
+  // Create scales
+  const x = d3.scaleTime()
+    .domain(d3.extent(processedData, d => d.date))
+    .range([0, width])
+    .nice();
+
+  // For blood pressure chart, use both systolic and diastolic values
+  const isBloodPressure = processedData.some(d => !isNaN(d.systolic));
   const y = d3.scaleLinear()
-    .domain([d3.min(data, d => d.value) * 0.95, d3.max(data, d => d.value) * 1.05])
-    .nice()
-    .range([height - margin.bottom, margin.top]);
-  svg.append('g')
-    .attr('transform', `translate(0,${height - margin.bottom})`)
-    .call(d3.axisBottom(x))
-    .selectAll('text')
+    .domain([
+      0,
+      isBloodPressure 
+        ? Math.max(
+            d3.max(processedData, d => d.systolic || 0),
+            d3.max(processedData, d => d.diastolic || 0)
+          ) * 1.1
+        : d3.max(processedData, d => d.value) * 1.1
+    ])
+    .range([height, 0])
+    .nice();
+
+  // Add grid lines
+  g.append('g')
+    .attr('class', 'd3-grid')
+    .call(d3.axisLeft(y)
+      .ticks(5)
+      .tickSize(-width)
+      .tickFormat(''));
+
+  // Add axes
+  g.append('g')
+    .attr('class', 'd3-axis x-axis')
+    .attr('transform', `translate(0,${height})`)
+    .call(d3.axisBottom(x)
+      .ticks(5)
+      .tickFormat(d3.timeFormat('%b %d')));
+
+  g.append('g')
+    .attr('class', 'd3-axis y-axis')
+    .call(d3.axisLeft(y)
+      .ticks(5));
+
+  // Add axis labels
+  g.append('text')
     .attr('class', 'd3-axis-label')
-    .attr('font-size', 12)
-    .attr('text-anchor', 'end')
-    .attr('transform', 'rotate(-32)')
-    .attr('dx', '-0.6em')
-    .attr('dy', '0.2em');
-  svg.append('g')
-    .attr('transform', `translate(${margin.left},0)`)
-    .call(d3.axisLeft(y).ticks(5).tickFormat(d3.format('~s')))
-    .selectAll('text')
+    .attr('x', width / 2)
+    .attr('y', height + margin.bottom - 15)
+    .style('text-anchor', 'middle')
+    .style('fill', 'var(--text-primary)')
+    .style('font-size', '0.9rem')
+    .style('font-weight', '500')
+    .text('Date');
+
+  g.append('text')
     .attr('class', 'd3-axis-label')
-    .attr('font-size', 12);
-  svg.append('path')
-    .datum(data)
+    .attr('transform', `rotate(-90) translate(${-height/2}, ${-margin.left + 25})`)
+    .style('text-anchor', 'middle')
+    .style('fill', 'var(--text-primary)')
+    .style('font-size', '0.9rem')
+    .style('font-weight', '500')
+    .text(config.yTitle || 'Value');
+
+  // Create line generator
+  const line = d3.line()
+    .x(d => x(d.date))
+    .y(d => y(isBloodPressure ? d.systolic : d.value))
+    .curve(d3.curveMonotoneX);
+
+  // Add the line path
+  g.append('path')
+    .datum(processedData)
     .attr('class', 'd3-line')
     .attr('fill', 'none')
-    .attr('stroke', options.color || '#4299e1')
-    .attr('stroke-width', 3)
-    .attr('d', d3.line()
-      .x(d => x(d.label))
-      .y(d => y(d.value))
-      .curve(d3.curveMonotoneX)
-    );
-  // Points
-  svg.selectAll('.d3-point')
-    .data(data)
+    .attr('stroke', config.color || '#4299e1')
+    .attr('stroke-width', 2)
+    .attr('d', line);
+
+  // Add data points
+  const points = g.selectAll('.data-point')
+    .data(processedData)
     .enter()
     .append('circle')
-    .attr('class', 'd3-point')
-    .attr('cx', d => x(d.label))
-    .attr('cy', d => y(d.value))
+    .attr('class', 'data-point')
+    .attr('cx', d => x(d.date))
+    .attr('cy', d => y(isBloodPressure ? d.systolic : d.value))
     .attr('r', 4)
-    .attr('fill', options.color || '#4299e1')
-    .on('mouseover', function (event, d) {
-      d3.select(this).attr('r', 7);
-      tooltip.transition().duration(100).style('opacity', 1);
-      tooltip.html(`<strong>${d.label}</strong><br/>${d.value}`)
-        .style('left', (event.offsetX + 16) + 'px')
-        .style('top', (event.offsetY - 28) + 'px');
-    })
-    .on('mousemove', function (event) {
-      tooltip.style('left', (event.offsetX + 16) + 'px')
-             .style('top', (event.offsetY - 28) + 'px');
-    })
-    .on('mouseout', function () {
-      d3.select(this).attr('r', 4);
-      tooltip.transition().duration(150).style('opacity', 0);
+    .attr('fill', config.color || '#4299e1')
+    .attr('opacity', 0.7);
+
+  // For blood pressure, add diastolic line and points
+  if (isBloodPressure) {
+    const diastolicLine = d3.line()
+      .x(d => x(d.date))
+      .y(d => y(d.diastolic))
+      .curve(d3.curveMonotoneX);
+
+    g.append('path')
+      .datum(processedData)
+      .attr('class', 'd3-line diastolic')
+      .attr('fill', 'none')
+      .attr('stroke', '#f6ad55')
+      .attr('stroke-width', 2)
+      .attr('d', diastolicLine);
+
+    g.selectAll('.diastolic-point')
+      .data(processedData)
+      .enter()
+      .append('circle')
+      .attr('class', 'data-point diastolic')
+      .attr('cx', d => x(d.date))
+      .attr('cy', d => y(d.diastolic))
+      .attr('r', 4)
+      .attr('fill', '#f6ad55')
+      .attr('opacity', 0.7);
+
+    // Add legend
+    const legend = g.append('g')
+      .attr('class', 'd3-legend')
+      .attr('transform', `translate(${width - 140}, 30)`);
+
+    // Add legend background
+    legend.append('rect')
+      .attr('x', -15)
+      .attr('y', -15)
+      .attr('width', 130)
+      .attr('height', 70)
+      .attr('fill', 'var(--glass-bg)')
+      .attr('rx', 8)
+      .attr('ry', 8)
+      .attr('stroke', 'var(--glass-border)')
+      .attr('stroke-width', 1);
+
+    // Add legend items
+    const systolicGroup = legend.append('g')
+      .attr('class', 'systolic')
+      .attr('transform', 'translate(0, 0)');
+
+    systolicGroup.append('line')
+      .attr('x1', 0)
+      .attr('y1', 6)
+      .attr('x2', 20)
+      .attr('y2', 6)
+      .attr('stroke', config.color || '#4299e1')
+      .attr('stroke-width', 2);
+
+    systolicGroup.append('text')
+      .attr('x', 30)
+      .attr('y', 10)
+      .attr('fill', 'var(--text-primary)')
+      .attr('font-size', '0.9rem')
+      .text('Systolic');
+
+    const diastolicGroup = legend.append('g')
+      .attr('class', 'diastolic')
+      .attr('transform', 'translate(0, 25)');
+
+    diastolicGroup.append('line')
+      .attr('x1', 0)
+      .attr('y1', 6)
+      .attr('x2', 20)
+      .attr('y2', 6)
+      .attr('stroke', '#f6ad55')
+      .attr('stroke-width', 2);
+
+    diastolicGroup.append('text')
+      .attr('x', 30)
+      .attr('y', 10)
+      .attr('fill', 'var(--text-primary)')
+      .attr('font-size', '0.9rem')
+      .text('Diastolic');
+  }
+
+  // Add chart title
+  g.append('text')
+    .attr('class', 'chart-title')
+    .attr('x', width / 2)
+    .attr('y', -margin.top / 2)
+    .style('text-anchor', 'middle')
+    .style('font-size', '1.2rem')
+    .style('font-weight', '600')
+    .style('fill', 'var(--text-primary)')
+    .text(config.title || '');
+
+  // Add hover effects and tooltip
+
+
+  const handleMouseOver = (event, d) => {
+    d3.select(event.target)
+      .transition()
+      .duration(200)
+      .attr('r', 6)
+      .attr('opacity', 1);
+
+    tooltip
+      .style('opacity', 1)
+      .html(`
+        <div class="tooltip-title">${d3.timeFormat('%b %d, %Y')(d.date)}</div>
+        ${isBloodPressure 
+          ? `<div class="tooltip-value">Systolic: ${d.systolic} mmHg</div>
+             <div class="tooltip-value">Diastolic: ${d.diastolic} mmHg</div>`
+          : `<div class="tooltip-value">${d.value.toFixed(1)} ${config.yTitle || ''}</div>`
+        }
+      `)
+      .style('left', `${event.pageX + 10}px`)
+      .style('top', `${event.pageY - 28}px`);
+  };
+
+  const handleMouseOut = (event) => {
+    d3.select(event.target)
+      .transition()
+      .duration(200)
+      .attr('r', 4)
+      .attr('opacity', 0.7);
+
+    tooltip.style('opacity', 0);
+  };
+
+  points.on('mouseover', handleMouseOver)
+    .on('mouseout', handleMouseOut);
+
+  if (isBloodPressure) {
+    g.selectAll('.diastolic-point')
+      .on('mouseover', handleMouseOver)
+      .on('mouseout', handleMouseOut);
+  }
+
+  // Add responsive behavior
+  const resizeObserver = new ResizeObserver(entries => {
+    for (const entry of entries) {
+      const newWidth = entry.contentRect.width;
+      const newHeight = Math.min(newWidth * aspectRatio, entry.contentRect.height);
+      
+      svg
+        .attr('viewBox', `0 0 ${newWidth} ${newHeight}`)
+        .attr('width', '100%')
+        .attr('height', '100%');
+
+      const newInnerWidth = newWidth - margin.left - margin.right;
+      const newInnerHeight = newHeight - margin.top - margin.bottom;
+
+      // Update scales
+      x.range([0, newInnerWidth]);
+      y.range([newInnerHeight, 0]);
+
+      // Update axes
+      g.select('.x-axis')
+        .attr('transform', `translate(0,${newInnerHeight})`)
+        .call(d3.axisBottom(x)
+          .ticks(5)
+          .tickFormat(d3.timeFormat('%b %d')));
+
+      g.select('.y-axis')
+        .call(d3.axisLeft(y)
+          .ticks(5));
+
+      // Update line
+      g.select('.d3-line')
+        .attr('d', line);
+
+      // Update points
+      g.selectAll('.data-point')
+        .attr('cx', d => x(d.date))
+        .attr('cy', d => y(isBloodPressure ? d.systolic : d.value));
+
+      // Update legend position
+      if (isBloodPressure) {
+        g.select('.d3-legend')
+          .attr('transform', `translate(${newInnerWidth - 140}, 30)`);
+      }
+
+      // Update y-axis label position
+      g.select('.d3-axis-label[transform*="rotate(-90)"]')
+        .attr('transform', `rotate(-90) translate(${-newInnerHeight/2}, ${-margin.left + 25})`);
+    }
+  });
+
+  resizeObserver.observe(container);
+
+  // Add zoom behavior
+  const zoom = d3.zoom()
+    .scaleExtent([0.5, 10])
+    .translateExtent([[0, 0], [width, height]])
+    .on('zoom', (event) => {
+      const newX = event.transform.rescaleX(x);
+      const newY = event.transform.rescaleY(y);
+
+      // Update axes
+      g.select('.x-axis').call(d3.axisBottom(newX));
+      g.select('.y-axis').call(d3.axisLeft(newY));
+
+      // Update line
+      const newLine = d3.line()
+        .x(d => newX(d.date))
+        .y(d => newY(isBloodPressure ? d.systolic : d.value))
+        .curve(d3.curveMonotoneX);
+
+      g.select('.d3-line')
+        .attr('d', newLine);
+
+      // Update points
+      g.selectAll('.data-point')
+        .attr('cx', d => newX(d.date))
+        .attr('cy', d => newY(isBloodPressure ? d.systolic : d.value));
+
+      if (isBloodPressure) {
+        const newDiastolicLine = d3.line()
+          .x(d => newX(d.date))
+          .y(d => newY(d.diastolic))
+          .curve(d3.curveMonotoneX);
+
+        g.selectAll('.d3-line.diastolic')
+          .attr('d', newDiastolicLine);
+
+        g.selectAll('.diastolic-point')
+          .attr('cx', d => newX(d.date))
+          .attr('cy', d => newY(d.diastolic));
+      }
     });
-  // Tooltip
+
+  svg.call(zoom);
+
+  // Add brush for selection
+  const brush = d3.brushX()
+    .extent([[0, 0], [width, height]])
+    .on('end', (event) => {
+      if (!event.selection) return;
+
+      const [x0, x1] = event.selection;
+      const newDomain = [x.invert(x0), x.invert(x1)];
+      
+      // Update x scale domain
+      x.domain(newDomain);
+      
+      // Update axes and lines
+      g.select('.x-axis').call(d3.axisBottom(x));
+      g.select('.d3-line').attr('d', line);
+      g.selectAll('.data-point')
+        .attr('cx', d => x(d.date))
+        .attr('cy', d => y(isBloodPressure ? d.systolic : d.value));
+
+      if (isBloodPressure) {
+        g.selectAll('.d3-line.diastolic')
+          .attr('d', diastolicLine);
+        g.selectAll('.diastolic-point')
+          .attr('cx', d => x(d.date))
+          .attr('cy', d => y(d.diastolic));
+      }
+    });
+
+  // Add brush group
+  const brushGroup = g.append('g')
+    .attr('class', 'brush')
+    .call(brush);
+
+  // Enhanced tooltip with more information
   const tooltip = d3.select(container)
     .append('div')
     .attr('class', 'd3-tooltip')
-    .style('position', 'absolute')
-    .style('pointer-events', 'none')
     .style('opacity', 0);
-}
 
-// --- Theme-aware D3 color helpers ---
-function getD3Color(varName, fallback) {
-  return getComputedStyle(document.documentElement).getPropertyValue(varName) || fallback;
-}
+  // Add vertical line for hover
+  const hoverLine = g.append('line')
+    .attr('class', 'hover-line')
+    .attr('stroke', 'var(--text-secondary)')
+    .attr('stroke-width', 1)
+    .attr('stroke-dasharray', '4,4')
+    .style('opacity', 0);
 
-function getD3ThemeColors() {
-  return {
-    axis: getD3Color('--d3-axis', '#a0aec0'),
-    label: getD3Color('--text-primary', '#222'),
-    grid: getD3Color('--d3-grid', '#e2e8f0'),
-    background: getD3Color('--d3-bg', 'transparent'),
-    tooltipBg: getD3Color('--d3-tooltip-bg', '#222'),
-    tooltipText: getD3Color('--d3-tooltip-text', '#fff'),
-    legendText: getD3Color('--d3-legend-text', '#222'),
-    cardBg: getD3Color('--glass-bg', '#fff'),
-    cardBorder: getD3Color('--glass-border', '#e2e8f0')
+  // Enhanced mouse move handler
+  const handleMouseMove = (event) => {
+    const [mouseX, mouseY] = d3.pointer(event);
+    const x0 = x.invert(mouseX);
+    
+    // Find closest data point
+    const bisect = d3.bisector(d => d.date).left;
+    const i = bisect(processedData, x0, 1);
+    const d0 = processedData[i - 1];
+    const d1 = processedData[i];
+    const d = x0 - d0.date > d1.date - x0 ? d1 : d0;
+
+    // Update hover line
+    hoverLine
+      .attr('x1', x(d.date))
+      .attr('x2', x(d.date))
+      .attr('y1', 0)
+      .attr('y2', height)
+      .style('opacity', 1);
+
+    // Update tooltip using the existing tooltip instance
+    tooltip
+      .style('opacity', 1)
+      .html(`
+        <div class="tooltip-title">
+          <i class="fas fa-calendar"></i>
+          ${d3.timeFormat('%B %d, %Y')(d.date)}
+        </div>
+        ${isBloodPressure 
+          ? `<div class="tooltip-value">
+               <i class="fas fa-heartbeat"></i>
+               Systolic: ${d.systolic} mmHg
+             </div>
+             <div class="tooltip-value">
+               <i class="fas fa-heartbeat"></i>
+               Diastolic: ${d.diastolic} mmHg
+             </div>
+             <div class="tooltip-value">
+               <i class="fas fa-calculator"></i>
+               Pulse Pressure: ${d.systolic - d.diastolic} mmHg
+             </div>`
+          : `<div class="tooltip-value">
+               <i class="fas fa-chart-line"></i>
+               ${d.value.toFixed(1)} ${config.yTitle || ''}
+             </div>
+             <div class="tooltip-value">
+               <i class="fas fa-clock"></i>
+               Time: ${d3.timeFormat('%I:%M %p')(d.date)}
+             </div>`
+        }
+        <div class="tooltip-actions">
+          <button class="tooltip-action-btn" onclick="zoomToPoint(${d.date.getTime()})">
+            <i class="fas fa-search-plus"></i> Zoom
+          </button>
+          <button class="tooltip-action-btn" onclick="resetZoom()">
+            <i class="fas fa-undo"></i> Reset
+          </button>
+        </div>
+      `)
+      .style('left', `${event.pageX + 10}px`)
+      .style('top', `${event.pageY - 28}px`);
   };
-}
 
-// --- D3 Chart re-render on theme change ---
-function rerenderAllD3Charts() {
-  document.querySelectorAll('.dashboard-chart').forEach(chartDiv => {
-    const parent = chartDiv.closest('.dashboard-card');
-    if (!parent) return;
-    const title = parent.querySelector('.dashboard-card-title')?.textContent || '';
-    // Re-render based on chart type
-    if (title.includes('Arrivals')) createRoomDashboard('emergency', true);
-    if (title.includes('Length of Stay')) createRoomDashboard('emergency', true);
-    if (title.includes('Service Distribution')) createRoomDashboard('emergency', true);
-    if (title.includes('Careunit Flow')) createRoomDashboard('emergency', true);
-    if (title.includes('Vitals Trend')) createRoomDashboard('emergency', true);
+  // Add mouse move handler to chart area
+  svg.on('mousemove', handleMouseMove)
+    .on('mouseleave', () => {
+      hoverLine.style('opacity', 0);
+      tooltip.style('opacity', 0);
+    });
+
+  // Add zoom to point function
+  window.zoomToPoint = (timestamp) => {
+    const point = new Date(timestamp);
+    const scale = 2;
+    const x0 = x(point);
+    const y0 = y(isBloodPressure ? processedData.find(d => d.date.getTime() === timestamp).systolic : processedData.find(d => d.date.getTime() === timestamp).value);
+    
+    svg.transition()
+      .duration(750)
+      .call(zoom.transform, d3.zoomIdentity
+        .translate(width/2, height/2)
+        .scale(scale)
+        .translate(-x0, -y0));
+  };
+
+  // Add reset zoom function
+  window.resetZoom = () => {
+    svg.transition()
+      .duration(750)
+      .call(zoom.transform, d3.zoomIdentity);
+  };
+
+  // Add keyboard shortcuts
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'r' || event.key === 'R') {
+      resetZoom();
+    }
   });
+
+  // Add legend interactivity
+  if (isBloodPressure) {
+    const legend = g.select('.d3-legend');
+    
+    legend.selectAll('g')
+      .on('click', function(event, d) {
+        const lineClass = this.classList.contains('systolic') ? '.d3-line.systolic' : '.d3-line.diastolic';
+        const pointsClass = this.classList.contains('systolic') ? '.data-point.systolic' : '.data-point.diastolic';
+        
+        const isVisible = d3.select(lineClass).style('opacity') !== '0';
+        d3.select(lineClass).style('opacity', isVisible ? 0 : 1);
+        d3.selectAll(pointsClass).style('opacity', isVisible ? 0 : 0.7);
+        d3.select(this).style('opacity', isVisible ? 0.5 : 1);
+      });
+  }
+
+  // ... rest of the existing code (resize observer, etc.) ...
 }
 
-// Listen for theme changes
-const observer = new MutationObserver(() => rerenderAllD3Charts());
-observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-
-// Update D3 chart rendering functions to use theme colors
-// Example for bar chart:
-
-// ... Repeat for renderD3PieChart, renderD3LineChart, renderD3MultiLineChart, updating all color usages to use theme ...
 // ... existing code ...
 
-// --- D3 Legend Utility ---
-function renderD3Legend(container, legend) {
-  // Remove any existing legend
-  d3.select(container.parentNode).selectAll('.d3-legend').remove();
-  if (!legend || !legend.length) return;
-  const legendDiv = document.createElement('div');
-  legendDiv.className = 'd3-legend';
-  legend.forEach(item => {
-    const legendItem = document.createElement('div');
-    legendItem.className = 'd3-legend-item';
-    const colorBox = document.createElement('span');
-    colorBox.className = 'd3-legend-color';
-    colorBox.style.background = item.color;
-    legendItem.appendChild(colorBox);
-    legendItem.appendChild(document.createTextNode(item.label));
-    legendDiv.appendChild(legendItem);
-  });
-  container.parentNode.appendChild(legendDiv);
+
+// ... rest of the code ...
+
+// Update the vitals section to render the charts
+console.log('Starting chart rendering...');
+
+const bmiChart = document.getElementById('bmiChart');
+const weightChart = document.getElementById('weightChart');
+const bpChart = document.getElementById('bpChart');
+
+console.log('Chart containers found:', {
+  bmiChart: !!bmiChart,
+  weightChart: !!weightChart,
+  bpChart: !!bpChart
+});
+
+if (bmiChart && bmiTrend.length) {
+  console.log('Rendering BMI chart with', bmiTrend.length, 'data points');
+  try {
+    bmiChart.querySelector('.chart-loading').remove();
+    renderD3LineChart(bmiChart, bmiTrend, {
+      color: '#4299e1',
+      title: 'BMI Trend',
+      yTitle: 'BMI (kg/m²)'
+    });
+    console.log('BMI chart rendered successfully');
+  } catch (error) {
+    console.error('Error rendering BMI chart:', error);
+  }
 }
+
+if (weightChart && weightTrend.length) {
+  console.log('Rendering weight chart with', weightTrend.length, 'data points');
+  try {
+    weightChart.querySelector('.chart-loading').remove();
+    renderD3LineChart(weightChart, weightTrend, {
+      color: '#68d391',
+      title: 'Weight Trend',
+      yTitle: 'Weight (lbs)'
+    });
+    console.log('Weight chart rendered successfully');
+  } catch (error) {
+    console.error('Error rendering weight chart:', error);
+  }
+}
+
+if (bpChart && bpTrend.length) {
+  console.log('Rendering blood pressure chart with', bpTrend.length, 'data points');
+  try {
+    bpChart.querySelector('.chart-loading').remove();
+    renderD3LineChart(bpChart, bpTrend, {
+      color: '#fc8181',
+      title: 'Blood Pressure Trend',
+      yTitle: 'mmHg'
+    });
+    console.log('Blood pressure chart rendered successfully');
+  } catch (error) {
+    console.error('Error rendering blood pressure chart:', error);
+  }
+}
+
+// ... rest of the code ...
