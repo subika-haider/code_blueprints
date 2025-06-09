@@ -783,172 +783,137 @@ new TWEEN.Tween(controls.target)
   }
 
   function resetToProjectOverview() {
-    const contentGrid = document.querySelector('.content-section .content-grid');
-    if (!contentGrid) return;
+    const contentSection = document.querySelector('.content-section');
+    if (!contentSection) {
+      console.warn('Content section not found');
+      return;
+    }
     
-    contentGrid.innerHTML = `
-      <div class="content-main">
-        <h2 class="content-title">Project Overview</h2>
-        
-        <div class="feature-highlight">
-          <div class="highlight-icon">
-            <i class="fas fa-lightbulb"></i>
-          </div>
-          <div class="highlight-content">
-            <h3>Advanced Healthcare Visualization</h3>
-            <p>This interactive 3D hospital map revolutionizes healthcare pathway visualization by providing immersive room exploration, real-time patient journey tracking, and comprehensive departmental insights.</p>
-          </div>
-        </div>
-
-        <div class="content-blocks">
-          <div class="content-block">
-            <div class="block-header">
-              <div class="block-number">01</div>
-              <h3 class="block-title">Current Achievements</h3>
-            </div>
-            <div class="block-content">
-              <p>We've successfully developed a comprehensive 3D hospital blueprint with interactive room exploration capabilities. Users can seamlessly navigate through different medical departments and visualize complete patient journeys from entry to discharge.</p>
-              
-              <div class="achievement-list">
-                <div class="achievement-item">
-                  <i class="fas fa-check-circle"></i>
-                  <span>15+ Interactive Room Types</span>
-                </div>
-                <div class="achievement-item">
-                  <i class="fas fa-check-circle"></i>
-                  <span>5 Medical Condition Pathways</span>
-                </div>
-                <div class="achievement-item">
-                  <i class="fas fa-check-circle"></i>
-                  <span>Real-time 3D Visualization</span>
-                </div>
-                <div class="achievement-item">
-                  <i class="fas fa-check-circle"></i>
-                  <span>Mobile-Responsive Design</span>
-                </div>
+    // Reset to the original project overview content
+    contentSection.innerHTML = `
+      <div class="container">
+        <div class="content-grid">
+          <div class="content-main">
+            <h2 class="content-title">Project Overview</h2>
+            
+            <div class="feature-highlight">
+              <div class="highlight-icon">
+                <i class="fas fa-lightbulb"></i>
+              </div>
+              <div class="highlight-content">
+                <h3>Advanced Healthcare Visualization</h3>
+                <p>This interactive 3D hospital map revolutionizes healthcare pathway visualization by providing immersive room exploration, real-time patient journey tracking, and comprehensive departmental insights.</p>
               </div>
             </div>
-          </div>
 
-          <div class="content-block">
-            <div class="block-header">
-              <div class="block-number">02</div>
-              <h3 class="block-title">Technical Innovation</h3>
-            </div>
-            <div class="block-content">
-              <p>Built with cutting-edge web technologies including Three.js for 3D rendering, advanced CSS animations, and responsive design principles to ensure optimal performance across all devices.</p>
-              
-              <div class="tech-stack">
-                <div class="tech-item">
-                  <div class="tech-icon">
-                    <i class="fab fa-js-square"></i>
-                  </div>
-                  <span>Three.js 3D Engine</span>
+            <div class="content-blocks">
+              <div class="content-block">
+                <div class="block-header">
+                  <div class="block-number">01</div>
+                  <h3 class="block-title">Current Achievements</h3>
                 </div>
-                <div class="tech-item">
-                  <div class="tech-icon">
-                    <i class="fab fa-css3-alt"></i>
-                  </div>
-                  <span>Advanced CSS3</span>
-                </div>
-                <div class="tech-item">
-                  <div class="tech-icon">
-                    <i class="fas fa-mobile-alt"></i>
-                  </div>
-                  <span>Responsive Design</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="content-block">
-            <div class="block-header">
-              <div class="block-number">03</div>
-              <h3 class="block-title">Future Roadmap</h3>
-            </div>
-            <div class="block-content">
-              <p>Our development roadmap includes AI-powered pathway optimization, real-time hospital data integration, and advanced analytics for healthcare professionals.</p>
-              
-              <div class="roadmap-list">
-                <div class="roadmap-item">
-                  <div class="roadmap-status in-progress"></div>
-                  <div class="roadmap-content">
-                    <h4>AI Pathway Optimization</h4>
-                    <p>Machine learning algorithms for optimal route planning</p>
-                  </div>
-                </div>
-                <div class="roadmap-item">
-                  <div class="roadmap-status planned"></div>
-                  <div class="roadmap-content">
-                    <h4>Real-time Data Integration</h4>
-                    <p>Live hospital data feeds and occupancy tracking</p>
-                  </div>
-                </div>
-                <div class="roadmap-item">
-                  <div class="roadmap-status planned"></div>
-                  <div class="roadmap-content">
-                    <h4>Advanced Analytics Dashboard</h4>
-                    <p>Comprehensive metrics and performance insights</p>
+                <div class="block-content">
+                  <p>We've successfully developed a comprehensive 3D hospital blueprint with interactive room exploration capabilities. Users can seamlessly navigate through different medical departments and visualize complete patient journeys from entry to discharge.</p>
+                  
+                  <div class="achievement-list">
+                    <div class="achievement-item">
+                      <i class="fas fa-check-circle"></i>
+                      <span>15+ Interactive Room Types</span>
+                    </div>
+                    <div class="achievement-item">
+                      <i class="fas fa-check-circle"></i>
+                      <span>5 Medical Condition Pathways</span>
+                    </div>
+                    <div class="achievement-item">
+                      <i class="fas fa-check-circle"></i>
+                      <span>Real-time 3D Visualization</span>
+                    </div>
+                    <div class="achievement-item">
+                      <i class="fas fa-check-circle"></i>
+                      <span>Mobile-Responsive Design</span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      <div class="content-sidebar">
-        <div class="sidebar-widget">
-          <h3 class="widget-title">
-            <i class="fas fa-chart-bar"></i>
-            Project Statistics
-          </h3>
-          <div class="stats-grid">
-            <div class="stat-card">
-              <div class="stat-value">99.9%</div>
-              <div class="stat-label">Uptime</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-value">15</div>
-              <div class="stat-label">Room Types</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-value">3D</div>
-              <div class="stat-label">Rendering</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-value">5</div>
-              <div class="stat-label">Pathways</div>
-            </div>
-          </div>
-        </div>
+              <div class="content-block">
+                <div class="block-header">
+                  <div class="block-number">02</div>
+                  <h3 class="block-title">Technical Innovation</h3>
+                </div>
+                <div class="block-content">
+                  <p>Built with cutting-edge web technologies including Three.js for 3D rendering, advanced CSS animations, and responsive design principles to ensure optimal performance across all devices.</p>
+                  
+                  <div class="tech-stack">
+                    <div class="tech-item">
+                      <div class="tech-icon">
+                        <i class="fab fa-js-square"></i>
+                      </div>
+                      <span>Three.js 3D Engine</span>
+                    </div>
+                    <div class="tech-item">
+                      <div class="tech-icon">
+                        <i class="fab fa-css3-alt"></i>
+                      </div>
+                      <span>Advanced CSS3</span>
+                    </div>
+                    <div class="tech-item">
+                      <div class="tech-icon">
+                        <i class="fas fa-mobile-alt"></i>
+                      </div>
+                      <span>Responsive Design</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-        <div class="sidebar-widget">
-          <h3 class="widget-title">
-            <i class="fas fa-keyboard"></i>
-            Keyboard Shortcuts
-          </h3>
-          <div class="shortcuts-list">
-            <div class="shortcut-item">
-              <kbd>R</kbd>
-              <span>Reset View</span>
-            </div>
-            <div class="shortcut-item">
-              <kbd>F</kbd>
-              <span>Fullscreen</span>
-            </div>
-            <div class="shortcut-item">
-              <kbd>H</kbd>
-              <span>Help</span>
-            </div>
-            <div class="shortcut-item">
-              <kbd>1-5</kbd>
-              <span>Select Condition</span>
+              <div class="content-block">
+                <div class="block-header">
+                  <div class="block-number">03</div>
+                  <h3 class="block-title">Future Roadmap</h3>
+                </div>
+                <div class="block-content">
+                  <p>Our development roadmap includes AI-powered pathway optimization, real-time hospital data integration, and advanced analytics for healthcare professionals.</p>
+                  
+                  <div class="roadmap-list">
+                    <div class="roadmap-item">
+                      <div class="roadmap-status in-progress"></div>
+                      <div class="roadmap-content">
+                        <h4>AI Pathway Optimization</h4>
+                        <p>Machine learning algorithms for optimal route planning</p>
+                      </div>
+                    </div>
+                    <div class="roadmap-item">
+                      <div class="roadmap-status planned"></div>
+                      <div class="roadmap-content">
+                        <h4>Real-time Data Integration</h4>
+                        <p>Live hospital data feeds and occupancy tracking</p>
+                      </div>
+                    </div>
+                    <div class="roadmap-item">
+                      <div class="roadmap-status planned"></div>
+                      <div class="roadmap-content">
+                        <h4>Advanced Analytics Dashboard</h4>
+                        <p>Comprehensive metrics and performance insights</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
     `;
+
+    // Add fade-in animation
+    contentSection.style.opacity = '0';
+    contentSection.style.transform = 'translateY(20px)';
+    setTimeout(() => {
+      contentSection.style.transition = 'opacity 0.4s, transform 0.4s';
+      contentSection.style.opacity = '1';
+      contentSection.style.transform = 'translateY(0)';
+    }, 50);
   }
 
   function resetCameraView() {
