@@ -1469,7 +1469,7 @@ new TWEEN.Tween(controls.target)
           grid.innerHTML = `
             <div class="dashboard-error">
               <i class="fas fa-exclamation-triangle"></i>
-              <p>Error processing ICU data. Please try again later.</p>
+              <p>Unable to load ICU data. Please try again later.</p>
               <p class="error-details">${error.message}</p>
             </div>
           `;
@@ -1535,7 +1535,7 @@ new TWEEN.Tween(controls.target)
           // Process data
           waitingData.forEach(row => {
             if (row.intime && row.outtime) {
-              const waitTime = (new Date(row.outtime.replace(' ', 'T')) - 
+              const waitTime = (new Date(row.intime.replace(' ', 'T')) - 
                               new Date(row.intime.replace(' ', 'T'))) / (1000 * 60); // in minutes
               
               if (waitTime <= 15) waitTimeData[0].value++;
@@ -2195,6 +2195,22 @@ new TWEEN.Tween(controls.target)
           rightColumn.appendChild(waitTimeHeader);
           
           // Add wait time card
+          const waitTimeData = [
+            { label: '0-15 min', value: 0 },
+            { label: '15-30 min', value: 0 },
+            { label: '30-60 min', value: 0 },
+            { label: '60+ min', value: 0 }
+          ];
+
+          // Simulate wait times for treatment rooms
+          treatmentRoomData.forEach(row => {
+            const randomWait = Math.random();
+            if (randomWait < 0.4) waitTimeData[0].value++; // 0-15 min
+            else if (randomWait < 0.7) waitTimeData[1].value++; // 15-30 min
+            else if (randomWait < 0.9) waitTimeData[2].value++; // 30-60 min
+            else waitTimeData[3].value++; // 60+ min
+          });
+
           const waitTimeCard = createDashboardCard(
             'Wait Time Distribution',
             'Monitor wait time patterns to identify areas for improvement in patient flow.',
@@ -2260,21 +2276,21 @@ new TWEEN.Tween(controls.target)
             return longWait ? longWait.value : 0;
           }
         } catch (error) {
-          console.error('Error processing triage data:', error);
+          console.error('Error processing treatment data:', error);
           grid.innerHTML = `
             <div class="dashboard-error">
               <i class="fas fa-exclamation-triangle"></i>
-              <p>Error processing triage data. Please try again later.</p>
+              <p>Error processing treatment data. Please try again later.</p>
               <p class="error-details">${error.message}</p>
             </div>
           `;
         }
       }).catch(error => {
-        console.error('Error loading triage data:', error);
+        console.error('Error loading treatment data:', error);
         grid.innerHTML = `
           <div class="dashboard-error">
             <i class="fas fa-exclamation-triangle"></i>
-            <p>Error loading triage data. Please try again later.</p>
+            <p>Error loading treatment data. Please try again later.</p>
             <p class="error-details">${error.message}</p>
           </div>
         `;
@@ -3552,7 +3568,7 @@ new TWEEN.Tween(controls.target)
           dashboardGrid.appendChild(createDashboardCard(
             'Staff Distribution',
             'Distribution of staff using the room by department.',
-            staffDistributionData,
+            staffDistributionData.map(d => d.color),
             'bar',
             staffDistributionData.map(d => d.color),
             'Department',
@@ -3809,12 +3825,8 @@ new TWEEN.Tween(controls.target)
   initializeThemeToggle();
   animate();
 
-  // ... rest of the code ...
-
   // Add camera position for waiting area
   setRoomCamera('waiting_area', -3, 5, 24, -3, 0, 24);
-
-  // ... rest of the code ...
 });
 
 function renderD3Chart(container, config) {
@@ -4074,67 +4086,267 @@ function renderD3Chart(container, config) {
   }
 }
 
-// ... existing code ...
+function renderD3LineChart(container, data, config) {
+  // Log container dimensions for debugging
+  console.log(`DEBUG: renderD3LineChart called for ${config.title || 'a chart'}. Container dimensions: ${container.clientWidth}x${container.clientHeight}`);
 
+  if (!data || data.length === 0) {
+    container.innerHTML = '<div class="chart-error">No data available for this chart.</div>';
+    console.warn(`No data provided for ${config.title || 'line chart'}`);
+    return;
+  }
 
-// ... rest of the code ...
+  // Clear existing content
+  container.innerHTML = '';
 
-// Update the vitals section to render the charts
-console.log('Starting chart rendering...');
+  const margin = { top: 40, right: 30, bottom: 60, left: 70 };
+  const containerWidth = container.clientWidth;
+  const containerHeight = container.clientHeight;
+  const width = containerWidth - margin.left - margin.right;
+  const height = containerHeight - margin.top - margin.bottom;
 
-const bmiChart = document.getElementById('bmiChart');
-const weightChart = document.getElementById('weightChart');
-const bpChart = document.getElementById('bpChart');
+  // Check for valid dimensions after margin subtraction
+  if (width <= 0 || height <= 0) {
+    console.warn(`Chart area for ${config.title || 'line chart'} is too small to render: ${width}x${height}`);
+    container.innerHTML = '<div style="color: red; padding: 20px;">Chart area too small. Please expand.</div>';
+    return;
+  }
 
-console.log('Chart containers found:', {
-  bmiChart: !!bmiChart,
-  weightChart: !!weightChart,
-  bpChart: !!bpChart
-});
+  const svg = d3.select(container)
+    .append("svg")
+    .attr("width", containerWidth)
+    .attr("height", containerHeight)
+    .attr("viewBox", `0 0 ${containerWidth} ${containerHeight}`)
+    .attr("preserveAspectRatio", "xMidYMid meet")
+    .append("g")
+    .attr("transform", `translate(${margin.left},${margin.top})`);
 
-if (bmiChart && bmiTrend.length) {
-  console.log('Rendering BMI chart with', bmiTrend.length, 'data points');
-  try {
-    bmiChart.querySelector('.chart-loading').remove();
-    renderD3LineChart(bmiChart, bmiTrend, {
-      color: '#4299e1',
-      title: 'BMI Trend',
-      yTitle: 'BMI (kg/m²)'
-    });
-    console.log('BMI chart rendered successfully');
-  } catch (error) {
-    console.error('Error rendering BMI chart:', error);
+  // Chart Title
+  svg.append("text")
+    .attr("x", width / 2)
+    .attr("y", -margin.top / 2)
+    .attr("text-anchor", "middle")
+    .style("font-size", "1.2em")
+    .style("font-weight", "bold")
+    .style("fill", "#ffffff")
+    .text(config.title || "");
+
+  // Set up scales
+  const x = d3.scaleTime()
+    .domain(d3.extent(data, d => new Date(d.label)))
+    .range([0, width]);
+
+  let yDomainMax = 0;
+  if (config.yTitle === 'mmHg') { // Special handling for BP chart with systolic/diastolic
+    const maxSystolic = d3.max(data, d => d.systolic || 0);
+    const maxDiastolic = d3.max(data, d => d.diastolic || 0);
+    yDomainMax = Math.max(maxSystolic, maxDiastolic);
+  } else {
+    yDomainMax = d3.max(data, d => d.value || 0);
+  }
+  const y = d3.scaleLinear()
+    .domain([0, yDomainMax * 1.2]) // Add 20% padding to max value
+    .nice()
+    .range([height, 0]);
+
+  // Add X axis
+  svg.append("g")
+    .attr("transform", `translate(0,${height})`)
+    .attr("class", "d3-axis x-axis")
+    .call(d3.axisBottom(x)
+      .ticks(d3.timeDay.every(1))
+      .tickFormat(d3.timeFormat("%m/%d"))).selectAll("text")
+    .style("text-anchor", "end")
+    .attr("dx", "-.8em")
+    .attr("dy", ".15em")
+    .attr("transform", "rotate(-45)");
+
+  // Add Y axis
+  svg.append("g")
+    .attr("class", "d3-axis y-axis")
+    .call(d3.axisLeft(y).ticks(5));
+
+  // Add X and Y axis labels
+  svg.append("text")
+    .attr("class", "d3-axis-label")
+    .attr("x", width / 2)
+    .attr("y", height + margin.bottom - 5) // Adjusted position
+    .style("text-anchor", "middle")
+    .text(config.xTitle || "Date");
+
+  svg.append("text")
+    .attr("class", "d3-axis-label")
+    .attr("transform", "rotate(-90)")
+    .attr("x", -height / 2)
+    .attr("y", -margin.left + 25) // Adjusted position to prevent cutoff
+    .style("text-anchor", "middle")
+    .text(config.yTitle || "Value");
+
+  // Add grid lines
+  svg.append("g")
+    .attr("class", "d3-grid")
+    .call(d3.axisLeft(y)
+      .tickSize(-width)
+      .tickFormat(""));
+
+  // Create tooltip
+  let tooltip = d3.select("body").select("#chart-tooltip");
+  if (tooltip.empty()) {
+    tooltip = d3.select("body").append("div")
+      .attr("id", "chart-tooltip")
+      .style("position", "absolute")
+      .style("background-color", "rgba(0, 0, 0, 0.8)")
+      .style("color", "#fff")
+      .style("padding", "8px")
+      .style("border-radius", "4px")
+      .style("pointer-events", "none")
+      .style("opacity", 0)
+      .style("font-size", "0.9em")
+      .style("z-index", 1000);
+  }
+
+  if (config.yTitle === 'mmHg') { // Render two lines for BP
+    const lineSystolic = d3.line()
+      .x(d => x(new Date(d.label)))
+      .y(d => y(d.systolic || 0));
+
+    const lineDiastolic = d3.line()
+      .x(d => x(new Date(d.label)))
+      .y(d => y(d.diastolic || 0));
+
+    svg.append("path")
+      .datum(data)
+      .attr("fill", "none")
+      .attr("stroke", "#fc8181") // Systolic color
+      .attr("stroke-width", 2)
+      .attr("d", lineSystolic)
+      .attr("class", "d3-line systolic");
+
+    svg.append("path")
+      .datum(data)
+      .attr("fill", "none")
+      .attr("stroke", "#4299e1") // Diastolic color
+      .attr("stroke-width", 2)
+      .attr("d", lineDiastolic)
+      .attr("class", "d3-line diastolic");
+
+    // Add circles for systolic data points
+    svg.selectAll(".dot-systolic")
+      .data(data)
+      .enter().append("circle")
+      .attr("class", "data-point dot-systolic")
+      .attr("cx", d => x(new Date(d.label)))
+      .attr("cy", d => y(d.systolic || 0))
+      .attr("r", 4)
+      .attr("fill", "#fc8181")
+      .on("mouseover", function(event, d) {
+        tooltip.style("opacity", 1)
+          .html(`
+            <div class="tooltip-title">${config.title}</div>
+            <div><strong>Date:</strong> ${d.label}</div>
+            <div><strong>Systolic:</strong> ${d.systolic}</div>
+            <div><strong>Diastolic:</strong> ${d.diastolic}</div>
+          `)
+          .style("left", (event.pageX + 10) + "px")
+          .style("top", (event.pageY - 20) + "px");
+      })
+      .on("mouseout", function() {
+        tooltip.style("opacity", 0);
+      });
+
+    // Add circles for diastolic data points
+    svg.selectAll(".dot-diastolic")
+      .data(data)
+      .enter().append("circle")
+      .attr("class", "data-point dot-diastolic")
+      .attr("cx", d => x(new Date(d.label)))
+      .attr("cy", d => y(d.diastolic || 0))
+      .attr("r", 4)
+      .attr("fill", "#4299e1")
+      .on("mouseover", function(event, d) {
+        tooltip.style("opacity", 1)
+          .html(`
+            <div class="tooltip-title">${config.title}</div>
+            <div><strong>Date:</strong> ${d.label}</div>
+            <div><strong>Systolic:</strong> ${d.systolic}</div>
+            <div><strong>Diastolic:</strong> ${d.diastolic}</div>
+          `)
+          .style("left", (event.pageX + 10) + "px")
+          .style("top", (event.pageY - 20) + "px");
+      })
+      .on("mouseout", function() {
+        tooltip.style("opacity", 0);
+      });
+
+  } else { // Render single line chart
+    const line = d3.line()
+      .x(d => x(new Date(d.label)))
+      .y(d => y(d.value || 0));
+
+    svg.append("path")
+      .datum(data)
+      .attr("fill", "none")
+      .attr("stroke", config.color || "#4299e1")
+      .attr("stroke-width", 2)
+      .attr("d", line)
+      .attr("class", "d3-line");
+
+    // Add circles for data points
+    svg.selectAll(".dot")
+      .data(data)
+      .enter().append("circle")
+      .attr("class", "data-point dot")
+      .attr("cx", d => x(new Date(d.label)))
+      .attr("cy", d => y(d.value || 0))
+      .attr("r", 4)
+      .attr("fill", config.color || "#4299e1")
+      .on("mouseover", function(event, d) {
+        tooltip.style("opacity", 1)
+          .html(`
+            <div class="tooltip-title">${config.title}</div>
+            <div><strong>Date:</strong> ${d.label}</div>
+            <div><strong>Value:</strong> ${d.value.toLocaleString()}</div>
+          `)
+          .style("left", (event.pageX + 10) + "px")
+          .style("top", (event.pageY - 20) + "px");
+      })
+      .on("mouseout", function() {
+        tooltip.style("opacity", 0);
+      });
+  }
+
+  // Add legend for BP chart
+  if (config.yTitle === 'mmHg') {
+    const legendBp = svg.append("g")
+      .attr("class", "d3-legend")
+      .attr("transform", `translate(${width - 100}, 0)`); // Position legend
+
+    legendBp.append("rect")
+      .attr("x", 0)
+      .attr("y", 0)
+      .attr("width", 10)
+      .attr("height", 10)
+      .attr("fill", "#fc8181");
+    legendBp.append("text")
+      .attr("x", 15)
+      .attr("y", 5)
+      .attr("dy", "0.35em")
+      .style("font-size", "0.8em")
+      .style("fill", "#ffffff")
+      .text("Systolic");
+
+    legendBp.append("rect")
+      .attr("x", 0)
+      .attr("y", 20)
+      .attr("width", 10)
+      .attr("height", 10)
+      .attr("fill", "#4299e1");
+    legendBp.append("text")
+      .attr("x", 15)
+      .attr("y", 25)
+      .attr("dy", "0.35em")
+      .style("font-size", "0.8em")
+      .style("fill", "#ffffff")
+      .text("Diastolic");
   }
 }
-
-if (weightChart && weightTrend.length) {
-  console.log('Rendering weight chart with', weightTrend.length, 'data points');
-  try {
-    weightChart.querySelector('.chart-loading').remove();
-    renderD3LineChart(weightChart, weightTrend, {
-      color: '#68d391',
-      title: 'Weight Trend',
-      yTitle: 'Weight (lbs)'
-    });
-    console.log('Weight chart rendered successfully');
-  } catch (error) {
-    console.error('Error rendering weight chart:', error);
-  }
-}
-
-if (bpChart && bpTrend.length) {
-  console.log('Rendering blood pressure chart with', bpTrend.length, 'data points');
-  try {
-    bpChart.querySelector('.chart-loading').remove();
-    renderD3LineChart(bpChart, bpTrend, {
-      color: '#fc8181',
-      title: 'Blood Pressure Trend',
-      yTitle: 'mmHg'
-    });
-    console.log('Blood pressure chart rendered successfully');
-  } catch (error) {
-    console.error('Error rendering blood pressure chart:', error);
-  }
-}
-
-// ... rest of the code ...
